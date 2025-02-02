@@ -11,12 +11,10 @@ const Body: React.FC = () => {
         {/* Text Content */}
         <div className="max-w-md">
           <h1 className="text-2xl md:text-3xl font-bold leading-snug mb-4">
-            Empowering Your Digital Learning Journey. <br />
-            Innovative Solutions for Everyday Needs
+            CourseCircle
           </h1>
           <p className="text-base md:text-lg text-gray-600 mb-6">
-            Explore our wide range of services designed to make your life easier
-            and your business more efficient.
+          An AI-driven platform that simplifies learning, streamlines communication, and keeps students and educators organized.
           </p>
           <button className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 text-lg">
             Get Started
@@ -41,8 +39,7 @@ const Body: React.FC = () => {
           What We Offer
         </div>
         <p className="text-sm md:text-base text-gray-600">
-          Discover tailored solutions for your unique challenges. Designed with
-          innovation to meet your goals.
+        Smart, seamless, and AI-powered course management—designed for students and educators alike.
         </p>
       </section>
     </div>
