@@ -1,9 +1,9 @@
-import Bodyintro from "./components/bodyintro";
+import Landing_page from "./components/landing_page";
 
 export default function Home() {
   return (
     <div className="text-4xl">
-      <Bodyintro />
+      <Landing_page />
     </div>
   );
 }

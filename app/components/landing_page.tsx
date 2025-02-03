@@ -1,15 +1,25 @@
-"use client"; // Add this line to specify that this is a client component
+"use client"; // Ensure this is a client component
 
 import React from "react";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import { SignInButton } from "@clerk/nextjs";
+import { SignUpButton } from "@clerk/nextjs";
 
-const Body: React.FC = () => {
+const Landing_page: React.FC = () => {
   return (
     <div className="text-gray-800">
       {/* Logo */}
-      <div className="flex items-center px-6 md:px-6 py-6">
+      <div className="flex items-center justify-between px-6 md:px-6 py-6 gap-3">
         <div className="w-8 h-8 bg-black rounded-full"></div>
+        <div className="flex gap-3">
+        <SignInButton >
+        <button className="px-4 py-2 text-lg border border-gray-800 rounded-md hover:bg-gray-100">
+          Login
+        </button>
+        </SignInButton>
+        </div>
       </div>
+
       {/* Hero Section */}
       <section className="flex flex-col md:flex-row items-center justify-between px-6 md:px-6 py-6 bg-white">
         {/* Text Content */}
@@ -21,9 +31,12 @@ const Body: React.FC = () => {
             An AI-driven platform that simplifies learning, streamlines
             communication, and keeps students and educators organized.
           </p>
-          <button className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 text-lg">
-            Get Started
-          </button>
+          {/* Clerk Sign-In Button */}
+          <SignUpButton>
+            <button className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 text-lg">
+              Get Started
+            </button>
+          </SignUpButton>
         </div>
 
         {/* Lottie Animation */}
@@ -54,4 +67,4 @@ const Body: React.FC = () => {
   );
 };
 
-export default Body;
+export default Landing_page;

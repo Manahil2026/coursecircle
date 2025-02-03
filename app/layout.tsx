@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import {
   ClerkProvider,
-  // SignInButton,
-  // SignedIn,
-  // SignedOut,
-  // UserButton,
-} from '@clerk/nextjs';
-import './globals.css';
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from "@clerk/nextjs";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "CourseCircle",
-  description: "The smarter way to manage courses. Seamless learning, effortless teaching, all in one place",
+  description:
+    "The smarter way to manage courses. Seamless learning, effortless teaching, all in one place",
 };
 
 export default function RootLayout({
@@ -22,15 +22,9 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body>
-          {/* Temporarily hide authentication components */}
-          {/* <SignedOut>
-            <SignInButton />
-          </SignedOut>
           <SignedIn>
-            <UserButton afterSignOutUrl="/" />
-          </SignedIn> */}
-
-          {/* Main content */}
+            <UserButton />
+          </SignedIn>
           {children}
         </body>
       </html>
