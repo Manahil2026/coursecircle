@@ -20,10 +20,10 @@
 
 # Tech Stack
 
-# Frontend:
+## Frontend:
 - React(Next JS) ,Tailwind CSS, TypeScript
 
-# Backend:
+## Backend:
 -  Next JS API Route
 ## Database:
 - PostgreSQL and Prisma ORM
