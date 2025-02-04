@@ -12,3 +12,24 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+enum UserRole {
+  STUDENT
+  PROFESSOR
+  ADMIN
+}
+
+model User {
+  id            String    @id
+  role          UserRole
+  email         String    @unique
+  firstName     String
+  lastName      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // More relations will be added as we create other tables. These are just a few examples 
+  // teachingCourses  Course[]   // For professors
+  // enrolledCourses  Enrollment[] // For students
+  // submissions      Submission[]
+  // uploadedFiles    File[]
+}
