@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 
 // Sidebar Component
-const Sidebar: React.FC = () => {
+const Sidebar_dashboard: React.FC = () => {
   const sidebarItems = [
     { icon: "/asset/logo_icon.svg", label: "", alt: "Logo Icon", isLogo: true },
     { icon: "/asset/home_icon.svg", label: "Home", alt: "Home Icon" },
@@ -42,24 +42,4 @@ const Sidebar: React.FC = () => {
     </aside>
   );
 };
-
-// Main Content Component
-const MainContent: React.FC = () => {
-  return (
-    <main className="flex-1 p-6 ">
-      <h1 className="text-base font-semibold mb-4">Hi, Joel Boat</h1>
-    </main>
-  );
-};
-
-// StudentDashboard Component
-const StudentDashboard: React.FC = () => {
-  return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <MainContent />
-    </div>
-  );
-};
-
-export default StudentDashboard;
+export default Sidebar_dashboard;

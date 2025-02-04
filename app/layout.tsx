@@ -23,12 +23,12 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body>
-          <SignedOut>
+          {/* <SignedOut>
             <SignInButton />
-          </SignedOut>
-          <SignedIn>
+          </SignedOut> */}
+          {/* <SignedIn>
             <UserButton afterSignOutUrl="/" />
-          </SignedIn> 
+          </SignedIn>  */}
           {children}
         </body>
       </html>
