@@ -9,8 +9,9 @@ const Sidebar_dashboard: React.FC = () => {
   const sidebarItems = [
     { component: <UserButton afterSignOutUrl="/" />, label: "", isLogo: true },
     { icon: "/asset/home_icon.svg", label: "Home", alt: "Home Icon" },
-    { icon: "/asset/folder_icon.svg", label: "Files", alt: "Folder Icon" },
+    { icon: "/asset/inbox_icon.svg", label: "Inbox", alt: "Inbox Icon" },
     { icon: "/asset/calendar_icon.svg", label: "Calendar", alt: "Calendar Icon" },
+    { icon: "/asset/folder_icon.svg", label: "Files", alt: "Folder Icon" },
     { icon: "/asset/ai_icon.svg", label: "AI Tools", alt: "AI Icon" },
   ];
 
@@ -22,7 +23,7 @@ const Sidebar_dashboard: React.FC = () => {
           {sidebarItems.map((item, index) => (
             <li
               key={index}
-              className={`w-14 h-14 flex flex-col justify-center items-center $ {
+              className={`w-14 h-14 flex flex-col justify-center items-center ${
                 !item.isLogo ? "hover:bg-gray-700" : ""
               } rounded-lg cursor-pointer transition-colors duration-200`}
               role="button"
