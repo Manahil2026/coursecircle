@@ -3,6 +3,7 @@ import React from "react";
 import { useUser } from "@clerk/nextjs";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import CourseCard from "@/app/components/course_card";
+import Image from "next/image"; // Missing import for Image
 
 export default function StudentDashboard() {
   const { isLoaded, user } = useUser();
@@ -10,6 +11,10 @@ export default function StudentDashboard() {
   if (!isLoaded) {
     return <div>Loading...</div>;
   }
+
+  // Helper function to get current month and year
+  const currentMonth = new Date().toLocaleString("default", { month: "long" });
+  const currentYear = new Date().getFullYear();
 
   return (
     <div className="flex h-screen">
@@ -19,7 +24,7 @@ export default function StudentDashboard() {
           {/* Left Section - User Greeting and Courses */}
           <div className="col-span-2">
             <h1 className="text-base font-semibold mb-4">
-              Hi, {user ? user.fullName : "Guest"}
+              Hi, {user ? user.fullName || user.firstName : "Guest"}
             </h1>
             <h1 className="font-bold text-xl">My Course</h1>
             <div className="space-y-4">
@@ -52,29 +57,42 @@ export default function StudentDashboard() {
           {/* Right Section - Calendar, To-do List, and Announcements */}
           <div className="col-span-1 space-y-4">
             <div className="rounded-lg shadow">
-              <h2 className="text-base font-semibold mb-4">Feb 2025</h2>
+              <h2 className="text-base font-semibold mb-4">{`${currentMonth} ${currentYear}`}</h2>
               <div className="grid grid-cols-7 text-center font-medium bg-[#AAFF45] rounded-lg">
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                  <div key={day} className="font-semibold">{day}</div>
+                  <div key={day} className="font-medium">{day}</div>
                 ))}
+                {/* Dynamically render days for the current month */}
                 {[...Array(7)].map((_, index) => (
-                  <div key={index} className="font-semibold">{index + 2}</div>
+                  <div key={index} className="font-medium">{index + 2}</div>
                 ))}
               </div>
             </div>
 
             {/* To-do List */}
             <div>
-              <h2 className="text-base font-semibold mb-2">To-do List</h2>
-              <div className="bg-white p-2 rounded-lg shadow">
+              <div className="flex justify-between">
+                <h2 className="text-base font-semibold mb-2">To-do List</h2>
+                <button>
+                  <Image
+                    src="/asset/add_icon.svg"
+                    alt="Add icon"
+                    width={27}
+                    height={27}
+                    priority
+                  />
+                </button>
+              </div>
+
+              <div className="bg-white p-2 rounded-lg">
                 <ul className="space-y-2">
-                  <li className="bg-black text-white p-4 rounded-lg">
+                  <li className="bg-black text-white p-4 rounded-lg shadow-lg cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
                     03 | Study for SE (Due 11:55)
                   </li>
-                  <li className="bg-gray-200 p-4 rounded-lg">
+                  <li className="bg-white p-4 rounded-lg shadow-lg cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
                     04 | Drink Water (Due 11:55)
                   </li>
-                  <li className="bg-gray-200 p-4 rounded-lg">
+                  <li className="bg-white p-4 rounded-lg shadow-lg cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
                     06 | Touch Grass (Due 11:55)
                   </li>
                 </ul>
@@ -83,9 +101,9 @@ export default function StudentDashboard() {
 
             {/* Announcements */}
             <div>
-              <h2 className="text-base font-semibold mb-2  ">Announcement</h2>
-              <div className="bg-white p-2 rounded-lg shadow border border-black text-center ">
-                <p className="text-gray-600 text-base">No Announcement</p>
+              <h2 className="text-base font-semibold mb-2">Announcement</h2>
+              <div className="bg-white p-2 rounded-lg shadow border border-black text-center">
+                <p className="text-gray-700 text-base">No Announcement</p>
               </div>
             </div>
           </div>
