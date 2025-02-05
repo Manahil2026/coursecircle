@@ -3,15 +3,16 @@
 import React from "react";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
+import Image from "next/image";
 
 const Landing_page: React.FC = () => {
-  const { isSignedIn } = useUser();  // Get user's sign-in state
+  const { isSignedIn } = useUser(); // Get user's sign-in state
 
   return (
     <div className="text-gray-800">
       {/* Logo */}
       <div className="flex items-center justify-between px-6 md:px-6 py-6 gap-3">
-        <div className="w-8 h-8 bg-black rounded-full"></div>
+        <Image src="/asset/logo_icon.svg" alt="CourseCircle Logo" width={40} height={40} />
         <div className="flex gap-3">
           {/* Conditionally render the SignInButton or UserButton */}
           {!isSignedIn ? (
@@ -36,12 +37,9 @@ const Landing_page: React.FC = () => {
       <section className="flex flex-col md:flex-row items-center justify-between px-6 md:px-6 py-6 bg-white">
         {/* Text Content */}
         <div className="max-w-md">
-          <h1 className="text-2xl md:text-3xl font-bold leading-snug mb-4">
-            CourseCircle
-          </h1>
+          <h1 className="text-2xl md:text-3xl font-bold leading-snug mb-4">CourseCircle</h1>
           <p className="text-base md:text-lg text-gray-600 mb-6">
-            An AI-driven platform that simplifies learning, streamlines
-            communication, and keeps students and educators organized.
+            An AI-driven platform that simplifies learning, streamlines communication, and keeps students and educators organized.
           </p>
           {/* Clerk Sign-In Button */}
           <SignUpButton>
@@ -70,8 +68,7 @@ const Landing_page: React.FC = () => {
             What We Offer
           </div>
           <p className="text-sm text-gray-600 text-center md:text-left">
-            Smart, seamless, and AI-powered course management—designed for
-            students and educators alike.
+            Smart, seamless, and AI-powered course management—designed for students and educators alike.
           </p>
         </div>
       </section>

@@ -2,14 +2,15 @@
 
 import React from "react";
 import Image from "next/image";
+import { UserButton } from "@clerk/nextjs";
 
 // Sidebar Component
 const Sidebar_dashboard: React.FC = () => {
   const sidebarItems = [
-    { icon: "/asset/logo_icon.svg", label: "", alt: "Logo Icon", isLogo: true },
+    { component: <UserButton afterSignOutUrl="/" />, label: "", isLogo: true },
     { icon: "/asset/home_icon.svg", label: "Home", alt: "Home Icon" },
     { icon: "/asset/folder_icon.svg", label: "Files", alt: "Folder Icon" },
-    { icon: "/asset/calendar_icon.svg", label: "Calendar", alt: "Candar Icon" },
+    { icon: "/asset/calendar_icon.svg", label: "Calendar", alt: "Calendar Icon" },
     { icon: "/asset/ai_icon.svg", label: "AI Tools", alt: "AI Icon" },
   ];
 
@@ -21,20 +22,26 @@ const Sidebar_dashboard: React.FC = () => {
           {sidebarItems.map((item, index) => (
             <li
               key={index}
-              className={`w-14 h-14 flex flex-col justify-center items-center ${
+              className={`w-14 h-14 flex flex-col justify-center items-center $ {
                 !item.isLogo ? "hover:bg-gray-700" : ""
               } rounded-lg cursor-pointer transition-colors duration-200`}
               role="button"
               aria-label={item.label}
             >
-              <Image
-                src={item.icon}
-                alt={item.alt}
-                width={27}
-                height={27}
-                priority
-              />
-              {item.label && <span className="text-[10px] py-1">{item.label}</span>}
+              {item.isLogo ? (
+                item.component
+              ) : (
+                <>
+                  <Image
+                    src={item.icon || ""}
+                    alt={item.alt || ""}
+                    width={27}
+                    height={27}
+                    priority
+                  />
+                  {item.label && <span className="text-[10px] py-1">{item.label}</span>}
+                </>
+              )}
             </li>
           ))}
         </ul>
@@ -42,4 +49,5 @@ const Sidebar_dashboard: React.FC = () => {
     </aside>
   );
 };
+
 export default Sidebar_dashboard;
