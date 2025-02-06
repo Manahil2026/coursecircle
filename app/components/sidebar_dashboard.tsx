@@ -2,13 +2,27 @@
 
 import React from "react";
 import Image from "next/image";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 // Sidebar Component
 const Sidebar_dashboard: React.FC = () => {
+  const router = useRouter();
+  const {user} = useUser();
+  const userRole = user?.publicMetadata?.role;
+
+   // Function to handle home click based on user role
+   const handleHomeClick = () => {
+    if (userRole === "member") {
+      router.push("/pages/student/dashboard");
+    } else if (userRole === "prof") {
+      router.push("/pages/professor/dashboard");
+    } 
+   };
+
   const sidebarItems = [
     { component: <UserButton afterSignOutUrl="/" />, label: "", isLogo: true },
-    { icon: "/asset/home_icon.svg", label: "Home", alt: "Home Icon" },
+    { icon: "/asset/home_icon.svg", label: "Home", alt: "Home Icon", onClick: handleHomeClick },
     { icon: "/asset/inbox_icon.svg", label: "Inbox", alt: "Inbox Icon" },
     { icon: "/asset/calendar_icon.svg", label: "Calendar", alt: "Calendar Icon" },
     { icon: "/asset/folder_icon.svg", label: "Files", alt: "Folder Icon" },
@@ -28,6 +42,7 @@ const Sidebar_dashboard: React.FC = () => {
               } rounded-lg cursor-pointer transition-colors duration-200`}
               role="button"
               aria-label={item.label}
+              onClick={item.onClick}
             >
               {item.isLogo ? (
                 item.component
