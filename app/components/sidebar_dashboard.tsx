@@ -16,7 +16,7 @@ const Sidebar_dashboard: React.FC = () => {
   ];
 
   return (
-    <aside className="w-16 bg-black text-white flex flex-col items-center justify-start h-screen">
+    <aside className="fixed top-0 w-16 bg-black text-white flex flex-col items-center justify-start h-full">
       <nav className="w-full flex flex-col items-center">
         {/* Sidebar Items */}
         <ul className="flex flex-col items-center gap-3 py-1 text-center">
