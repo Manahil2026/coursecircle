@@ -65,3 +65,39 @@ model Course {
   @@index([professorId])
   @@map("courses")
 }
+
+model File {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  name      String
+  url       String
+  type      String   // e.g., "pdf", "doc", etc.
+  
+  // Each file belongs to one course
+  // onDelete: Cascade means if the course is deleted, its files are also deleted
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId  String
+
+  @@index([courseId])
+  @@map("files")
+}
+
+model Assignment {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  title       String
+  description String?
+  dueDate     DateTime?
+  
+  // Each assignment belongs to one course
+  // onDelete: Cascade means if the course is deleted, its assignments are also deleted
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId    String
+
+  @@index([courseId])
+  @@map("assignments")
+}
