@@ -1,74 +1,112 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
+import CourseMenu from "@/app/components/course_menu";
+
 
 const Coursepage: React.FC = () => {
+  const [showTextInput, setShowTextInput] = useState(false);
+  const [textContent, setTextContent] = useState("");
+  const [publishedTexts, setPublishedTexts] = useState<string[]>([]);
+  const [showModulePopup, setShowModulePopup] = useState(false);
+  const [modules, setModules] = useState<{ title: string; description: string; file: File | null }[]>([]);
+
+  const handlePublishText = () => {
+    if (textContent.trim()) {
+      setPublishedTexts([...publishedTexts, textContent]);
+      setTextContent("");
+      setShowTextInput(false);
+    }
+  };
+
+   // Delete published text
+ const handleDeleteText = (index: number) => {
+  setPublishedTexts(publishedTexts.filter((_, i) => i !== index));
+ };
+
+  const handleAddModule = (title: string, description: string, file: File | null) => {
+    setModules([...modules, { title, description, file }]);
+    setShowModulePopup(false);
+  };
+
+    // Delete module
+    const handleDeleteModule = (index: number) => {
+      setModules(modules.filter((_, i) => i !== index));
+    };
+
   return (
     <>
       <Sidebar_dashboard />
-      <div className="flex h-screen bg-gray-100 flex-1 pl-16">
+      <div className="flex min-h-screen bg-gray-100 flex-1 pl-80">
         {/* Course Menu Sidebar */}
-        <div className="w-64 bg-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4">Course Menu</h2>
-          <ul className="space-y-2">
-            <li className="p-3 bg-black text-white rounded-md cursor-pointer">
-              Assignments
-            </li>
-            <li className="p-3 bg-gray-100 rounded-md hover:bg-gray-300 cursor-pointer">
-              Syllabus
-            </li>
-            <li className="p-3 bg-gray-100 rounded-md hover:bg-gray-300 cursor-pointer">
-              Gradebook
-            </li>
-          </ul>
-        </div>
+        <CourseMenu />
 
         {/* Main Content Area */}
         <div className="flex-1 p-8">
-          <h1 className="text-2xl font-bold">Professor Dashboard</h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold">Professor Homepage</h1>
 
-          {/* Assignment Creation UI */}
-          <div className="mt-6 p-6 bg-white shadow-md rounded-md border">
-            <h2 className="text-lg font-semibold mb-4">Create Assignment</h2>
-            <input
-              type="text"
-              placeholder="Title"
-              className="block w-full p-2 border rounded-md mb-2"
-            />
-            <textarea
-              placeholder="Description"
-              className="block w-full p-2 border rounded-md mb-2"
-            ></textarea>
-            <input
-              type="date"
-              className="block w-full p-2 border rounded-md mb-2"
-            />
-            <button className="px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700">
-              Add Assignment
-            </button>
-          </div>
-        </div>
-
-        {/* Assignment List */}
-        <div className="w-80 bg-white p-6 shadow-md border-l border-gray-300">
-          <h2 className="text-lg font-semibold mb-4">Assignments</h2>
-          <ul className="space-y-4">
-            <li className="p-4 bg-gray-100 rounded-md shadow-sm cursor-pointer hover:bg-gray-200">
-              <h3 className="text-md font-semibold">Sample Assignment</h3>
-              <p className="text-sm text-gray-600">Course: Introduction to Web Development</p>
-              <p className="text-sm text-gray-600">Student: John Doe</p>
-              <p className="text-sm text-gray-600">Context: Student submission details...</p>
-              <input
-                type="number"
-                placeholder="Enter grade"
-                className="block w-full p-2 border rounded-md mt-2"
-              />
-              <button className="mt-2 px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700">
-                Submit Grade
+            {/* Buttons */}
+            <div className="flex gap-4">
+              <button onClick={() => setShowTextInput(true)} className="px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-[#B9FF66]">
+                Add Text
               </button>
-              <span className="text-xs text-red-500 font-semibold block mt-2">Due: Feb 10, 2025</span>
-            </li>
-          </ul>
+              <button onClick={() => setShowModulePopup(true)} className="px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-[#B9FF66]">
+                Add File
+              </button>
+            </div>
+          </div>
+
+
+          {/* Text Input */}
+          {showTextInput && (
+            <div className="mt-4 p-4 bg-white shadow-md rounded-md border relative max-h-64 overflow-auto">
+              <button onClick={() => setShowTextInput(false)} className="absolute top-2 right-2 text-red-500">X</button>
+              <textarea
+                placeholder="Write something..."
+                value={textContent}
+                onChange={(e) => setTextContent(e.target.value)}
+                className="block w-full p-2 border rounded-md mb-2"
+              ></textarea>
+              <button onClick={handlePublishText} className="px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700">Publish</button>
+            </div>
+          )}
+
+          {/* Published Texts */}
+          {publishedTexts.map((text, index) => (
+            <div key={index} className="mt-4 p-4 bg-white rounded-md border overflow-auto relative">
+               <button onClick={() => handleDeleteText(index)} className="absolute top-2 right-2 text-red-500">X</button>
+              {text}
+            </div>
+          ))}
+
+          {/* Display Modules in Main Content */}
+          {modules.map((module, index) => (
+            <div key={index} className="mt-4 p-4 bg-white rounded-md border shadow-md relative">
+              <button onClick={() => handleDeleteModule(index)} className="absolute top-2 right-2 text-red-500">X</button>
+              <h3 className="text-md font-semibold">{module.title}</h3>
+              <p className="text-sm text-gray-600">{module.description}</p>
+              {module.file && <p className="text-sm text-gray-500">File: <a href={URL.createObjectURL(module.file)} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">{module.file.name}</a></p>}
+            </div>
+          ))}
+
+          {/* Module Creation Popup */}
+          {showModulePopup && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+              <div className="bg-white p-6 rounded-md shadow-md w-96 relative">
+                <button onClick={() => setShowModulePopup(false)} className="absolute top-2 right-2 text-red-500">X</button>
+                <h2 className="text-lg font-semibold mb-4">Create Module</h2>
+                <input type="text" placeholder="Title" id="moduleTitle" className="block w-full p-2 border rounded-md mb-2" />
+                <textarea placeholder="Description" id="moduleDescription" className="block w-full p-2 border rounded-md mb-2"></textarea>
+                <input type="file" id="moduleFile" className="block w-full p-2 border rounded-md mb-2" />
+                <button onClick={() => handleAddModule(
+                  (document.getElementById('moduleTitle') as HTMLInputElement)?.value,
+                  (document.getElementById('moduleDescription') as HTMLTextAreaElement)?.value,
+                  (document.getElementById('moduleFile') as HTMLInputElement)?.files?.[0] || null
+                )} className="px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700">Add Module</button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
