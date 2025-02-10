@@ -65,7 +65,7 @@ const Coursepage: React.FC = () => {
                 onChange={setTextContent}
                 height="200px"
               />
-              <button onClick={handlePublishText} className="mt-40 px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700 mt-4">Publish</button>
+              <button onClick={handlePublishText} className="mt-28 px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700 mt-4">Publish</button>
             </div>
           )}
 
