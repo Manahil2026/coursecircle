@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 // Dynamically import ReactQuill with SSR disabled
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 import "react-quill-new/dist/quill.snow.css"; // Import Quill styles
+import { Quill } from "react-quill-new";
 
 interface ReactQuillEditorProps {
   value: string;
@@ -14,19 +15,28 @@ interface ReactQuillEditorProps {
   toolbarOptions?: any;
 }
 
+
 const ReactQuillEditor: React.FC<ReactQuillEditorProps> = ({ value, onChange, height = "200px", toolbarOptions }) => {
   const defaultToolbarOptions = [
-    [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
-    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+    ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
+    ['blockquote', 'code-block'],
+    ['link', 'image', 'video'],
+  
+    // custom button values
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'list': 'check' }],
+    [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
+    [{ 'indent': '-1'}, { 'indent': '+1' }],          // outdent/indent
+    [{ 'direction': 'rtl' }],                         // text direction
+  
+    [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
+    [{ 'header': [1, 2, 3, 4, 5, 6] }],
+  
+    [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
     [{ 'align': [] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    ['link', 'image', 'blockquote', 'code-block'],
-    ['undo', 'redo'],
-    [{ 'color': [] }, { 'background': [] }],
-    [{ 'size': ['small', 'medium', 'large', 'huge'] }],
-    [{ 'font': ['serif', 'monospace', 'sans-serif'] }],
-    ['clean']
+  
+    ['clean']                                         // remove formatting button
   ];
+  
 
   return (
     <ReactQuill
