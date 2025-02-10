@@ -1,7 +1,10 @@
-"use client";
+'use client';
+
 import React, { useState } from "react";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import CourseMenu from "@/app/components/course_menu";
+import ReactQuillEditor from "@/app/components/text_editor";
+import "react-quill-new/dist/quill.snow.css";
 
 
 const Coursepage: React.FC = () => {
@@ -13,40 +16,35 @@ const Coursepage: React.FC = () => {
 
   const handlePublishText = () => {
     if (textContent.trim()) {
-      setPublishedTexts([...publishedTexts, textContent]);
+      setPublishedTexts([...publishedTexts, textContent]);  // Store the HTML content
       setTextContent("");
       setShowTextInput(false);
     }
   };
 
-   // Delete published text
- const handleDeleteText = (index: number) => {
-  setPublishedTexts(publishedTexts.filter((_, i) => i !== index));
- };
+  const handleDeleteText = (index: number) => {
+    setPublishedTexts(publishedTexts.filter((_, i) => i !== index));
+  };
 
   const handleAddModule = (title: string, description: string, file: File | null) => {
     setModules([...modules, { title, description, file }]);
     setShowModulePopup(false);
   };
 
-    // Delete module
-    const handleDeleteModule = (index: number) => {
-      setModules(modules.filter((_, i) => i !== index));
-    };
+  const handleDeleteModule = (index: number) => {
+    setModules(modules.filter((_, i) => i !== index));
+  };
 
   return (
     <>
       <Sidebar_dashboard />
       <div className="flex min-h-screen bg-gray-100 flex-1 pl-80">
-        {/* Course Menu Sidebar */}
         <CourseMenu />
 
-        {/* Main Content Area */}
         <div className="flex-1 p-8">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">Professor Homepage</h1>
 
-            {/* Buttons */}
             <div className="flex gap-4">
               <button onClick={() => setShowTextInput(true)} className="px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-[#B9FF66]">
                 Add Text
@@ -57,28 +55,31 @@ const Coursepage: React.FC = () => {
             </div>
           </div>
 
-
-          {/* Text Input */}
           {showTextInput && (
             <div className="mt-4 p-4 bg-white shadow-md rounded-md border relative max-h-64 overflow-auto">
               <button onClick={() => setShowTextInput(false)} className="absolute top-2 right-2 text-red-500">X</button>
-              <textarea
-                placeholder="Write something..."
+
+              {/*ReactQuillEditor component*/}
+              <ReactQuillEditor
                 value={textContent}
-                onChange={(e) => setTextContent(e.target.value)}
-                className="block w-full p-2 border rounded-md mb-2"
-              ></textarea>
-              <button onClick={handlePublishText} className="px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700">Publish</button>
+                onChange={setTextContent}
+                height="200px"
+              />
+              <button onClick={handlePublishText} className="mt-40 px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700 mt-4">Publish</button>
             </div>
           )}
 
           {/* Published Texts */}
           {publishedTexts.map((text, index) => (
             <div key={index} className="mt-4 p-4 bg-white rounded-md border overflow-auto relative">
-               <button onClick={() => handleDeleteText(index)} className="absolute top-2 right-2 text-red-500">X</button>
-              {text}
+              <button onClick={() => handleDeleteText(index)} className="absolute top-2 right-2 text-red-500">X</button>
+              {/* Ensure Quill styles are applied */}
+              <div className="ql-snow">
+                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: text }}></div>
+              </div>
             </div>
           ))}
+
 
           {/* Display Modules in Main Content */}
           {modules.map((module, index) => (
@@ -90,7 +91,6 @@ const Coursepage: React.FC = () => {
             </div>
           ))}
 
-          {/* Module Creation Popup */}
           {showModulePopup && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
               <div className="bg-white p-6 rounded-md shadow-md w-96 relative">
@@ -103,7 +103,7 @@ const Coursepage: React.FC = () => {
                   (document.getElementById('moduleTitle') as HTMLInputElement)?.value,
                   (document.getElementById('moduleDescription') as HTMLTextAreaElement)?.value,
                   (document.getElementById('moduleFile') as HTMLInputElement)?.files?.[0] || null
-                )} className="px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700">Add Module</button>
+                )} className="px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700">Add File</button>
               </div>
             </div>
           )}
