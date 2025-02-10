@@ -16,6 +16,7 @@
     "next": "15.1.6",
     "prisma": "^6.3.0",
     "react": "^19.0.0",
+    "react-doc-viewer": "^0.1.14",
     "react-dom": "^19.0.0",
     "react-quill-new": "^3.3.3"
   },
