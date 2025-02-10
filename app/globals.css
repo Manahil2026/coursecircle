@@ -2,8 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+@import "react-quill-new/dist/quill.snow.css";
 
 body {
   background: #FFF;
   font-family: 'Poppins', sans-serif;
 }
+
+.ql-editor {
+  min-height: 200px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.ql-editor strong {
+  font-weight: bold;
+}
+
+.ql-editor em {
+  font-style: italic;
+}
+
+.ql-editor u {
+  text-decoration: underline;
+}
+
+.ql-editor blockquote {
+  border-left: 4px solid #ccc;
+  padding-left: 10px;
+  color: #666;
+}
+
+.ql-editor h1 {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.ql-editor h2 {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.ql-editor h3 {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+
+
+
+
+
