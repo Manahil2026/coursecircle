@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
 import React, { useState } from "react";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import CourseMenu from "@/app/components/course_menu_professor";
 import ReactQuillEditor from "@/app/components/text_editor";
 import "react-quill-new/dist/quill.snow.css";
-
+import { useRouter } from "next/navigation";
 
 const Coursepage: React.FC = () => {
   const [showTextInput, setShowTextInput] = useState(false);
@@ -13,10 +13,11 @@ const Coursepage: React.FC = () => {
   const [publishedTexts, setPublishedTexts] = useState<string[]>([]);
   const [showModulePopup, setShowModulePopup] = useState(false);
   const [modules, setModules] = useState<{ title: string; description: string; file: File | null }[]>([]);
+  const router = useRouter();
 
   const handlePublishText = () => {
     if (textContent.trim()) {
-      setPublishedTexts([...publishedTexts, textContent]);  // Store the HTML content
+      setPublishedTexts([...publishedTexts, textContent]);
       setTextContent("");
       setShowTextInput(false);
     }
@@ -33,6 +34,12 @@ const Coursepage: React.FC = () => {
 
   const handleDeleteModule = (index: number) => {
     setModules(modules.filter((_, i) => i !== index));
+  };
+
+  const handleOpenFile = (file: File | null) => {
+    if (!file) return; // Ensure file is not null before proceeding
+    const fileUrl = URL.createObjectURL(file);
+    router.push(`/pages/professor/view_file?file=${encodeURIComponent(fileUrl)}`);
   };
 
   return (
@@ -59,27 +66,23 @@ const Coursepage: React.FC = () => {
             <div className="mt-4 p-4 bg-white shadow-md rounded-md border relative max-h-64 overflow-auto">
               <button onClick={() => setShowTextInput(false)} className="absolute top-2 right-2 text-red-500">X</button>
 
-              {/*ReactQuillEditor component*/}
               <ReactQuillEditor
                 value={textContent}
                 onChange={setTextContent}
                 height="100%"
               />
-              <button onClick={handlePublishText} className=" mt-2 px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700">Publish</button>
+              <button onClick={handlePublishText} className="mt-28 px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700">Publish</button>
             </div>
           )}
 
-          {/* Published Texts */}
           {publishedTexts.map((text, index) => (
             <div key={index} className="mt-4 p-4 bg-white rounded-md border overflow-auto relative">
               <button onClick={() => handleDeleteText(index)} className="absolute top-2 right-2 text-red-500">X</button>
-              {/* Ensure Quill styles are applied */}
               <div className="ql-snow">
                 <div className="ql-editor" dangerouslySetInnerHTML={{ __html: text }}></div>
               </div>
             </div>
           ))}
-
 
           {/* Display Modules in Main Content */}
           {modules.map((module, index) => (
@@ -87,7 +90,11 @@ const Coursepage: React.FC = () => {
               <button onClick={() => handleDeleteModule(index)} className="absolute top-2 right-2 text-red-500">X</button>
               <h3 className="text-md font-semibold">{module.title}</h3>
               <p className="text-sm text-gray-600">{module.description}</p>
-              {module.file && <p className="text-sm text-gray-500">File: <a href={URL.createObjectURL(module.file)} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">{module.file.name}</a></p>}
+              {module.file && (
+                <p className="text-sm text-blue-500 underline cursor-pointer" onClick={() => handleOpenFile(module.file)}>
+                  View File: {module.file.name}
+                </p>
+              )}
             </div>
           ))}
 
