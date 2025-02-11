@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
-import CourseMenu from "@/app/components/course_menu";
+import CourseMenu from "@/app/components/course_menu_professor";
 import ReactQuillEditor from "@/app/components/text_editor";
 import "react-quill-new/dist/quill.snow.css";
 
@@ -38,18 +38,18 @@ const Coursepage: React.FC = () => {
   return (
     <>
       <Sidebar_dashboard />
-      <div className="flex min-h-screen bg-gray-100 flex-1 pl-80">
+      <div className="flex min-h-screen bg-gray-100 flex-1 pl-52">
         <CourseMenu />
 
-        <div className="flex-1 p-8">
+        <div className="flex-1">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Professor Homepage</h1>
+            <h1 className="text-base font-medium">Professor Homepage</h1>
 
-            <div className="flex gap-4">
-              <button onClick={() => setShowTextInput(true)} className="px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-[#B9FF66]">
+            <div className="flex gap-2 m-2">
+              <button onClick={() => setShowTextInput(true)} className=" p-2 bg-[#AAFF45] text-black text-sm rounded-md hover:bg-[#B9FF66]">
                 Add Text
               </button>
-              <button onClick={() => setShowModulePopup(true)} className="px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-[#B9FF66]">
+              <button onClick={() => setShowModulePopup(true)} className="p-2 bg-[#AAFF45] text-black text-sm rounded-md hover:bg-[#B9FF66]">
                 Add File
               </button>
             </div>
@@ -63,9 +63,9 @@ const Coursepage: React.FC = () => {
               <ReactQuillEditor
                 value={textContent}
                 onChange={setTextContent}
-                height="200px"
+                height="100%"
               />
-              <button onClick={handlePublishText} className="mt-28 px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700">Publish</button>
+              <button onClick={handlePublishText} className=" mt-2 px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700">Publish</button>
             </div>
           )}
 
@@ -83,7 +83,7 @@ const Coursepage: React.FC = () => {
 
           {/* Display Modules in Main Content */}
           {modules.map((module, index) => (
-            <div key={index} className="mt-4 p-4 bg-white rounded-md border shadow-md relative">
+            <div key={index} className="mt-4 p-4 bg-white rounded-md border shadow-md relative h-auto">
               <button onClick={() => handleDeleteModule(index)} className="absolute top-2 right-2 text-red-500">X</button>
               <h3 className="text-md font-semibold">{module.title}</h3>
               <p className="text-sm text-gray-600">{module.description}</p>
