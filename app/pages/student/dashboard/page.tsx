@@ -3,18 +3,18 @@ import React from "react";
 import { useUser } from "@clerk/nextjs";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import CourseCard from "@/app/components/course_card";
-import Image from "next/image"; // Missing import for Image
+import Image from "next/image";
 
 export default function StudentDashboard() {
   const { isLoaded, user } = useUser();
 
   if (!isLoaded) {
     return (
-      <div className="h-screen flex items-center justify-center">
-      <div className="flex flex-col items-center space-y-2">
-        <div className="w-8 h-8 border-8 border-t-transparent border-[#73b029] rounded-full animate-spin"></div>
+      <div className="h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center space-y-2">
+          <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
+        </div>
       </div>
-    </div>
     );
   }
 

@@ -1,4 +1,4 @@
-"use client"; // Ensure this is a client component
+"use client";
 
 import React from "react";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
@@ -6,7 +6,7 @@ import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
 import Image from "next/image";
 
 const Landing_page: React.FC = () => {
-  const { isSignedIn } = useUser(); // Get user's sign-in state
+  const { isSignedIn } = useUser();
 
   return (
     <div className="text-gray-800">
