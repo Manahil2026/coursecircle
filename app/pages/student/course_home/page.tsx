@@ -1,6 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
+import CourseHomepage from "@/app/components/course_homepage";
+import CourseMenu from "@/app/components/course_menu";
 
 const assignments = [
   {
@@ -37,25 +39,8 @@ const Coursepage: React.FC = () => {
   return (
     <>
       <Sidebar_dashboard />
-      <div className="flex h-screen bg-gray-100 flex-1 pl-16">
-        {/* Existing Sidebar */}
-
-        {/* Course Menu Sidebar */}
-        <div className="w-64 bg-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4">Course Menu</h2>
-          <ul className="space-y-2">
-            <li className="p-3 bg-black text-white rounded-md cursor-pointer">
-              Assignment
-            </li>
-            <li className="p-3 bg-gray-100 rounded-md hover:bg-gray-300 cursor-pointer">
-              Syllabus
-            </li>
-            <li className="p-3 bg-gray-100 rounded-md hover:bg-gray-300 cursor-pointer">
-              Grade
-            </li>
-          </ul>
-        </div>
-
+      <CourseMenu />
+      <div className="flex h-screen bg-gray-100 flex-1 pl-40">
         {/* Main Content Area */}
         <div className="flex-1 p-8">
           <h1 className="text-2xl font-bold">Welcome to the Course</h1>
