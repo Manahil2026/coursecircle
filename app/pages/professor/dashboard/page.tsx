@@ -9,7 +9,13 @@ export default function ProfessorDashboard() {
   const { isLoaded, user } = useUser();
 
   if (!isLoaded) {
-    return <div>Loading...</div>;
+    return (
+      <div className="h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center space-y-2">
+          <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
   }
 
   // Helper function to get current month and year
