@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
-import CourseMenu from "@/app/components/course_menu_professor";
+import CourseMenu from "@/app/components/course_menu";
 import ReactQuillEditor from "@/app/components/text_editor";
 import "react-quill-new/dist/quill.snow.css";
 import { useRouter } from "next/navigation";

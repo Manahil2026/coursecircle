@@ -12,13 +12,13 @@ const CourseMenu: React.FC = () => {
   ];
 
   return (
-    <div className="w-64 bg-gray-200 h-screen fixed left-16 top-0 pt-16">
+    <div className="w-32 bg-white h-screen fixed left-16 top-0 pt-3 shadow-lg">
       <nav className="flex flex-col">
         {menuItems.map((item) => (
           <button 
             key={item.path} 
             onClick={() => router.push(item.path)}
-            className="px-6 py-3 text-left text-black hover:bg-gray-300"
+            className="px-4 py-1 text-left text-black text-sm hover:underline"
           >
             {item.name}
           </button>
