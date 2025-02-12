@@ -14,6 +14,9 @@ Open your terminal and follow these steps:
 # Connect to PostgreSQL:
 psql -U postgres
 
+(Note:the above command is the standard way to connect, but I actually got a
+permission denied error. If this happens to you, try: sudo -u postgres psql)
+
 # Once connected, create the database with this command:
 CREATE DATABASE coursecircle;
 
@@ -53,6 +56,17 @@ npx prisma studio
 and you can look at each model separately)
 
 ## Usage & Maintenance
+
+When you are testing a feature that will add data to one of the tables
+(creating a user, adding files etc.) make sure the database is actually
+running. To do this, get into the psql shell(using psql -U postgres or sudo -u
+postgres psql), and then use this command to
+connect to the coursecircle database: 
+
+\c coursecircle
+
+Then whatever action you are doing on the frontend should be able to affect
+the database
 
 ### Common Commands
 
