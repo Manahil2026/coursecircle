@@ -33,7 +33,7 @@ export default function StudentDashboard() {
               <h1 className="text-base font-semibold mb-4">
                 Hi, {user ? user.fullName || user.firstName : "Guest"}
               </h1>
-              <h1 className="font-bold text-xl">My Course</h1>
+              <h1 className="text-base font-semibold">My Course</h1>
               <div className="space-y-4">
                 <CourseCard
                   courseName="Python Programming"

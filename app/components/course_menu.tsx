@@ -12,7 +12,7 @@ const CourseMenu: React.FC = () => {
   ];
 
   return (
-    <div className="w-32 bg-white h-screen fixed left-16 top-0 pt-3 shadow-lg">
+    <div className="w-32 bg-white shadow-lg border border-[#aeaeae85] h-screen fixed left-16 top-0 pt-3">
       <nav className="flex flex-col">
         {menuItems.map((item) => (
           <button 

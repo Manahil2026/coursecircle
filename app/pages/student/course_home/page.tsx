@@ -1,102 +1,32 @@
 "use client";
 import React, { useState } from "react";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
-import CourseHomepage from "@/app/components/course_homepage";
 import CourseMenu from "@/app/components/course_menu";
 
-const assignments = [
-  {
-    id: 1,
-    title: "React Components",
-    description: "Build reusable React components for a UI library.",
-    details:
-      "In this assignment, you will create reusable React components using props and state. Focus on building modular UI elements.",
-    dueDate: "Due: Feb 10, 2025",
-  },
-  {
-    id: 2,
-    title: "Next.js API Routes",
-    description: "Create and deploy API routes using Next.js.",
-    details:
-      "This assignment requires you to build API routes in Next.js. Learn how to handle GET and POST requests efficiently.",
-    dueDate: "Due: Feb 15, 2025",
-  },
-  {
-    id: 3,
-    title: "Tailwind CSS Styling",
-    description: "Style a responsive webpage using Tailwind CSS.",
-    details:
-      "Use Tailwind CSS utility classes to create a fully responsive webpage. Pay attention to flexbox and grid layouts.",
-    dueDate: "Due: Feb 20, 2025",
-  },
-];
+const Section: React.FC<{ title: string; items: string[] }> = ({ title, items }) => (
+  <div className="border border-gray-400 flex flex-col text-sm mb-6 rounded-sm">
+    <div className="border-b border-gray-400 p-2 font-medium bg-[#AAFF45]">{title}</div>
+    {items.map((item, index) => (
+      <div key={index} className="border-b last:border-none border-gray-400 p-2 hover:bg-gray-50 cursor-pointer">
+        {item}
+      </div>
+    ))}
+  </div>
+);
 
 const Coursepage: React.FC = () => {
-  const [selectedAssignment, setSelectedAssignment] = useState<
-    null | (typeof assignments)[0]
-  >(null);
+  const [progress, setProgress] = useState(43);
 
   return (
-    <>
+    <div className="flex">
       <Sidebar_dashboard />
       <CourseMenu />
-      <div className="flex h-screen bg-gray-100 flex-1 pl-40">
-        {/* Main Content Area */}
-        <div className="flex-1 p-8">
-          <h1 className="text-2xl font-bold">Welcome to the Course</h1>
-          <p className="text-gray-600 mt-2">
-            Here you will find all the course materials, assignments, and
-            grades.
-          </p>
-
-          {/* Display Selected Assignment */}
-          {selectedAssignment && (
-            <div className="mt-6 p-6 bg-white shadow-md rounded-md border">
-              <h2 className="text-xl font-semibold">
-                {selectedAssignment.title}
-              </h2>
-              <p className="text-gray-700 mt-2">{selectedAssignment.details}</p>
-              <p className="text-red-500 font-semibold mt-2">
-                {selectedAssignment.dueDate}
-              </p>
-
-              <button className="mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-blue-700 transition">
-                Upload Assignment
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Right Section: List of Assignments */}
-        <div className="w-80 bg-white p-6 shadow-md border-l border-gray-300">
-          <h2 className="text-lg font-semibold mb-4">Assignments</h2>
-          <ul className="space-y-4">
-            {assignments.map((assignment) => (
-              <li
-                key={assignment.id}
-                onClick={() => setSelectedAssignment(assignment)}
-                className={`p-4 rounded-md shadow-sm cursor-pointer transition ${
-                  selectedAssignment?.id === assignment.id
-                    ? "bg-blue-100 border-l-4 border-[#AAFF45]"
-                    : "bg-gray-100"
-                } hover:bg-gray-200`}
-                title="Click to View Assignment"
-              >
-                <div className="flex justify-between items-center">
-                  <h3 className="text-md font-semibold">{assignment.title}</h3>
-                  <span className="text-xs text-red-500 font-semibold">
-                    {assignment.dueDate}
-                  </span>
-                </div>
-                <p className="text-gray-600 text-sm">
-                  {assignment.description}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </>
+      <main className="min-h-screen flex-1 p-6 pl-52">
+        <h2 className="text-base font-semibold mb-4">Welcome to Your Course</h2>
+        <Section title="Course Overview" items={["Get Started", "Syllabus", "Resources"]} />
+        <Section title="Course Materials" items={["Lectures", "Assignments", "Quizzes"]} />
+      </main>
+    </div>
   );
 };
 
