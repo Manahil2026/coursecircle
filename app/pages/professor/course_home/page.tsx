@@ -22,7 +22,7 @@ const Coursepage: React.FC = () => {
     description: "",
     file: null,
   });
-  const [deleteConfirmation, setDeleteConfirmation] = useState<{ type: "text" | "module"; index: number } | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ type: "text" | "file"; index: number } | null>(null);
 
   const router = useRouter();
 
@@ -56,7 +56,7 @@ const Coursepage: React.FC = () => {
   };
 
   const handleDeleteModule = (index: number) => {
-    setDeleteConfirmation({ type: "module", index });
+    setDeleteConfirmation({ type: "file", index });
   };
 
   const handleEditModule = (index: number) => {
@@ -68,7 +68,7 @@ const Coursepage: React.FC = () => {
     if (deleteConfirmation) {
       if (deleteConfirmation.type === "text") {
         setPublishedTexts(publishedTexts.filter((_, i) => i !== deleteConfirmation.index));
-      } else if (deleteConfirmation.type === "module") {
+      } else if (deleteConfirmation.type === "file") {
         setModules(modules.filter((_, i) => i !== deleteConfirmation.index));
       }
       setDeleteConfirmation(null);
@@ -191,7 +191,7 @@ const Coursepage: React.FC = () => {
         {showModulePopup && (
           <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30">
             <div className="bg-white p-4 rounded-md shadow-md w-96">
-              <h2 className="text-lg font-semibold mb-2">Add Module</h2>
+              <h2 className="text-lg font-semibold mb-2">Add File</h2>
 
               <input
                 type="text"
