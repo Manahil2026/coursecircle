@@ -22,6 +22,7 @@ const Coursepage: React.FC = () => {
     description: "",
     file: null,
   });
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ type: "text" | "module"; index: number } | null>(null);
 
   const router = useRouter();
 
@@ -34,7 +35,7 @@ const Coursepage: React.FC = () => {
   };
 
   const handleDeleteText = (index: number) => {
-    setPublishedTexts(publishedTexts.filter((_, i) => i !== index));
+    setDeleteConfirmation({ type: "text", index });
   };
 
   const handleEditText = (index: number) => {
@@ -55,12 +56,23 @@ const Coursepage: React.FC = () => {
   };
 
   const handleDeleteModule = (index: number) => {
-    setModules(modules.filter((_, i) => i !== index));
+    setDeleteConfirmation({ type: "module", index });
   };
 
   const handleEditModule = (index: number) => {
     setEditingModuleIndex(index);
     setEditingModule(modules[index]);
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmation) {
+      if (deleteConfirmation.type === "text") {
+        setPublishedTexts(publishedTexts.filter((_, i) => i !== deleteConfirmation.index));
+      } else if (deleteConfirmation.type === "module") {
+        setModules(modules.filter((_, i) => i !== deleteConfirmation.index));
+      }
+      setDeleteConfirmation(null);
+    }
   };
 
   const handleSaveModuleEdit = (index: number) => {
@@ -222,6 +234,29 @@ const Coursepage: React.FC = () => {
             </div>
           </div>
         )}
+        {deleteConfirmation && (
+          <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30">
+            <div className="bg-white p-4 rounded-md shadow-md w-96">
+              <h2 className="text-lg font-semibold">Confirm Delete</h2>
+              <p>Are you sure you want to delete this {deleteConfirmation.type}?</p>
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  onClick={() => setDeleteConfirmation(null)}
+                  className="px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500"
+                >
+                  No
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                >
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </>
   );
