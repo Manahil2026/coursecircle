@@ -35,6 +35,13 @@ const ProfessorAssignments = () => {
     setNewAssignment({ title: "", points: "", dueDate: "", dueTime: "" });
   };
 
+  const handleDelete = (index: number) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this assignment?");
+    if (confirmDelete) {
+      setAssignments(assignments.filter((_, i) => i !== index));
+    }
+  };
+
   return (
     <div className="flex">
       <Sidebar_dashboard />
@@ -57,10 +64,18 @@ const ProfessorAssignments = () => {
           ) : (
             <ul>
               {assignments.map((assignment, index) => (
-                <li key={index} className="border p-3 mb-2 shadow rounded">
-                  <h2 className="font-semibold">{assignment.title}</h2>
-                  <p>Points: {assignment.points}</p>
-                  <p>Due Date: {assignment.dueDate} at {assignment.dueTime}</p>
+                <li key={index} className="border p-3 mb-2 shadow rounded flex justify-between items-center">
+                  <div>
+                    <h2 className="font-semibold">{assignment.title}</h2>
+                    <p>Points: {assignment.points}</p>
+                    <p>Due Date: {assignment.dueDate} at {assignment.dueTime}</p>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(index)}
+                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
                 </li>
               ))}
             </ul>
