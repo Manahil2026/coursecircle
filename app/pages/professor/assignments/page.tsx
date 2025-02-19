@@ -12,6 +12,7 @@ interface Assignment {
 
 const ProfessorAssignments = () => {
   const [showModal, setShowModal] = useState(false);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [newAssignment, setNewAssignment] = useState<Assignment>({
     title: "",
@@ -30,7 +31,14 @@ const ProfessorAssignments = () => {
       alert("Please fill in all fields");
       return;
     }
-    setAssignments([...assignments, newAssignment]);
+    if (editIndex !== null) {
+      const updatedAssignments = [...assignments];
+      updatedAssignments[editIndex] = newAssignment;
+      setAssignments(updatedAssignments);
+      setEditIndex(null);
+    } else {
+      setAssignments([...assignments, newAssignment]);
+    }
     setShowModal(false);
     setNewAssignment({ title: "", points: "", dueDate: "", dueTime: "" });
   };
@@ -40,6 +48,12 @@ const ProfessorAssignments = () => {
     if (confirmDelete) {
       setAssignments(assignments.filter((_, i) => i !== index));
     }
+  };
+
+  const handleEdit = (index: number) => {
+    setNewAssignment(assignments[index]);
+    setEditIndex(index);
+    setShowModal(true);
   };
 
   return (
@@ -70,23 +84,31 @@ const ProfessorAssignments = () => {
                     <p>Points: {assignment.points}</p>
                     <p>Due Date: {assignment.dueDate} at {assignment.dueTime}</p>
                   </div>
-                  <button
-                    onClick={() => handleDelete(index)}
-                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEdit(index)}
+                      className="bg-black text-white px-3 py-1 rounded hover:bg-blue-600"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(index)}
+                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
           )}
         </div>
 
-        {/* Create Assignment Modal */}
+        {/* Create/Edit Assignment Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
             <div className="bg-white p-6 rounded shadow-lg w-96">
-              <h2 className="text-xl font-bold mb-4">Create Assignment</h2>
+              <h2 className="text-xl font-bold mb-4">{editIndex !== null ? "Edit Assignment" : "Create Assignment"}</h2>
               <input
                 type="text"
                 name="title"
@@ -122,7 +144,7 @@ const ProfessorAssignments = () => {
                   Cancel
                 </button>
                 <button onClick={handlePublish} className="bg-[#AAFF45] text-black px-4 py-2 rounded hover:bg-[#B9FF66]">
-                  Publish
+                  {editIndex !== null ? "Save Changes" : "Publish"}
                 </button>
               </div>
             </div>
