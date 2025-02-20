@@ -64,11 +64,11 @@ export default function GradeTracker() {
 
         {/* Student Detail Section */}
         {student && (
-          <div className="border rounded-lg p-6 shadow-xl">
+          <div className="border rounded-lg p-6">
             <h2 className="text-xl font-medium mb-2 text-black">
               {student.name}
             </h2>
-            <table className="w-full table-auto border-collapse text-sm text-gray-700">
+            <table className="w-full table-auto border-collapse text-sm">
               <thead>
                 <tr className="bg-gray-200 text-left">
                   <th className="px-4 py-2">Assignment Name</th>
@@ -79,7 +79,7 @@ export default function GradeTracker() {
               </thead>
               <tbody>
                 {student.assignments.map((assignment, index) => (
-                  <tr key={index} className="odd:bg-gray-50 border-b">
+                  <tr key={index} className="border-b border-gray-400">
                     <td className="px-4 py-2">{assignment.name}</td>
                     <td className="px-4 py-2">{assignment.dueDate}</td>
                     <td className="px-4 py-2">{assignment.submissionDate}</td>
@@ -87,10 +87,10 @@ export default function GradeTracker() {
                   </tr>
                 ))}
                 {/* Average Grade */}
-                <tr className="bg-gray-100 font-medium">
+                <tr className="font-medium">
                   <td
                     colSpan={3}
-                    className="px-4 py-2 text-right bg-[#AAFF45] border-b-[1px] border-black"
+                    className="px-4 py-2 text-left bg-[#AAFF45] border-b-[1px] border-black"
                   >
                     Average Grade
                   </td>
@@ -99,10 +99,10 @@ export default function GradeTracker() {
                   </td>
                 </tr>
                 {/* Attendance */}
-                <tr className="bg-gray-100 font-medium">
+                <tr className="font-medium">
                   <td
                     colSpan={3}
-                    className="px-4 py-2 text-right bg-[#AAFF45] border-b-[1px] border-black"
+                    className="px-4 py-2 text-left bg-[#AAFF45] border-b-[1px] border-black"
                   >
                     Attendance (%)
                   </td>

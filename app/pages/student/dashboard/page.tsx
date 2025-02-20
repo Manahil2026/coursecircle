@@ -33,7 +33,7 @@ export default function StudentDashboard() {
               <h1 className="text-base font-semibold mb-4">
                 Hi, {user ? user.fullName || user.firstName : "Guest"}
               </h1>
-              <h1 className="text-base font-semibold">My Course</h1>
+              <h1 className="font-bold text-xl">Courses</h1>
               <div className="space-y-4">
                 <CourseCard
                   courseName="Python Programming"
@@ -99,13 +99,13 @@ export default function StudentDashboard() {
 
                 <div className="bg-white p-2 rounded-lg">
                   <ul className="space-y-2">
-                    <li className="bg-black text-white p-4 rounded-lg shadow-lg cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
+                    <li className="bg-black text-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
                       03 | Study for SE (Due 11:55)
                     </li>
-                    <li className="bg-white p-4 rounded-lg shadow-lg cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
+                    <li className="bg-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
                       04 | Drink Water (Due 11:55)
                     </li>
-                    <li className="bg-white p-4 rounded-lg shadow-lg cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
+                    <li className="bg-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
                       06 | Touch Grass (Due 11:55)
                     </li>
                   </ul>
