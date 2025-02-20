@@ -1,13 +1,17 @@
 'use client';
+import CourseMenu from '@/app/components/course_menu';
+import Sidebar_dashboard from '@/app/components/sidebar_dashboard';
 import React from 'react'
 
 const ViewAssignment = () => {
 
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Assignment</h1>
-      <p>Details about...</p>
+    <div className="flex">
+      <Sidebar_dashboard />
+      <CourseMenu />
+      <div className="flex-1 p-6 ml-48">
+      </div>
     </div>
   );
 };
