@@ -33,10 +33,11 @@ const ProfessorAssignments = () => {
   };
 
   const handlePublish = () => {
-    if (!newAssignment.title || !newAssignment.points || !newAssignment.dueDate || !newAssignment.dueTime) {
-      alert("Please fill in all fields");
+    if (!newAssignment.title) {
+      alert("Please provide a title for the assignment.");
       return;
     }
+  
     if (editIndex !== null) {
       const updatedAssignments = [...assignments];
       updatedAssignments[editIndex] = newAssignment;
@@ -45,6 +46,7 @@ const ProfessorAssignments = () => {
     } else {
       setAssignments([...assignments, newAssignment]);
     }
+  
     setShowModal(false);
     setNewAssignment({ title: "", points: "", dueDate: "", dueTime: "" });
   };
