@@ -2,6 +2,7 @@
 import CourseMenu from "@/app/components/course_menu";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Assignment {
   title: string;
@@ -11,6 +12,7 @@ interface Assignment {
 }
 
 const ProfessorAssignments = () => {
+  const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -20,6 +22,10 @@ const ProfessorAssignments = () => {
     dueDate: "",
     dueTime: "",
   });
+
+  const handleNavigate = () => {
+    router.push(`/pages/professor/view_assignment`);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -78,9 +84,14 @@ const ProfessorAssignments = () => {
           ) : (
             <ul>
               {assignments.map((assignment, index) => (
-                <li key={index} className="border p-3 mb-2 shadow rounded flex justify-between items-center">
+                <li key={index} className="border p-3 mb-2 shadow rounded flex justify-between items-center hover:bg-slate-100">
                   <div>
-                    <h2 className="font-semibold">{assignment.title}</h2>
+                    <p
+                      className="font-semibold text-black hover:underline cursor-pointer"
+                      onClick={() => handleNavigate()}
+                    >
+                      {assignment.title}
+                    </p>
                     <p>Points: {assignment.points}</p>
                     <p>Due Date: {assignment.dueDate} at {assignment.dueTime}</p>
                   </div>
