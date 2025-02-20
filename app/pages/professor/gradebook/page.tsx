@@ -4,6 +4,7 @@ import CourseMenu from "@/app/components/course_menu";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import { useState } from "react";
 import Image from "next/image";
+import GradeTable from "@/app/components/grade_table";
 
 interface Assignment {
   name: string;
@@ -73,21 +74,12 @@ export default function GradeTracker() {
     },
   ]);
 
-  // State for managing selected student and arrow toggle
-  const [selectedStudentId, setSelectedStudentId] = useState<number>(1); // First student is selected by default
+  const [selectedStudentId, setSelectedStudentId] = useState<number>(1);
   const [isArrowDown, setIsArrowDown] = useState<boolean>(true);
 
   const selectStudent = (id: number) => {
-    setSelectedStudentId(id === selectedStudentId ? 0 : id); // Toggle the student selection
-    setIsArrowDown(!isArrowDown); // Toggle arrow direction
-  };
-
-  const calculateGrade = (assignments: Assignment[]): string => {
-    const total = assignments.reduce(
-      (acc, assignment) => acc + assignment.score,
-      0
-    );
-    return (total / assignments.length).toFixed(2);
+    setSelectedStudentId(id === selectedStudentId ? 0 : id);
+    setIsArrowDown(!isArrowDown);
   };
 
   const handleScoreChange = (
@@ -126,7 +118,6 @@ export default function GradeTracker() {
           Student Grade [ Python Programming ]
         </h1>
 
-        {/* Student List Section */}
         <div className="mb-2 pl-6">
           <ul>
             {students.map((student) => (
@@ -159,68 +150,18 @@ export default function GradeTracker() {
           </ul>
         </div>
 
-        {/* Student Detail Section */}
         {selectedStudent && (
           <div className="border rounded-md p-6">
             <h2 className="text-xl font-medium mb-2 text-black">
               {selectedStudent.name}
             </h2>
-            <table className="w-full table-auto border-collapse text-sm ">
-              <thead>
-                <tr className="bg-gray-200 text-left">
-                  <th className="px-4 py-2">Assignment Name</th>
-                  <th className="px-4 py-2">Due Date</th>
-                  <th className="px-4 py-2">Submission Date</th>
-                  <th className="px-4 py-2">Score</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedStudent.assignments.map((assignment, index) => (
-                  <tr key={index} className="border-b border-gray-400">
-                    <td className="px-4 py-2">{assignment.name}</td>
-                    <td className="px-4 py-2">{assignment.dueDate}</td>
-                    <td className="px-4 py-2">{assignment.submissionDate}</td>
-                    <td className="px-4 py-2">
-                      <input
-                        type="number"
-                        value={assignment.score}
-                        onChange={(e) =>
-                          handleScoreChange(
-                            selectedStudent.id,
-                            index,
-                            +e.target.value
-                          )
-                        }
-                        className="w-14 border-[0.1px] bg-[#AAFF45] border-black rounded-md px-2 py-1 text-center appearance-none outline-none focus:outline-none"
-                      />
-                    </td>
-                  </tr>
-                ))}
-                {/* Average Grade and Attendance */}
-                <tr className="font-medium">
-                  <td
-                    colSpan={3}
-                    className="px-4 py-2 text-left bg-[#AAFF45] border-b-[1px] border-black"
-                  >
-                    Average Grade
-                  </td>
-                  <td className="px-4 py-2 border-b-[1px] border-black bg-[#AAFF45]">
-                    {calculateGrade(selectedStudent.assignments)}
-                  </td>
-                </tr>
-                <tr className="font-medium">
-                  <td
-                    colSpan={3}
-                    className="px-4 py-2 border-b-[1px] border-black bg-[#AAFF45]"
-                  >
-                    Attendance (%)
-                  </td>
-                  <td className="px-4 py-2 border-b-[1px] border-black bg-[#AAFF45]">
-                    {selectedStudent.attendance}%
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <GradeTable
+              assignments={selectedStudent.assignments}
+              attendance={selectedStudent.attendance}
+              updateScore={(index, newScore) =>
+                handleScoreChange(selectedStudent.id, index, newScore)
+              }
+            />
           </div>
         )}
       </div>
