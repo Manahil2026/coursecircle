@@ -5,9 +5,9 @@ import CourseMenu from "@/app/components/course_menu";
 
 const Section: React.FC<{ title: string; items: string[] }> = ({ title, items }) => (
   <div className="border border-gray-400 flex flex-col text-sm mb-6 rounded-sm">
-    <div className="border-b border-gray-400 p-2 font-medium bg-[#AAFF45]">{title}</div>
+    <div className="border-b border-gray-400 p-2 font-medium bg-[#AAFF45] rounded-md]">{title}</div>
     {items.map((item, index) => (
-      <div key={index} className="border-b last:border-none border-gray-400 p-2 hover:bg-gray-50 cursor-pointer">
+      <div key={index} className="border-b last:border-none border-gray-400 p-2 hover:bg-gray-50 cursor-pointer rounded-sm">
         {item}
       </div>
     ))}

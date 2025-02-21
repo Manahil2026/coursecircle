@@ -3,7 +3,7 @@ import React from "react";
 import { useUser } from "@clerk/nextjs";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import CourseCard from "@/app/components/course_card";
-import Image from "next/image"; // Missing import for Image
+import Image from "next/image";
 
 export default function ProfessorDashboard() {
   const { isLoaded, user } = useUser();
@@ -99,13 +99,13 @@ export default function ProfessorDashboard() {
 
                 <div className="bg-white p-2 rounded-lg">
                   <ul className="space-y-2">
-                    <li className="bg-black text-white p-4 rounded-lg shadow-lg cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
+                    <li className="bg-black text-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
                       03 | Study for SE (Due 11:55)
                     </li>
-                    <li className="bg-white p-4 rounded-lg shadow-lg cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
+                    <li className="bg-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
                       04 | Drink Water (Due 11:55)
                     </li>
-                    <li className="bg-white p-4 rounded-lg shadow-lg cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
+                    <li className="bg-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
                       06 | Touch Grass (Due 11:55)
                     </li>
                   </ul>
