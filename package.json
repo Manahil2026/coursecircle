@@ -18,7 +18,8 @@
     "react": "^19.0.0",
     "react-doc-viewer": "^0.1.14",
     "react-dom": "^19.0.0",
-    "react-quill-new": "^3.3.3"
+    "react-quill-new": "^3.3.3",
+    "svix": "^1.60.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
