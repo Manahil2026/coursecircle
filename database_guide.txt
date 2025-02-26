@@ -1,0 +1,115 @@
+## Database Setup
+(some of this assumes you have terminal access)
+
+### 1. Install PostgreSQL
+1. Download PostgreSQL from the [official website](https://www.postgresql.org/download/)
+2. During installation:
+   - Set a password for the postgres user (write this down!)
+   - Keep the default port (5432)
+   - Install all components when prompted
+
+### 2. Create Local Database
+Open your terminal and follow these steps:
+
+# Connect to PostgreSQL:
+psql -U postgres
+
+(Note:the above command is the standard way to connect, but I actually got a
+permission denied error. If this happens to you, try: sudo -u postgres psql)
+
+# Once connected, create the database with this command:
+CREATE DATABASE coursecircle;
+
+# Verify creation (lists all databases)
+\l
+
+# Exit psql
+\q
+
+### 3. Project Configuration
+1. Create a new file named `.env` in the coursecircle root directory
+2. Add your database connection string:
+
+DATABASE_URL="postgresql://postgres:your_password@localhost:5432/coursecircle?schema=public"
+
+3. Replace `your_password` with your actual postgres password from when you
+installed it.
+
+### 4. Install Dependencies
+
+# Install Prisma and its client (you probably already did this since its been
+in packages.json for a while, but just to
+make sure that you have prisma)
+
+npm install 
+
+### 5. Initialize Database
+
+# Apply database migrations
+npx prisma migrate dev
+(this will apply the schema I've been working on to the database you just
+created)
+
+# Verify setup with Prisma Studio
+npx prisma studio
+(this is kindof cool, it opens a browser tab that displays the full schema,
+and you can look at each model separately)
+
+## Usage & Maintenance
+
+When you are testing a feature that will add data to one of the tables
+(creating a user, adding files etc.) make sure the database is actually
+running. To do this, get into the psql shell(using psql -U postgres or sudo -u
+postgres psql), and then use this command to
+connect to the coursecircle database: 
+
+\c coursecircle
+
+Then whatever action you are doing on the frontend should be able to affect
+the database
+
+### Common Commands
+
+# View database in browser
+npx prisma studio
+
+# Update database after schema changes
+If you want to make changes to the schema, edit the schema.prisma file and
+then use this command:
+
+npx prisma migrate dev --name describe_your_changes
+
+# Reset database (Deletes all data; only use on your local development
+database)
+npx prisma migrate reset
+
+# Update Prisma Client
+npx prisma generate
+
+### Troubleshooting
+
+#### Connection Issues
+- Verify PostgreSQL is running:
+  - Windows: Check Services app
+  - Mac: Run `brew services list`
+  - Linux: `sudo service postgresql status`
+- Confirm your password in DATABASE_URL matches your postgres password
+- Check that port 5432 isn't blocked
+
+#### Migration Problems
+1. If migrations fail:
+   ```
+   npx prisma migrate reset
+   npx prisma migrate dev
+   ```
+2. For schema conflicts:
+   - Check git history of schema.prisma
+   - Pull latest changes from main branch
+
+## Schema Overview as of 2/12
+Current models:
+- User (integrated with Clerk auth)
+- Course
+- Assignment
+- File
+
