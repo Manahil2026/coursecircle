@@ -1,4 +1,4 @@
-import { prisma } from '../lib/prisma.ts'
+import { prisma } from '../lib/prisma'
 import { UserRole } from '@prisma/client'
 
 async function main() {
