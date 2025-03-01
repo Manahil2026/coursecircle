@@ -3,6 +3,11 @@ import { NextResponse } from 'next/server';
 import { Webhook } from 'svix';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
+import { createClerkClient } from '@clerk/backend';
+
+const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+
+
 
 // Helper function to map Clerk roles to Prisma UserRole
 function mapClerkRoleToPrisma(clerkRole?: string): UserRole {
@@ -40,7 +45,7 @@ const getEmail = (user: UserJSON) => {
     console.log("No email_addresses array found in user data");
     return null;
   }
-  
+
   const primaryEmailId = user.primary_email_address_id;
   const emailObject = user.email_addresses.find(
     email => email.id === primaryEmailId
@@ -50,7 +55,7 @@ const getEmail = (user: UserJSON) => {
 
 export async function POST(request: Request) {
   console.log("Webhook received");
-  
+
   // Get the request body
   let payload;
   try {
@@ -60,14 +65,14 @@ export async function POST(request: Request) {
     console.error("Error parsing request body", error);
     return new NextResponse('Error parsing request body', { status: 400 });
   }
-  
+
   // Get the Svix headers for verification
   const svix_id = request.headers.get('svix-id') || '';
   const svix_timestamp = request.headers.get('svix-timestamp') || '';
   const svix_signature = request.headers.get('svix-signature') || '';
-  
+
   console.log("Headers received:", !!svix_id, !!svix_timestamp, !!svix_signature);
-  
+
   if (!svix_id || !svix_timestamp || !svix_signature) {
     console.error("Missing Svix headers");
     return new NextResponse('Error: Missing Svix headers', { status: 400 });
@@ -79,15 +84,15 @@ export async function POST(request: Request) {
     console.error("Missing CLERK_WEBHOOK_SECRET environment variable");
     return new NextResponse('Error: Missing webhook secret', { status: 500 });
   }
-  
+
   console.log("Verifying webhook signature");
-  
+
   // Verify the webhook signature
   let evt: WebhookEvent;
   try {
     const wh = new Webhook(webhookSecret);
     const rawBody = JSON.stringify(payload);
-    
+
     evt = wh.verify(
       rawBody,
       {
@@ -96,7 +101,7 @@ export async function POST(request: Request) {
         'svix-signature': svix_signature,
       }
     ) as WebhookEvent;
-    
+
     console.log("Webhook verified successfully");
   } catch (err) {
     console.error("Error verifying webhook", err);
@@ -106,15 +111,15 @@ export async function POST(request: Request) {
   // Extract the event data
   const eventType = evt.type;
   console.log("Event type:", eventType);
-  
+
   // Skip if not a user event
   if (!eventType.startsWith('user.')) {
     return new NextResponse('Not a user event', { status: 200 });
   }
-  
+
   const { id, first_name, last_name, public_metadata } = evt.data;
   const email = getEmail(evt.data);
-  
+
   if (!email) {
     console.error("No email found in user data");
     return new NextResponse('No email found in user data', { status: 400 });
@@ -124,18 +129,26 @@ export async function POST(request: Request) {
 
   // Map Clerk role to Prisma role
   const role = mapClerkRoleToPrisma(public_metadata?.role);
-  
+
   // Handle the event based on type
   try {
     switch (eventType) {
       case 'user.created': {
         console.log(`Creating user in database: ${id}, ${email}, ${role}`);
-        
+
         try {
+          // Assign 'member' role in Clerk's public metadata
+          await clerkClient.users.updateUser(id, {
+            publicMetadata: {
+              role: 'member',
+            },
+          });
+          console.log(`Assigned 'member' role in Clerk metadata for user ${id}`);
+          
           // Test connection first
           const userCount = await prisma.user.count();
           console.log("Database connection OK, user count:", userCount);
-          
+
           // Create user with simple Prisma call
           await prisma.user.upsert({
             where: { id },
@@ -153,7 +166,7 @@ export async function POST(request: Request) {
               role
             }
           });
-          
+
           console.log(`User ${id} created/updated successfully`);
         } catch (dbError) {
           console.error("Database operation failed:", dbError);
@@ -163,7 +176,7 @@ export async function POST(request: Request) {
         }
         break;
       }
-      
+
       case 'user.updated': {
         console.log(`Updating user: ${id}`);
         try {
@@ -185,7 +198,7 @@ export async function POST(request: Request) {
         }
         break;
       }
-      
+
       case 'user.deleted': {
         console.log(`Deleting user: ${id}`);
         try {
@@ -201,18 +214,18 @@ export async function POST(request: Request) {
         }
         break;
       }
-      
+
       default: {
         console.log(`Unhandled user event: ${eventType}`);
         return new NextResponse(`Unhandled event type: ${eventType}`, { status: 200 });
       }
     }
-    
+
     return new NextResponse('Webhook processed successfully', { status: 200 });
   } catch (error) {
     console.error("Error processing webhook:", error);
     return new NextResponse(
-      `Error processing webhook: ${error instanceof Error ? error.message : 'Unknown error'}`, 
+      `Error processing webhook: ${error instanceof Error ? error.message : 'Unknown error'}`,
       { status: 500 }
     );
   }
