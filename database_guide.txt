@@ -113,3 +113,56 @@ Current models:
 - Assignment
 - File
 
+### 6. 2/26 UPDATE -- ngrok + clerk webhooks
+
+##Before doing this stuff, make sure you have run the latest database
+migration. Use the command: npx prisma migrate dev
+
+##ngrok
+
+#go to ngrok website and create a free account, then follow the install
+structions for your OS. 
+#Make sure you do the authtoken step
+#next, open a new terminal window and generate an ngrok URL with the command:
+ngrok http 3000 (because my dev server is on port 3000, I assume this is the
+same for you guys). The url that you want to use looks something like: 
+https://cb93-130-68-183-73.ngrok-free.app
+#IMPORTANT: leave ngrok running in the terminal while you are testing webhooks
+from clerk.
+
+##Clerk
+
+#in clerk, go to configure --> webhooks
+#Under Endpoints, you'll see my ngrok url; note the path at the end making
+sure clerk sends the webhook to the route.ts file.
+#Change the URL of this endpoint to the one you generated earlier (but leave
+the path to the file)
+#Go to webhooks --> configure --> signing secret. Click reveal, and copy the
+string it shows you.
+#open you .env.local file, and add the following line:
+CLERK_WEBHOOK_SECRET= <YOUR_SECRET_HERE>
+#Now you should be able to sign up for coursecircle with a new email account
+and have a user get created in the database. I think there is a feature to
+send a test webhook, but I haven't found it, so I've just been testing with my
+personal email. 
+
+##Reminders for testing this:
+1. make sure you have have the coursecircle database
+open in a postgres shell
+2. make sure ngrok is running
+3. make sure the ngrok url is your url. We should communicate when we make
+this change so everyone knows not to mess with it during eachothers tests
+4. Check that the user was created by running npx prisma studio. For me, the
+new users get added to the very bottom of the table.
+5. Note about ngrok; the url it gives you is dependent on the network you are
+connected to. So If you set one up at home, you will need to generate a new
+one at school, etc. 
+
+##General note:
+
+#This endpoint and route.ts file is just for user creation/updating/deleting.
+I am currently looking into it, but for other database interactions, we might
+not need api routes, since course creation (for example) is not relying on
+webhooks. These types of things might be done with server actions.
+#If something isn't working, the route.ts file is written to print logs to the
+console where the dev server is running, so you can check those for info
