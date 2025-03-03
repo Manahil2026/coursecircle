@@ -6,11 +6,6 @@
       "dom.iterable",
       "esnext"
     ],
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -21,7 +16,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "jsx": "preserve",
     "incremental": true,
     "plugins": [
       {
@@ -29,9 +23,6 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./*"
-      ]
       "@/*": [
         "./*"
       ]
