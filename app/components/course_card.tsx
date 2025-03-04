@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 interface CourseCardProps {
   courseId: string;
@@ -22,12 +23,28 @@ const CourseCard: React.FC<CourseCardProps> = ({
   upcomingClassDate,
 }) => {
   const router = useRouter();
+  const { user } = useUser();
+
+  // Extract role from Clerk's public metadata
+  const role = user?.publicMetadata?.role as "prof" | "member" | undefined;
+
+  const handleClick = () => {
+    if (!role) return; // Prevent navigation if role is undefined
+
+    const path =
+      role === "prof"
+        ? `/pages/professor/course_home/${courseId}`
+        : `/pages/student/course_home/${courseId}`;
+
+    router.push(path);
+  };
+
   const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
   return (
     <div
       className="flex items-center border-b rounded-md p-2 shadow-lg border-[#aeaeae85] w-full max-w-xl cursor-pointer transition-all duration-300 hover:transform hover:scale-105"
-      onClick={() => router.push(`/pages/professor/course_home/${courseId}`)}
+      onClick={handleClick}
     >
       <div className={`${randomColor} w-24 h-24 flex items-center justify-center text-7xl font-bold rounded-md`}>
         {courseName.charAt(0)}
