@@ -150,8 +150,8 @@ personal email.
 1. make sure you have have the coursecircle database
 open in a postgres shell
 2. make sure ngrok is running
-3. make sure the ngrok url is your url. We should communicate when we make
-this change so everyone knows not to mess with it during eachothers tests
+3. make sure you add your ngrok url with the correct file extension as a
+webhook endpoint in clerk
 4. Check that the user was created by running npx prisma studio. For me, the
 new users get added to the very bottom of the table.
 5. Note about ngrok; the url it gives you is dependent on the network you are
@@ -161,8 +161,5 @@ one at school, etc.
 ##General note:
 
 #This endpoint and route.ts file is just for user creation/updating/deleting.
-I am currently looking into it, but for other database interactions, we might
-not need api routes, since course creation (for example) is not relying on
-webhooks. These types of things might be done with server actions.
 #If something isn't working, the route.ts file is written to print logs to the
 console where the dev server is running, so you can check those for info
