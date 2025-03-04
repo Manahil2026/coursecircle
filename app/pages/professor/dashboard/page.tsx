@@ -1,11 +1,34 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import CourseCard from "@/app/components/course_card";
 import Image from "next/image";
 
+interface Course {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+}
+
 export default function ProfessorDashboard() {
+  const [courses, setCourses] = useState<Course[]>([]);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await fetch("/api/courses/professor");
+        if (!response.ok) throw new Error("Failed to fetch courses");
+        const data = await response.json();
+        setCourses(data);
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+      }
+    };
+
+    fetchCourses();
+  }, []);
   const { isLoaded, user } = useUser();
 
   if (!isLoaded) {
@@ -35,29 +58,21 @@ export default function ProfessorDashboard() {
               </h1>
               <h1 className="font-bold text-xl">Courses</h1>
               <div className="space-y-4">
-                <CourseCard
-                  courseName="Python Programming"
-                  assignmentsDue={10}
-                  notifications={4}
-                  schedule="Tues/Thurs"
-                  upcomingClassDate="Thursday 20"
-                />
-
-                <CourseCard
-                  courseName="Software Engineering"
-                  assignmentsDue={10}
-                  notifications={4}
-                  schedule="Tues/Thurs"
-                  upcomingClassDate="Thursday 20"
-                />
-
-                <CourseCard
-                  courseName="Networking"
-                  assignmentsDue={10}
-                  notifications={4}
-                  schedule="Tues/Thurs"
-                  upcomingClassDate="Thursday 20"
-                />
+                {courses.length > 0 ? (
+                  courses.map((course) => (
+                    <CourseCard
+                      key={course.id}
+                      courseId={course.id}
+                      courseName={course.name}
+                      assignmentsDue={Math.floor(Math.random() * 5)} // Replace with actual count
+                      notifications={Math.floor(Math.random() * 5)} // Replace with actual count
+                      schedule="MWF 10:00 AM" // Replace with real data
+                      upcomingClassDate="March 4, 2025" // Replace with real data
+                    />
+                  ))
+                ) : (
+                  <p>No courses assigned.</p>
+                )}
               </div>
             </div>
 
