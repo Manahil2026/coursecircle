@@ -1,6 +1,10 @@
+"use client";
 import React from "react";
+import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 interface CourseCardProps {
+  courseId: string;
   courseName: string;
   assignmentsDue: number;
   notifications: number;
@@ -11,16 +15,37 @@ interface CourseCardProps {
 const colors = ["bg-pink-300", "bg-blue-300", "bg-green-300", "bg-yellow-300", "bg-purple-300", "bg-red-300"];
 
 const CourseCard: React.FC<CourseCardProps> = ({
+  courseId,
   courseName,
   assignmentsDue,
   notifications,
   schedule,
   upcomingClassDate,
 }) => {
+  const router = useRouter();
+  const { user } = useUser();
+
+  // Extract role from Clerk's public metadata
+  const role = user?.publicMetadata?.role as "prof" | "member" | undefined;
+
+  const handleClick = () => {
+    if (!role) return; // Prevent navigation if role is undefined
+
+    const path =
+      role === "prof"
+        ? `/pages/professor/course_home/${courseId}`
+        : `/pages/student/course_home/${courseId}`;
+
+    router.push(path);
+  };
+
   const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
   return (
-    <div className="flex items-center border-b rounded-md p-2 shadow-lg border-[#aeaeae85] w-full max-w-xl cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
+    <div
+      className="flex items-center border-b rounded-md p-2 shadow-lg border-[#aeaeae85] w-full max-w-xl cursor-pointer transition-all duration-300 hover:transform hover:scale-105"
+      onClick={handleClick}
+    >
       <div className={`${randomColor} w-24 h-24 flex items-center justify-center text-7xl font-bold rounded-md`}>
         {courseName.charAt(0)}
       </div>
@@ -41,3 +66,4 @@ const CourseCard: React.FC<CourseCardProps> = ({
 };
 
 export default CourseCard;
+
