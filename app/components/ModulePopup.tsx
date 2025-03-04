@@ -6,7 +6,10 @@ interface ModuleFormData {
   title: string;
   sections: { title: string; content: string }[];
   files: { name: string; file: File | null }[];
+  moduleId: string;  // Make moduleId required
 }
+
+
 
 interface ModuleFormErrors {
   title: string;
@@ -17,14 +20,16 @@ interface ModuleFormErrors {
 interface ModulePopupProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (moduleData: ModuleFormData) => void;
+  onSave: (moduleData: ModuleFormData) => void; // expects ModuleFormData
 }
+
 
 const ModulePopup: React.FC<ModulePopupProps> = ({ isOpen, onClose, onSave }) => {
   const [moduleData, setModuleData] = useState<ModuleFormData>({
     title: "",
     sections: [{ title: "", content: "" }],
     files: [{ name: "", file: null }],
+    moduleId: "",
   });
   
   const [errors, setErrors] = useState<ModuleFormErrors>({
@@ -146,6 +151,7 @@ const ModulePopup: React.FC<ModulePopupProps> = ({ isOpen, onClose, onSave }) =>
       title: "",
       sections: [{ title: "", content: "" }],
       files: [{ name: "", file: null }],
+      moduleId: '',
     });
   };
 
