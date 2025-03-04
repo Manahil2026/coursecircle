@@ -62,6 +62,8 @@ model Course {
   files       File[]
   assignments Assignment[]
 
+  modules     Module[]  // One course can have many modules
+
   @@index([professorId])
   @@map("courses")
 }
@@ -101,3 +103,43 @@ model Assignment {
   @@index([courseId])
   @@map("assignments")
 }
+
+model Module {
+  id        String   @id @default(cuid())
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId  String
+
+  sections  ModuleSection[]
+  files     ModuleFile[]
+
+  @@index([courseId])
+  @@map("modules")
+}
+
+model ModuleSection {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId  String
+
+  @@index([moduleId])
+  @@map("module_sections")
+}
+
+model ModuleFile {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  type      String
+  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId  String
+
+  @@index([moduleId])
+  @@map("module_files")
+}
+
