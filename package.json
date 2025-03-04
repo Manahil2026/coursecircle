@@ -15,7 +15,7 @@
     "@lottiefiles/dotlottie-react": "^0.12.3",
     "@prisma/client": "^6.4.1",
     "axios": "^1.7.9",
-    "next": "15.1.6",
+    "next": "^15.2.0",
     "react": "^19.0.0",
     "react-doc-viewer": "^0.1.14",
     "react-dom": "^19.0.0",
