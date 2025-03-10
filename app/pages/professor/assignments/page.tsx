@@ -52,9 +52,16 @@ const ProfessorAssignments = () => {
 
     const updatedGroups = [...groups];
 
+    if (editGroupIndex !== null && editIndex !== null) {
+      // If editing, remove from the old group
+      updatedGroups[editGroupIndex].assignments.splice(editIndex, 1);
+    }
+
     if (selectedGroupIndex !== null) {
+      // Add to the new group
       updatedGroups[selectedGroupIndex].assignments.push(newAssignment);
     } else {
+      // Add to "Ungrouped" if no group is selected
       let ungroupedIndex = updatedGroups.findIndex(
         (group) => group.name === "Ungrouped"
       );
@@ -70,8 +77,10 @@ const ProfessorAssignments = () => {
     setShowModal(false);
     setNewAssignment({ title: "", points: "", dueDate: "", dueTime: "" });
     setEditIndex(null);
+    setEditGroupIndex(null);
     setSelectedGroupIndex(null); // Reset selected group
   };
+
 
   const handleDeleteGroup = (groupIndex: number) => {
     if (groups[groupIndex].assignments.length > 0) {
@@ -97,6 +106,18 @@ const ProfessorAssignments = () => {
 
     const updatedGroups = [...groups];
 
+    // Check if a group with the same name already exists
+    const groupExists = updatedGroups.some(
+      (group, index) =>
+        group.name.toLowerCase() === newGroupName.toLowerCase() &&
+        index !== editGroupIndex
+    );
+
+    if (groupExists) {
+      alert("A group with this name already exists. Please choose a different name.");
+      return;
+    }
+
     if (editGroupIndex !== null) {
       updatedGroups[editGroupIndex].name = newGroupName;
       setEditGroupIndex(null);
@@ -121,7 +142,16 @@ const ProfessorAssignments = () => {
     setNewAssignment(groups[groupIndex].assignments[index]);
     setEditGroupIndex(groupIndex);
     setEditIndex(index);
+    setSelectedGroupIndex(groupIndex); // Preserve the group selection
     setShowModal(true);
+  };
+
+  const convertTo12HourFormat = (time: string) => {
+    if (!time) return "";
+    const [hours, minutes] = time.split(":").map(Number);
+    const ampm = hours >= 12 ? "pm" : "am";
+    const formattedHours = hours % 12 || 12; // Convert 0 to 12 for AM
+    return `${formattedHours}:${minutes.toString().padStart(2, "0")} ${ampm}`;
   };
 
   return (
@@ -129,8 +159,8 @@ const ProfessorAssignments = () => {
       <Sidebar_dashboard />
       <CourseMenu />
       <div className="flex-1 pl-52 px-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-base font-medium">Assignments</h1>
+        <div className="flex justify-between items-center py-2">
+          <h1 className="text-lg font-medium">Assignments</h1>
           <div className="flex gap-2">
             <button
               onClick={() => setShowGroupModal(true)}
@@ -153,63 +183,40 @@ const ProfessorAssignments = () => {
             <p>No assignment groups yet.</p>
           ) : (
             groups.map((group, groupIndex) => (
-              <div key={groupIndex} className="border border-gray-400 rounded-sm p-2 mb-4">
+              <div key={groupIndex} className="border border-gray-400 rounded-md p-4 mb-4 bg-gray-200">
                 <details>
-                  <summary className="text-base flex items-center cursor-pointer">
+                  <summary className="text-lg font-bold flex items-center cursor-pointer">
                     <span className="flex-1">{group.name}</span>
                     <div className="flex gap-4">
                       <button onClick={() => handleEditGroup(groupIndex)}>
-                        <Image
-                          src="/asset/edit_icon.svg"
-                          alt="Delete"
-                          width={18}
-                          height={18}
-                        />
+                        <Image src="/asset/edit_icon.svg" alt="Edit" width={18} height={18} />
                       </button>
                       <button onClick={() => handleDeleteGroup(groupIndex)}>
-                        <Image
-                          src="/asset/delete_icon.svg"
-                          alt="Delete"
-                          width={18}
-                          height={18}
-                        />
+                        <Image src="/asset/delete_icon.svg" alt="Delete" width={18} height={18} />
                       </button>
                     </div>
                   </summary>
 
                   <ul className="mt-2">
                     {group.assignments.map((assignment, index) => (
-                      <li
-                        key={index}
-                        className="flex justify-between items-center bg-gray-200"
-                      >
+                      <li key={index} className="flex justify-between items-center border-b border-gray-300 py-2 bg-white p-2 rounded-md">
                         <div>
-                          <p
-                            className="font-base text-black hover:underline cursor-pointer py-2"
-                            onClick={handleNavigate}
-                          >
-                            {assignment.title} - due: {assignment.dueDate} at{" "}
-                            {assignment.dueTime} - {assignment.points} PTS
+                          <p className="text-lg font-bold text-black hover:underline cursor-pointer py-1" onClick={handleNavigate}>
+                            {assignment.title}
                           </p>
+                          <div className="text-sm text-gray-600">
+                            <b>Due</b>: {new Date(assignment.dueDate).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}{" "}
+                            at {convertTo12HourFormat(assignment.dueTime)} - {assignment.points} pts
+                          </div>
+
                         </div>
+
                         <div className="flex gap-4">
                           <button onClick={() => handleEdit(groupIndex, index)}>
-                            <Image
-                              src="/asset/edit_icon.svg"
-                              alt="Delete"
-                              width={18}
-                              height={18}
-                            />
+                            <Image src="/asset/edit_icon.svg" alt="Edit" width={18} height={18} />
                           </button>
-                          <button
-                            onClick={() => handleDelete(groupIndex, index)}
-                          >
-                            <Image
-                              src="/asset/delete_icon.svg"
-                              alt="Delete"
-                              width={18}
-                              height={18}
-                            />
+                          <button onClick={() => handleDelete(groupIndex, index)}>
+                            <Image src="/asset/delete_icon.svg" alt="Delete" width={18} height={18} />
                           </button>
                         </div>
                       </li>
@@ -217,6 +224,8 @@ const ProfessorAssignments = () => {
                   </ul>
                 </details>
               </div>
+
+
             ))
           )}
         </div>
