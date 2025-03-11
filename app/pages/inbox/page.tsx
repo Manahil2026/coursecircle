@@ -80,9 +80,9 @@ export default function InboxPage() {
   return (
     <div className="flex">
       <Sidebar_dashboard />
-      <div className="flex-1 min-h-screen text-black pt-4 pl-16">
+      <div className="flex-1 min-h-screen text-black p-4 pl-16">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center mb-4 pl-4 ">
+          <div className="flex items-center pl-4">
             <Image
               src="/asset/mail.svg"
               alt="Mail icon"
@@ -95,52 +95,52 @@ export default function InboxPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* Email List */}
-            <div className="md:col-span-4 bg-gray-300 p-4 h-[calc(100vh-8rem)] overflow-y-auto">
-              <div className="space-y-2">
+            <div className="md:col-span-3 bg-gray-200 p-3 h-[calc(100vh-2rem)] overflow-y-auto">
+              <div className="space-y-1.5">
                 {emails.map((email) => (
                   <div
                     key={email.id}
-                    className={`flex items-center border rounded-md py-2 px-4 
+                    className={`flex items-center border border-gray-400 rounded-md py-1.5 px-3 
                       w-full cursor-pointer transition-all duration-300 
-                      hover:border-black hover:shadow-md bg-white
-                      ${selectedEmail?.id === email.id ? 'border-black shadow-md bg-white' : 'border-gray-200'}`}
+                      hover:bg-gray-300 hover:shadow-sm bg-white
+                      ${selectedEmail?.id === email.id ? 'border-black shadow-sm bg-white' : 'border-gray-500'}`}
                     onClick={() => {
                       setSelectedEmail(email);
                       markAsRead(email.id);
                     }}
                   >
                     {/* Profile Picture */}
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${getInitialColor(email.sender)}`}>
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${getInitialColor(email.sender)}`}>
                       {email.sender.charAt(0)}
                     </div>
 
-                    <div className="flex-1 ml-3 min-w-0">
+                    <div className="flex-1 ml-2 min-w-0">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-1 min-w-0">
                           <span
-                            className={`font-medium truncate ${
-                              !email.isRead ? "font-semibold" : ""
+                            className={`text-sm truncate ${
+                              !email.isRead ? "font-semibold" : "font-medium"
                             }`}
                           >
                             {email.sender}
                           </span>
-                          <span className="text-sm text-gray-500 flex-shrink-0">
+                          <span className="text-xs text-gray-500 flex-shrink-0">
                             {email.time}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                        <div className="flex items-center gap-0.5 flex-shrink-0 ml-1">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleStar(email.id);
                             }}
-                            className="p-1.5 rounded-full hover:bg-gray-100 hover:ring-1 hover:ring-gray-300 transition-all"
+                            className="p-1 rounded-full hover:bg-gray-100 hover:ring-1 hover:ring-gray-300 transition-all"
                           >
                             <Image
                               src="/asset/star.svg"
                               alt="Star"
-                              width={16}
-                              height={16}
+                              width={14}
+                              height={14}
                               className={
                                 email.isStarred ? "text-black" : "text-gray-400"
                               }
@@ -151,13 +151,13 @@ export default function InboxPage() {
                               e.stopPropagation();
                               // Add archive functionality
                             }}
-                            className="p-1.5 rounded-full hover:bg-gray-100 hover:ring-1 hover:ring-gray-300 transition-all"
+                            className="p-1 rounded-full hover:bg-gray-100 hover:ring-1 hover:ring-gray-300 transition-all"
                           >
                             <Image
                               src="/asset/archive.svg"
                               alt="Archive"
-                              width={16}
-                              height={16}
+                              width={14}
+                              height={14}
                               className="text-gray-400"
                             />
                           </button>
@@ -166,22 +166,21 @@ export default function InboxPage() {
                               e.stopPropagation();
                               // Add delete functionality
                             }}
-                            className="p-1.5 rounded-full hover:bg-gray-100 hover:ring-1 hover:ring-gray-300 transition-all"
+                            className="p-1 rounded-full hover:bg-gray-100 hover:ring-1 hover:ring-gray-300 transition-all"
                           >
                             <Image
                               src="/asset/delete_icon.svg"
                               alt="Delete"
-                              width={16}
-                              height={16}
+                              width={14}
+                              height={14}
                               className="text-gray-400"
                             />
                           </button>
                         </div>
                       </div>
-                      <div className="flex items-baseline gap-2 min-w-0">
-                        <p className="font-medium truncate">{email.subject}</p>
-                        <p className="text-gray-600 text-sm truncate">
-                          - {email.preview}
+                      <div className="flex items-baseline gap-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {email.subject.length > 20 ? email.subject.substring(0, 20) + '...' : email.subject}
                         </p>
                       </div>
                     </div>
@@ -191,33 +190,33 @@ export default function InboxPage() {
             </div>
 
             {/* Email Preview */}
-            <div className="md:col-span-8 bg-white rounded-lg border shadow-sm border-gray-200 p-8 h-[calc(100vh-8rem)] overflow-y-auto">
+            <div className="md:col-span-9 bg-white border shadow-sm border-black p-4 h-[calc(100vh-6rem)] overflow-y-auto">
               {selectedEmail ? (
                 <div>
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-medium ${getInitialColor(selectedEmail.sender)}`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-medium ${getInitialColor(selectedEmail.sender)}`}>
                         {selectedEmail.sender.charAt(0)}
                       </div>
                       <div>
-                        <h2 className="text-2xl font-bold mb-1">
-                          {selectedEmail.subject}
-                        </h2>
-                        <span className="font-medium text-gray-700">{selectedEmail.sender}</span>
+                        <span className="text-sm font-medium text-gray-700">{selectedEmail.sender}</span>
                       </div>
                     </div>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-xs text-gray-500">
                       {selectedEmail.time}
                     </span>
                   </div>
-                  <div className="prose max-w-none mt-8">
-                    <p className="text-gray-600 text-lg leading-relaxed">{selectedEmail.preview}</p>
+                  <h2 className="text-xl font-bold mb-4">
+                    {selectedEmail.subject}
+                  </h2>
+                  <div className="prose max-w-none mt-6">
+                    <p className="text-black text-base leading-relaxed">{selectedEmail.preview}</p>
                     {/* Add more email content here */}
-                    <div className="mt-8">
-                      <p className="text-gray-600 text-lg leading-relaxed">
+                    <div className="mt-6">
+                      <p className="text-black text-base leading-relaxed">
                         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
                       </p>
-                      <p className="text-gray-600 text-lg leading-relaxed mt-4">
+                      <p className="text-black text-base leading-relaxed mt-4">
                         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
                       </p>
                     </div>
@@ -225,7 +224,7 @@ export default function InboxPage() {
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-500">
-                  <p className="text-lg">Select an email to view</p>
+                  <p className="text-base">Select an email to view</p>
                 </div>
               )}
             </div>
