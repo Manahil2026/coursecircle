@@ -3,7 +3,8 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
-const CourseMenu: React.FC = () => {
+const CourseMenu: React.FC = () => { // Use this later when ready: const CourseMenu: React.FC<{ courseId: string }> = ({ courseId }) => {
+
   const router = useRouter();
   const { user } = useUser();
 
@@ -12,7 +13,7 @@ const CourseMenu: React.FC = () => {
 
   // Define menu items with dynamic paths based on role
   const menuItems = [
-    { name: "Homepage", path: role === "prof" ? "/pages/professor/course_home" : "/pages/student/course_home" },
+    { name: "Homepage", path: role === "prof" ? `/pages/professor/course_home` : `/pages/student/course_home/`}, // use ${courseId} for dynamic path later
     { name: "Assignments", path: role === "prof" ? "/pages/professor/assignments" : "/pages/student/assignments" },
     { name: "Gradebook", path: role === "prof" ? "/pages/professor/gradebook" : "/pages/student/gradebook" },
   ];
