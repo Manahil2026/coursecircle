@@ -162,12 +162,12 @@ export default function InboxPage() {
   return (
     <div className="flex">
       <Sidebar_dashboard />
-      <div className="flex-1 min-h-screen text-black pl-16">
+      <div className="flex-1 min-h-screen text-black pl-16 bg-gradient-to-t from-[#AAFF45]/15 to-white">
         <div className="h-screen">
           <div className="flex flex-col md:flex-row h-full">
             {/* Email List */}
-            <div className="w-full md:w-1/4 border-r flex flex-col h-full">
-              <div className="flex items-center p-3 pl-4 bg-gradient-to-r from-[#AAFF45] to-white">
+            <div className="w-full md:w-1/4 flex flex-col h-full ">
+              <div className="flex items-center p-3 pl-4">
                 <Image
                   src="/asset/mail.svg"
                   alt="Mail icon"
@@ -273,7 +273,7 @@ export default function InboxPage() {
             </div>
 
             {/* Email Preview */}
-            <div className="flex-1 bg-gradient-to-t from-[#AAFF45]/15 to-white overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {selectedEmail ? (
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
