@@ -9,8 +9,16 @@ import "react-quill-new/dist/quill.snow.css";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 
+// Interface for the module data from the API
 interface Module {
-  moduleId: string; // Adding moduleId here as unique identifier
+  id: string;
+  title: string;
+  sections: { title: string; content: string }[];
+  files: { name: string; url: string; type: string }[];
+}
+
+// Interface for the form data when creating a module
+interface ModuleFormData {
   title: string;
   sections: { title: string; content: string }[];
   files: { name: string; file: File | null }[];
@@ -18,13 +26,13 @@ interface Module {
 
 const Coursepage: React.FC = () => {
   const [showModulePopup, setShowModulePopup] = useState(false);
-  const [modules, setModules] = useState<Module[]>([]); // Stores all modules of the course
-  const [selectedModule, setSelectedModule] = useState(null);// Stores the selected module
+  const [modules, setModules] = useState<Module[]>([]);
+  const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [expandedRows, setExpandedRows] = useState<{ [key: string]: boolean }>({});
   const [loading, setLoading] = useState(true);
 
   const params = useParams();
-  const courseId = params?.courseId as string; // Extract courseId from URL
+  const courseId = params?.courseId as string;
   const [course, setCourse] = useState(null);
 
   useEffect(() => {
@@ -78,7 +86,7 @@ const Coursepage: React.FC = () => {
   };
 
 
-  const handleAddModule = async (moduleData: Module) => {
+  const handleAddModule = async (moduleData: ModuleFormData) => {
     if (!courseId) {
       console.error("No course selected!");
       return;
@@ -100,59 +108,75 @@ const Coursepage: React.FC = () => {
         }),
       });
 
-      if (!moduleResponse.ok) throw new Error("Failed to create module");
+      if (!moduleResponse.ok) {
+        const errorData = await moduleResponse.json();
+        throw new Error(errorData.error || "Failed to create module");
+      }
 
       const createdModule = await moduleResponse.json();
       const moduleId = createdModule.id;
 
       if (!moduleId) {
-        console.error("Module creation failed, no moduleId received");
-        return;
+        throw new Error("Module creation failed, no moduleId received");
       }
 
-      // Step 2: Upload files
-      const uploadedFiles = await Promise.all(
-        moduleData.files.map(async (fileItem) => {
-          if (!fileItem.file) return null;
+      // Step 2: Upload files if any exist
+      if (moduleData.files && moduleData.files.length > 0 && moduleData.files[0].file) {
+        const uploadedFiles = await Promise.all(
+          moduleData.files.map(async (fileItem) => {
+            if (!fileItem.file) return null;
 
-          const formData = new FormData();
-          formData.append("file", fileItem.file);
-          formData.append("moduleId", moduleId);
+            const formData = new FormData();
+            formData.append("file", fileItem.file);
+            formData.append("moduleId", moduleId);
 
-          const uploadResponse = await fetch("/api/files", {
-            method: "POST",
-            body: formData,
+            const uploadResponse = await fetch("/api/files", {
+              method: "POST",
+              body: formData,
+            });
+
+            if (!uploadResponse.ok) {
+              const errorData = await uploadResponse.json();
+              throw new Error(errorData.error || "File upload failed");
+            }
+
+            return await uploadResponse.json();
+          })
+        );
+
+        // Step 3: Update module with file data
+        const fileData = uploadedFiles
+          .filter((file): file is NonNullable<typeof file> => file !== null)
+          .map((file) => ({
+            id: file.id,
+            name: file.name,
+            url: file.url,
+            type: file.type,
+            moduleId: moduleId,
+          }));
+
+        if (fileData.length > 0) {
+          const updateResponse = await fetch(`/api/modules/${moduleId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ files: fileData }),
           });
 
-          if (!uploadResponse.ok) throw new Error("File upload failed");
+          if (!updateResponse.ok) {
+            const errorData = await updateResponse.json();
+            throw new Error(errorData.error || "Failed to update module with files");
+          }
+        }
+      }
 
-          return await uploadResponse.json();
-        })
-      );
-
-      // Step 3: Prepare file data for update
-      const fileData = uploadedFiles.filter((file) => file !== null).map((file) => ({
-        id: file.id,
-        name: file.name,
-        url: file.url, // Ensure this is the correct URL
-        type: file.type,
-        moduleId: moduleId,
-      }));
-
-
-      // Step 4: Update the module with files
-      const updateResponse = await fetch(`/api/modules/${moduleId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          files: fileData, // Send the prepared file data
-        }),
-      });
-
-      if (!updateResponse.ok) throw new Error("Failed to update module with files");
-
-      const updatedModule = await updateResponse.json();
-      setModules([...modules, updatedModule]);
+      // Update local state with the new module
+      setModules((prevModules) => [...prevModules, {
+        id: createdModule.id,
+        title: createdModule.title,
+        sections: createdModule.sections || [],
+        files: createdModule.files || []
+      }]);
+      
       setShowModulePopup(false);
     } catch (error) {
       console.error("Error saving module:", error);
@@ -162,20 +186,31 @@ const Coursepage: React.FC = () => {
 
   // Deleting a module using moduleId
   const handleDeleteModule = async (moduleId: string) => {
-    console.log('Deleting module with ID:', moduleId);  // Add this line to check the moduleId
-  
+    if (!moduleId) {
+      console.error("No module ID provided for deletion");
+      return;
+    }
+
     try {
       const deleteResponse = await fetch(`/api/modules/${moduleId}`, {
         method: "DELETE",
       });
-  
-      if (!deleteResponse.ok) throw new Error("Failed to delete module");
-  
-      const updatedModules = modules.filter(module => module.moduleId !== moduleId);
-      setModules(updatedModules);
-      console.log('Module deleted successfully');
+
+      if (!deleteResponse.ok) {
+        const errorData = await deleteResponse.json();
+        throw new Error(errorData.error || "Failed to delete module");
+      }
+
+      // Update local state after successful deletion
+      setModules((prevModules) => prevModules.filter(module => module.id !== moduleId));
+      
+      // If the deleted module was selected, clear the selection
+      if (selectedModule?.id === moduleId) {
+        setSelectedModule(null);
+      }
     } catch (error) {
       console.error("Error deleting module:", error);
+      // You might want to show an error message to the user here
     }
   };
   
@@ -204,13 +239,10 @@ const Coursepage: React.FC = () => {
           {/* Modules with flex layout */}
           <div className="w-full mt-4">
             {modules.map((module) => (
-              <div key={module.moduleId} className="mb-6 text-sm">
+              <div key={module.id} className="mb-6 text-sm">
                 <div className="bg-[#AAFF45] border border-gray-400 p-2 rounded-t-sm flex justify-between items-center">
                   <span>{module.title}</span>
-                  <button onClick={() => {
-                    console.log('Delete button clicked for moduleId:', module.moduleId); // Add this line to check the moduleId
-                    handleDeleteModule(module.moduleId);
-                  }}>
+                  <button onClick={() => handleDeleteModule(module.id)}>
                     <Image
                       src="/asset/delete_icon.svg"
                       alt="Delete"
@@ -221,59 +253,56 @@ const Coursepage: React.FC = () => {
                 </div>
   
                 {/* Sections */}
-                {module.sections.map((section, sectionIndex) => (
+                {(module.sections || []).map((section, sectionIndex) => (
                   <div
-                    key={`section-${module.moduleId}-${sectionIndex}`}
+                    key={`section-${module.id}-${sectionIndex}`}
                     className="border border-gray-400 border-t-0 rounded-sm"
                   >
                     <div
                       className="flex justify-between items-center p-2 cursor-pointer"
                       onClick={() =>
-                        toggleExpand(`section-${module.moduleId}-${sectionIndex}`)
+                        toggleExpand(`section-${module.id}-${sectionIndex}`)
                       }
                     >
                       {section.title}
                       <Image
                         src={
-                          expandedRows[`section-${module.moduleId}-${sectionIndex}`]
+                          expandedRows[`section-${module.id}-${sectionIndex}`]
                             ? "/asset/arrowup_icon.svg"
-                            : "/asset/arrowdown_icon.svg"
+                          : "/asset/arrowdown_icon.svg"
                         }
                         alt="Expand arrow"
                         width={16}
                         height={16}
                       />
                     </div>
-                    {expandedRows[`section-${module.moduleId}-${sectionIndex}`] && (
+                    {expandedRows[`section-${module.id}-${sectionIndex}`] && (
                       <p className="p-2 bg-gray-200">{section.content}</p>
                     )}
                   </div>
                 ))}
   
                 {/* Files */}
-                {module.files.map(
-                  (fileItem, fileIndex) =>
-                    fileItem.name && ( // Make sure file has a name (file exists)
-                      <div key={`file-${module.moduleId}-${fileIndex}`} className="border border-gray-400 border-t-0 rounded-sm">
-                        <div className="flex justify-between items-center p-2 cursor-pointer" onClick={() => toggleExpand(`file-${module.moduleId}-${fileIndex}`)}>
-                          {fileItem.name}
-                          <Image
-                            src={
-                              expandedRows[`file-${module.moduleId}-${fileIndex}`]
-                                ? "/asset/arrowup_icon.svg"
-                                : "/asset/arrowdown_icon.svg"
-                            }
-                            alt="Expand arrow"
-                            width={16}
-                            height={16}
-                          />
-                        </div>
-                        {expandedRows[`file-${module.moduleId}-${fileIndex}`] && (
-                          <p className="p-2 bg-gray-200">{fileItem.name}</p>
-                        )}
-                      </div>
-                    )
-                )}
+                {(module.files || []).map((file, fileIndex) => (
+                  <div key={`file-${module.id}-${fileIndex}`} className="border border-gray-400 border-t-0 rounded-sm">
+                    <div className="flex justify-between items-center p-2 cursor-pointer" onClick={() => toggleExpand(`file-${module.id}-${fileIndex}`)}>
+                      {file.name}
+                      <Image
+                        src={
+                          expandedRows[`file-${module.id}-${fileIndex}`]
+                            ? "/asset/arrowup_icon.svg"
+                          : "/asset/arrowdown_icon.svg"
+                        }
+                        alt="Expand arrow"
+                        width={16}
+                        height={16}
+                      />
+                    </div>
+                    {expandedRows[`file-${module.id}-${fileIndex}`] && (
+                      <p className="p-2 bg-gray-200">{file.name}</p>
+                    )}
+                  </div>
+                ))}
   
                 {/* Empty bottom border for the last item */}
                 <div className="border-t-0 rounded-b-sm h-1"></div>
