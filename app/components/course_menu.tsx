@@ -1,21 +1,21 @@
-"use client";
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
-const CourseMenu: React.FC = () => { // Use this later when ready: const CourseMenu: React.FC<{ courseId: string }> = ({ courseId }) => {
+interface CourseMenuProps {
+  courseId: string; // Expecting courseId as a prop
+}
 
+const CourseMenu: React.FC<CourseMenuProps> = ({ courseId }) => {
   const router = useRouter();
   const { user } = useUser();
 
-  // Determine role 
-  const role = user?.publicMetadata?.role; 
+  const role = user?.publicMetadata?.role;
 
-  // Define menu items with dynamic paths based on role
   const menuItems = [
-    { name: "Homepage", path: role === "prof" ? `/pages/professor/course_home` : `/pages/student/course_home/`}, // use ${courseId} for dynamic path later
-    { name: "Assignments", path: role === "prof" ? "/pages/professor/assignments" : "/pages/student/assignments" },
-    { name: "Gradebook", path: role === "prof" ? "/pages/professor/gradebook" : "/pages/student/gradebook" },
+    { name: "Homepage", path: role === "prof" ? `/pages/professor/course_home/${courseId}` : `/pages/student/course_home/${courseId}` },
+    { name: "Assignments", path: role === "prof" ? `/pages/professor/assignments/${courseId}` : `/pages/student/assignments` },
+    { name: "Gradebook", path: role === "prof" ? `/pages/professor/gradebook` : `/pages/student/gradebook` },
   ];
 
   return (
