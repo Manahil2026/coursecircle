@@ -218,7 +218,9 @@ const Coursepage: React.FC = () => {
     <div className="flex">
       <Sidebar_dashboard />
       <div className="flex min-h-screen bg-gray-100 flex-1 pl-52 px-6">
-        <CourseMenu />
+        <CourseMenu 
+        courseId={courseId as string}
+        />
   
         <div className="flex-1">
           <div className="flex justify-between items-center">
