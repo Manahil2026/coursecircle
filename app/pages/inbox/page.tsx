@@ -185,7 +185,7 @@ export default function InboxPage() {
                       className={`flex items-center border border-gray-400 rounded-md py-1.5 px-3 
                         w-full cursor-pointer transition-all duration-300 
                         hover:bg-gray-200 hover:shadow-sm bg-white
-                        ${selectedEmail?.id === email.id ? 'border-black shadow-sm bg-white' : 'border-gray-500'}`}
+                        ${selectedEmail?.id === email.id ? 'border-black shadow-sm bg-white border-l-4 border-l-black' : 'border-gray-500'}`}
                       onClick={() => {
                         setSelectedEmail(email);
                         markAsRead(email.id);
