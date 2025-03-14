@@ -244,14 +244,24 @@ const Coursepage: React.FC = () => {
               <div key={module.id} className="mb-6 text-sm">
                 <div className="bg-[#AAFF45] border border-gray-400 p-2 rounded-t-sm flex justify-between items-center">
                   <span>{module.title}</span>
-                  <button onClick={() => handleDeleteModule(module.id)}>
-                    <Image
-                      src="/asset/delete_icon.svg"
-                      alt="Delete"
-                      width={18}
-                      height={18}
-                    />
-                  </button>
+                  <div className="flex gap-2">
+                    <button>
+                      <Image 
+                        src="/asset/edit_icon.svg"
+                        alt="Edit"
+                        width={18}
+                        height={18}
+                      />
+                    </button>
+                    <button onClick={() => handleDeleteModule(module.id)}>
+                      <Image
+                        src="/asset/delete_icon.svg"
+                        alt="Delete"
+                        width={18}
+                        height={18}
+                      />
+                    </button>
+                  </div>
                 </div>
   
                 {/* Sections */}
