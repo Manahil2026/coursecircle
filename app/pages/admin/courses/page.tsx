@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import SectionNavLinks from "@/app/components/section_nav_links";
 import CourseForm from "@/app/components/course_form";
+import EnrolledStudentsList from "@/app/components/enrolled_students_list";
 
 // Interface definitions
 interface Professor {
@@ -66,31 +67,41 @@ const AdminCoursesPage: React.FC = () => {
   
   // Fetch courses and users when component mounts
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch courses
-        const coursesResponse = await fetch('/api/admin/courses');
-        if (!coursesResponse.ok) throw new Error('Failed to fetch courses');
-        const coursesData = await coursesResponse.json();
-        setCourses(coursesData.courses);
-        
-        // Fetch users for the enrollment form
-        const usersResponse = await fetch('/api/admin/users');
-        if (!usersResponse.ok) throw new Error('Failed to fetch users');
-        const usersData = await usersResponse.json();
-        setUsers(usersData.users);
-      } catch (err) {
-        setError('Error loading data');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchData();
   }, []);
+  
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch courses
+      const coursesResponse = await fetch('/api/admin/courses');
+      if (!coursesResponse.ok) throw new Error('Failed to fetch courses');
+      const coursesData = await coursesResponse.json();
+      setCourses(coursesData.courses);
+      
+      // Update selected course if needed
+      if (selectedCourse) {
+        const updatedCourse = coursesData.courses.find(
+          (course: Course) => course.id === selectedCourse.id
+        );
+        if (updatedCourse) {
+          setSelectedCourse(updatedCourse);
+        }
+      }
+      
+      // Fetch users for the enrollment form
+      const usersResponse = await fetch('/api/admin/users');
+      if (!usersResponse.ok) throw new Error('Failed to fetch users');
+      const usersData = await usersResponse.json();
+      setUsers(usersData.users);
+    } catch (err) {
+      setError('Error loading data');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Create new course
   const createCourse = async (courseData: {
@@ -153,13 +164,8 @@ const AdminCoursesPage: React.FC = () => {
         throw new Error(errorData.error || 'Failed to enroll students');
       }
       
-      // Update courses state with new enrollment data
-      const { course } = await response.json();
-      setCourses(prevCourses => 
-        prevCourses.map(c => c.id === course.id ? 
-          { ...c, students: course.students } : c
-        )
-      );
+      // Refresh data to show updated enrollments
+      fetchData();
       
       // Reset form
       setEnrollmentCourse("");
@@ -183,6 +189,21 @@ const AdminCoursesPage: React.FC = () => {
     const options = Array.from(e.target.selectedOptions);
     const values = options.map(option => option.value);
     setEnrollmentStudents(values);
+  };
+  
+  // Handle students being removed from a course
+  const handleStudentsRemoved = () => {
+    fetchData();
+  };
+
+  // Handle course selection
+  const handleCourseSelect = (course: Course) => {
+    setSelectedCourse(course);
+  };
+  
+  // Close course details
+  const handleCloseDetails = () => {
+    setSelectedCourse(null);
   };
 
   return (
@@ -254,36 +275,78 @@ const AdminCoursesPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Course List */}
-          <div className="mt-6 p-6 bg-white shadow-md rounded-md border">
-            <h3 className="text-xl font-semibold mb-4">Available Courses</h3>
-            {loading ? (
-              <p className="text-gray-500 mt-2">Loading courses...</p>
-            ) : (
-              <ul className="space-y-4 mt-4">
-                {courses.length === 0 ? (
-                  <p className="text-gray-500">No courses available</p>
+          {/* Course List and Details Section */}
+          <div className="mt-6">
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Course List */}
+              <div className="w-full md:w-1/2 bg-white p-6 shadow-md rounded-md border">
+                <h3 className="text-xl font-semibold mb-4">Available Courses</h3>
+                {loading ? (
+                  <p className="text-gray-500 mt-2">Loading courses...</p>
                 ) : (
-                  courses.map((course) => (
-                    <li
-                      key={course.id}
-                      onClick={() => setSelectedCourse(course)}
-                      className="p-4 rounded-md shadow-sm cursor-pointer hover:bg-gray-200"
-                    >
-                      <h4 className="font-semibold">{course.name}</h4>
-                      <p className="text-sm text-gray-700">{course.code}</p>
-                      <p>{course.description}</p>
-                      <p className="text-sm text-gray-500">
-                        Professor: {course.professor.firstName} {course.professor.lastName}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Students: {course.students ? course.students.length : 0}
-                      </p>
-                    </li>
-                  ))
+                  <ul className="space-y-4 mt-4">
+                    {courses.length === 0 ? (
+                      <p className="text-gray-500">No courses available</p>
+                    ) : (
+                      courses.map((course) => (
+                        <li
+                          key={course.id}
+                          onClick={() => handleCourseSelect(course)}
+                          className={`p-4 rounded-md shadow-sm cursor-pointer hover:bg-gray-100 transition-colors ${
+                            selectedCourse?.id === course.id ? 'border-2 border-blue-500' : 'border border-gray-200'
+                          }`}
+                        >
+                          <h4 className="font-semibold">{course.name}</h4>
+                          <p className="text-sm text-gray-700">{course.code}</p>
+                          <p className="text-sm mt-1">{course.description}</p>
+                          <p className="text-sm text-gray-500 mt-2">
+                            Professor: {course.professor.firstName} {course.professor.lastName}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Students: {course.students ? course.students.length : 0}
+                          </p>
+                        </li>
+                      ))
+                    )}
+                  </ul>
                 )}
-              </ul>
-            )}
+              </div>
+              
+              {/* Course Details */}
+              {selectedCourse && (
+                <div className="w-full md:w-1/2 bg-white p-6 shadow-md rounded-md border">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-semibold">Course Details</h3>
+                    <button 
+                      onClick={handleCloseDetails}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h4 className="text-lg font-medium">{selectedCourse.name}</h4>
+                    <p className="text-gray-700">{selectedCourse.code}</p>
+                    <p className="mt-2">{selectedCourse.description}</p>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h4 className="font-medium">Professor</h4>
+                    <p>
+                      {selectedCourse.professor.firstName} {selectedCourse.professor.lastName} ({selectedCourse.professor.id})
+                    </p>
+                  </div>
+                  
+                  {/* Enrolled Students List Component */}
+                  <EnrolledStudentsList 
+                    courseId={selectedCourse.id}
+                    students={selectedCourse.students}
+                    onStudentsRemoved={handleStudentsRemoved}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
