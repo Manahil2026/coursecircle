@@ -50,8 +50,8 @@ model Course {
 
   // Links this course to its professor using professorId
   // The references keyword points to the id field in the User model
-  professor   User   @relation("ProfessorCourses", fields: [professorId], references: [id])
-  professorId String
+  professor   User?   @relation("ProfessorCourses", fields: [professorId], references: [id])
+  professorId String?
 
   // Many-to-many relationship with students
   // Prisma creates a join table automatically

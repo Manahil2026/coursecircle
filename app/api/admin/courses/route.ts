@@ -35,39 +35,53 @@ export async function GET() {
 }
 
 // POST to create a new course
+// Updated POST function for app/api/admin/courses/route.ts file
+
+// POST to create a new course
 export async function POST(request: Request) {
   try {
     const data = await request.json();
     const { name, code, description, professorId } = data;
     
-    // Validate required fields
-    if (!name || !code || !professorId) {
+    // Validate required fields (professorId is now optional)
+    if (!name || !code) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, code, or professorId' },
+        { error: 'Missing required fields: name and code' },
         { status: 400 }
       );
     }
     
-    // Check if professor exists
-    const professor = await prisma.user.findUnique({
-      where: { id: professorId }
-    });
+    // Check if professor exists if professorId is provided
+    if (professorId) {
+      const professor = await prisma.user.findUnique({
+        where: { id: professorId }
+      });
+      
+      if (!professor) {
+        return NextResponse.json(
+          { error: 'Professor not found' },
+          { status: 404 }
+        );
+      }
+    }
     
-    if (!professor) {
-      return NextResponse.json(
-        { error: 'Professor not found' },
-        { status: 404 }
-      );
+    // Create course data object
+    const courseData: any = {
+      name,
+      code,
+      description: description || '',
+    };
+    
+    // Only add professor connection if professorId is provided
+    if (professorId) {
+      courseData.professor = { 
+        connect: { id: professorId } 
+      };
     }
     
     // Create the course
     const course = await prisma.course.create({
-      data: {
-        name,
-        code,
-        description: description || '',
-        professor: { connect: { id: professorId } }
-      },
+      data: courseData,
       include: {
         professor: { 
           select: { 

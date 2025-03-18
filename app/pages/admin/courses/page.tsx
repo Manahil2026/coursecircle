@@ -30,8 +30,8 @@ interface Course {
   name: string;
   code: string;
   description?: string;
-  professor: Professor;
-  professorId: string;
+  professor?: Professor;
+  professorId?: string;
   students: Student[];
   assignments: Assignment[];
 }
@@ -108,14 +108,10 @@ const AdminCoursesPage: React.FC = () => {
     name: string;
     code: string;
     description: string;
-    professorId: string;
+    professorId: string | null;
   }) => {
     try {
-      // Validate form
-      if (!courseData.name || !courseData.code || !courseData.professorId) {
-        setError('Please fill in all required fields');
-        return;
-      }
+      // Validation is now handled in the CourseForm component
       
       const response = await fetch('/api/admin/courses', {
         method: 'POST',
@@ -300,7 +296,9 @@ const AdminCoursesPage: React.FC = () => {
                           <p className="text-sm text-gray-700">{course.code}</p>
                           <p className="text-sm mt-1">{course.description}</p>
                           <p className="text-sm text-gray-500 mt-2">
-                            Professor: {course.professor.firstName} {course.professor.lastName}
+                            Professor: {course.professor 
+                              ? `${course.professor.firstName} ${course.professor.lastName}` 
+                              : <span className="italic">Not assigned</span>}
                           </p>
                           <p className="text-sm text-gray-500">
                             Students: {course.students ? course.students.length : 0}
@@ -333,9 +331,13 @@ const AdminCoursesPage: React.FC = () => {
                   
                   <div className="mb-4">
                     <h4 className="font-medium">Professor</h4>
-                    <p>
-                      {selectedCourse.professor.firstName} {selectedCourse.professor.lastName} ({selectedCourse.professor.id})
-                    </p>
+                    {selectedCourse.professor ? (
+                      <p>
+                        {selectedCourse.professor.firstName} {selectedCourse.professor.lastName} ({selectedCourse.professor.id})
+                      </p>
+                    ) : (
+                      <p className="italic text-gray-500">No professor assigned</p>
+                    )}
                   </div>
                   
                   {/* Enrolled Students List Component */}
