@@ -20,47 +20,51 @@ enum UserRole {
 }
 
 model User {
-  id              String    @id
-  role            UserRole
-  email           String    @unique
-  firstName       String
-  lastName        String
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id        String   @id
+  role      UserRole
+  email     String   @unique
+  firstName String
+  lastName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Course relationships
   // This creates a one-to-many relationship between professors and courses they teach
   // A professor can teach many courses, but each course has one professor
-  teachingCourses Course[]  @relation("ProfessorCourses")
+  teachingCourses Course[] @relation("ProfessorCourses")
 
   // This creates a many-to-many relationship between students and courses
   // A student can be enrolled in many courses, and a course can have many students
   // Prisma automatically creates a join table to manage this relationship
-  enrolledCourses Course[]  @relation("StudentCourses")
+  enrolledCourses Course[] @relation("StudentCourses")
 }
 
 model Course {
-  id          String      @id @default(cuid())
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   name        String
-  code        String      // e.g., "CS101"
+  code        String // e.g., "CS101"
   description String?
-  
+
   // Links this course to its professor using professorId
   // The references keyword points to the id field in the User model
-  professor   User        @relation("ProfessorCourses", fields: [professorId], references: [id])
-  professorId String
-  
+  professor   User?   @relation("ProfessorCourses", fields: [professorId], references: [id])
+  professorId String?
+
   // Many-to-many relationship with students
   // Prisma creates a join table automatically
-  students    User[]      @relation("StudentCourses")
-  
+  students User[] @relation("StudentCourses")
+
   // One-to-many relationships with files and assignments
   // One course can have many files and assignments
   files       File[]
   assignments Assignment[]
+
+  modules Module[] // One course can have many modules
+
+  assignmentGroups AssignmentGroup[] //one to many relation btw Course and AssignmentGroup
 
   @@index([professorId])
   @@map("courses")
@@ -70,34 +74,86 @@ model File {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  name      String
-  url       String
-  type      String   // e.g., "pdf", "doc", etc.
-  
+
+  name String
+  url  String
+  type String // e.g., "pdf", "doc", etc.
+
   // Each file belongs to one course
   // onDelete: Cascade means if the course is deleted, its files are also deleted
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseId  String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
 
   @@index([courseId])
   @@map("files")
 }
 
+model AssignmentGroup {
+  id          String       @id @default(cuid())
+  name        String
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId    String
+  assignments Assignment[] @relation("GroupAssignments")
+
+  @@index([courseId])
+  @@map("assignment_groups")
+}
+
 model Assignment {
-  id          String    @id @default(cuid())
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   title       String
   description String?
   dueDate     DateTime?
-  
-  // Each assignment belongs to one course
-  // onDelete: Cascade means if the course is deleted, its assignments are also deleted
-  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseId    String
+  points      Int       @default(0)
+
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+
+  group   AssignmentGroup? @relation("GroupAssignments", fields: [groupId], references: [id])
+  groupId String?
 
   @@index([courseId])
   @@map("assignments")
+}
+
+model Module {
+  id        String   @id @default(cuid())
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+
+  sections ModuleSection[]
+  files    ModuleFile[]
+
+  @@index([courseId])
+  @@map("modules")
+}
+
+model ModuleSection {
+  id       String @id @default(cuid())
+  title    String
+  content  String
+  module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId String
+
+  @@index([moduleId])
+  @@map("module_sections")
+}
+
+model ModuleFile {
+  id       String @id @default(cuid())
+  name     String
+  url      String
+  type     String
+  module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId String
+
+  @@index([moduleId])
+  @@map("module_files")
 }
