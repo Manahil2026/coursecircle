@@ -58,6 +58,14 @@ const ProfessorAssignments = () => {
     setNewAssignment((prev) => ({ ...prev, [name]: value }));
   };
 
+  const fetchAssignments = async () => {
+    if (courseId) {
+      const res = await fetch(`/api/courses/${courseId}/assignments`);
+      const updatedGroups = await res.json();
+      setGroups(updatedGroups);
+    }
+  };
+
   const handleSaveGroup = async () => { // add group
     if (!newGroupName.trim()) return;
 
@@ -99,6 +107,7 @@ const ProfessorAssignments = () => {
       );
 
       setShowGroupModal(false);
+      await fetchAssignments();
     } catch (error) {
       console.error("Error creating group:", error);
       alert("An error occurred while creating the group.");
@@ -121,12 +130,10 @@ const ProfessorAssignments = () => {
       title: newAssignment.title,
       points: newAssignment.points,
       dueDate: newAssignment.dueDate,
-      dueTime: newAssignment.dueTime,
+      dueTime: newAssignment.dueTime, // Ensure it's in HH:MM format
       groupId,
       assignmentId,
     };
-
-    console.log("Sending payload:", JSON.stringify(payload)); // Debugging
 
     try {
       const res = await fetch(`/api/courses/${courseId}/assignments`, {
@@ -221,9 +228,20 @@ const ProfessorAssignments = () => {
     setShowGroupModal(true);
   };
 
-
   const handleEdit = (groupIndex: number, index: number) => { // edit assignment details
-    setNewAssignment(groups[groupIndex].assignments[index]);
+    const assignment = groups[groupIndex].assignments[index];
+
+    // Ensure dueTime is in HH:MM format
+    const formattedDueTime = assignment.dueTime ? assignment.dueTime.slice(0, 5) : "";
+
+    setNewAssignment({
+      id: assignment.id,
+      title: assignment.title,
+      points: assignment.points,
+      dueDate: assignment.dueDate ? new Date(assignment.dueDate).toISOString().split('T')[0] : "", // Ensure it's always controlled and formatted as YYYY-MM-DD
+      dueTime: formattedDueTime, // Ensure it's always controlled and formatted as HH:MM
+    });
+
     setEditGroupIndex(groupIndex);
     setEditIndex(index);
     setSelectedGroupIndex(groupIndex); // Preserve the group selection
@@ -233,7 +251,7 @@ const ProfessorAssignments = () => {
   const convertTo12HourFormat = (time: string) => {
     if (!time) return "";
     const [hours, minutes] = time.split(":").map(Number);
-    const ampm = hours >= 12 ? "pm" : "am";
+    const ampm = hours >= 12 ? "PM" : "AM";
     const formattedHours = hours % 12 || 12; // Convert 0 to 12 for AM
     return `${formattedHours}:${minutes.toString().padStart(2, "0")} ${ampm}`;
   };
@@ -255,11 +273,18 @@ const ProfessorAssignments = () => {
               Add Group
             </button>
             <button
-              onClick={() => setShowModal(true)}
+              onClick={() => {
+                setNewAssignment({ id: "", title: "", points: "", dueDate: "", dueTime: "" }); // Reset form
+                setEditIndex(null); // Ensure it's not in edit mode
+                setEditGroupIndex(null);
+                setSelectedGroupIndex(null);
+                setShowModal(true);
+              }}
               className="p-2 mt-2 bg-[#AAFF45] text-black text-sm rounded-sm hover:bg-[#B9FF66]"
             >
               Create Assignment
             </button>
+
           </div>
         </div>
 
@@ -353,14 +378,14 @@ const ProfessorAssignments = () => {
               <input
                 type="date"
                 name="dueDate"
-                value={newAssignment.dueDate || ""} // Ensure it's always controlled
+                value={newAssignment.dueDate} // Ensure it's always controlled
                 onChange={handleChange}
                 className="w-full border p-2 rounded mb-2"
               />
               <input
                 type="time"
                 name="dueTime"
-                value={newAssignment.dueTime || ""} // Prevents uncontrolled state
+                value={newAssignment.dueTime} // Ensure it's always controlled
                 onChange={handleChange}
                 className="w-full border p-2 rounded mb-4"
               />
