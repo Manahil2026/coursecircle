@@ -6,17 +6,25 @@ import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
 import Image from "next/image";
 
 const Landing_page: React.FC = () => {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded } = useUser();
+
+  // Show loading state while Clerk is initializing
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="text-gray-800">
       {/* Logo */}
       <div className="flex items-center justify-between px-6 md:px-6 py-6 gap-3">
-        <Image src="/asset/logo_icon.svg" alt="CourseCircle Logo" width={40} height={40} />
+        <Image src="/asset/logo_icon.svg" alt="CourseCircle Logo" width={40} height={40} priority />
         <div className="flex gap-3">
-          {/* Conditionally render the SignInButton or UserButton */}
           {!isSignedIn ? (
-            <SignInButton>
+            <SignInButton mode="modal">
               <button className="px-4 py-2 text-lg border border-gray-800 rounded-md hover:bg-gray-100">
                 Login
               </button>
@@ -41,8 +49,7 @@ const Landing_page: React.FC = () => {
           <p className="text-base md:text-lg text-gray-600 mb-6">
             An AI-driven platform that simplifies learning, streamlines communication, and keeps students and educators organized.
           </p>
-          {/* Clerk Sign-In Button */}
-          <SignUpButton>
+          <SignUpButton mode="modal">
             <button className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 text-lg">
               Get Started
             </button>
