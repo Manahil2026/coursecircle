@@ -32,13 +32,24 @@ const Coursepage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const params = useParams();
   const courseId = params?.courseId as string;
   const [course, setCourse] = useState(null);
 
-  useEffect(() => {
+  const fetchModules = async () => {
+    try {
+      const response = await fetch(`/api/modules?courseId=${courseId}`);
+      if (!response.ok) throw new Error("Failed to fetch modules");
+      const data = await response.json();
+      setModules(data);
+    } catch (error) {
+      console.error("Error fetching modules:", error);
+    }
+  };
 
+  useEffect(() => {
     const fetchCourse = async () => {
       try {
         setLoading(true);
@@ -50,18 +61,6 @@ const Coursepage: React.FC = () => {
         console.error("Error fetching course:", error);
       } finally {
         setLoading(false);
-      }
-    };
-
-    const fetchModules = async () => {
-      try {
-        const response = await fetch(`/api/modules?courseId=${courseId}`);
-        if (!response.ok) throw new Error("Failed to fetch modules");
-        const data = await response.json();
-        console.log("Fetched modules:", data); // Log fetched modules
-        setModules(data);
-      } catch (error) {
-        console.error("Error fetching modules:", error);
       }
     };
 
@@ -87,6 +86,18 @@ const Coursepage: React.FC = () => {
     }
   };
 
+  const handleEditModule = async (moduleId: string) => {
+    try {
+      const response = await fetch(`/api/modules/${moduleId}`);
+      if (!response.ok) throw new Error("Module not found");
+      const moduleData = await response.json();
+      setSelectedModule(moduleData);
+      setIsEditing(true);
+      setShowModulePopup(true);
+    } catch (error) {
+      console.error("Error fetching module for edit:", error);
+    }
+  };
 
   const handleAddModule = async (moduleData: ModuleFormData) => {
     if (!courseId) {
@@ -95,96 +106,163 @@ const Coursepage: React.FC = () => {
     }
 
     try {
-      // Step 1: Create the module
-      const moduleResponse = await fetch("/api/modules/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: moduleData.title,
-          courseId,
-          sections: moduleData.sections.map((section) => ({
-            title: section.title,
-            content: section.content,
-          })),
-          files: [], // Initially no files in the module creation
-        }),
-      });
+      if (isEditing && selectedModule) {
+        // Update existing module
+        const updateResponse = await fetch(`/api/modules/${selectedModule.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: moduleData.title,
+            sections: moduleData.sections.map((section) => ({
+              title: section.title,
+              content: section.content,
+            })),
+            files: selectedModule.files, // Keep existing files
+          }),
+        });
 
-      if (!moduleResponse.ok) {
-        const errorData = await moduleResponse.json();
-        throw new Error(errorData.error || "Failed to create module");
-      }
+        if (!updateResponse.ok) {
+          const errorData = await updateResponse.json();
+          throw new Error(errorData.error || "Failed to update module");
+        }
 
-      const createdModule = await moduleResponse.json();
-      const moduleId = createdModule.id;
+        // Handle any new file uploads if present
+        if (moduleData.files && moduleData.files.length > 0 && moduleData.files[0].file) {
+          const uploadedFiles = await Promise.all(
+            moduleData.files.map(async (fileItem) => {
+              if (!fileItem.file) return null;
 
-      if (!moduleId) {
-        throw new Error("Module creation failed, no moduleId received");
-      }
+              const formData = new FormData();
+              formData.append("file", fileItem.file);
+              formData.append("moduleId", selectedModule.id);
 
-      // Step 2: Upload files if any exist
-      if (moduleData.files && moduleData.files.length > 0 && moduleData.files[0].file) {
-        const uploadedFiles = await Promise.all(
-          moduleData.files.map(async (fileItem) => {
-            if (!fileItem.file) return null;
+              const uploadResponse = await fetch("/api/files", {
+                method: "POST",
+                body: formData,
+              });
 
-            const formData = new FormData();
-            formData.append("file", fileItem.file);
-            formData.append("moduleId", moduleId);
+              if (!uploadResponse.ok) {
+                const errorData = await uploadResponse.json();
+                throw new Error(errorData.error || "File upload failed");
+              }
 
-            const uploadResponse = await fetch("/api/files", {
-              method: "POST",
-              body: formData,
+              return await uploadResponse.json();
+            })
+          );
+
+          const fileData = uploadedFiles
+            .filter((file): file is NonNullable<typeof file> => file !== null)
+            .map((file) => ({
+              id: file.id,
+              name: file.name,
+              url: file.url,
+              type: file.type,
+              moduleId: selectedModule.id,
+            }));
+
+          if (fileData.length > 0) {
+            const updateFilesResponse = await fetch(`/api/modules/${selectedModule.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ 
+                files: [...selectedModule.files, ...fileData]
+              }),
             });
 
-            if (!uploadResponse.ok) {
-              const errorData = await uploadResponse.json();
-              throw new Error(errorData.error || "File upload failed");
+            if (!updateFilesResponse.ok) {
+              const errorData = await updateFilesResponse.json();
+              throw new Error(errorData.error || "Failed to update module with files");
             }
+          }
+        }
+      } else {
+        // Create new module
+        const moduleResponse = await fetch("/api/modules/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: moduleData.title,
+            courseId,
+            sections: moduleData.sections.map((section) => ({
+              title: section.title,
+              content: section.content,
+            })),
+            files: [],
+          }),
+        });
 
-            return await uploadResponse.json();
-          })
-        );
+        if (!moduleResponse.ok) {
+          const errorData = await moduleResponse.json();
+          throw new Error(errorData.error || "Failed to create module");
+        }
 
-        // Step 3: Update module with file data
-        const fileData = uploadedFiles
-          .filter((file): file is NonNullable<typeof file> => file !== null)
-          .map((file) => ({
-            id: file.id,
-            name: file.name,
-            url: file.url,
-            type: file.type,
-            moduleId: moduleId,
-          }));
+        const createdModule = await moduleResponse.json();
+        const moduleId = createdModule.id;
 
-        if (fileData.length > 0) {
-          const updateResponse = await fetch(`/api/modules/${moduleId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ files: fileData }),
-          });
+        if (!moduleId) {
+          throw new Error("Module creation failed, no moduleId received");
+        }
 
-          if (!updateResponse.ok) {
-            const errorData = await updateResponse.json();
-            throw new Error(errorData.error || "Failed to update module with files");
+        // Handle file uploads if present
+        if (moduleData.files && moduleData.files.length > 0 && moduleData.files[0].file) {
+          const uploadedFiles = await Promise.all(
+            moduleData.files.map(async (fileItem) => {
+              if (!fileItem.file) return null;
+
+              const formData = new FormData();
+              formData.append("file", fileItem.file);
+              formData.append("moduleId", moduleId);
+
+              const uploadResponse = await fetch("/api/files", {
+                method: "POST",
+                body: formData,
+              });
+
+              if (!uploadResponse.ok) {
+                const errorData = await uploadResponse.json();
+                throw new Error(errorData.error || "File upload failed");
+              }
+
+              return await uploadResponse.json();
+            })
+          );
+
+          const fileData = uploadedFiles
+            .filter((file): file is NonNullable<typeof file> => file !== null)
+            .map((file) => ({
+              id: file.id,
+              name: file.name,
+              url: file.url,
+              type: file.type,
+              moduleId: moduleId,
+            }));
+
+          if (fileData.length > 0) {
+            const updateResponse = await fetch(`/api/modules/${moduleId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ files: fileData }),
+            });
+
+            if (!updateResponse.ok) {
+              const errorData = await updateResponse.json();
+              throw new Error(errorData.error || "Failed to update module with files");
+            }
           }
         }
       }
-
-      // Update local state with the new module
-      setModules((prevModules) => [...prevModules, {
-        id: createdModule.id,
-        title: createdModule.title,
-        sections: createdModule.sections || [],
-        files: createdModule.files || []
-      }]);
       
+      // Fetch updated modules data
+      await fetchModules();
+      
+      // Reset states
       setShowModulePopup(false);
+      setIsEditing(false);
+      setSelectedModule(null);
     } catch (error) {
       console.error("Error saving module:", error);
     }
   };
-
 
   // Deleting a module using moduleId
   const handleDeleteModule = async (moduleId: string) => {
@@ -210,27 +288,21 @@ const Coursepage: React.FC = () => {
         throw new Error(errorData.error || "Failed to delete module");
       }
 
-      // Update local state after successful deletion
-      setModules((prevModules) => prevModules.filter(module => module.id !== moduleToDelete));
+      // Fetch updated modules data
+      await fetchModules();
       
-      // If the deleted module was selected, clear the selection
-      if (selectedModule?.id === moduleToDelete) {
-        setSelectedModule(null);
-      }
-
       // Close the confirmation popup
       setShowDeleteConfirmation(false);
       setModuleToDelete(null);
     } catch (error) {
       console.error("Error deleting module:", error);
-      // You might want to show an error message to the user here
     }
   };
   
   return (
     <div className="flex">
       <Sidebar_dashboard />
-      <div className="flex min-h-screen bg-gray-100 flex-1 pl-52 px-6">
+      <div className="flex min-h-screen bg-gradient-to-t from-[#AAFF45]/15 to-white flex-1 pl-52 px-6">
         <CourseMenu 
         courseId={courseId as string}
         />
@@ -258,7 +330,7 @@ const Coursepage: React.FC = () => {
                 <div className="bg-[#AAFF45] border border-gray-400 p-2 rounded-t-sm flex justify-between items-center">
                   <span>{module.title}</span>
                   <div className="flex gap-2">
-                    <button>
+                    <button onClick={() => handleEditModule(module.id)}>
                       <Image 
                         src="/asset/edit_icon.svg"
                         alt="Edit"
@@ -339,8 +411,14 @@ const Coursepage: React.FC = () => {
         {/* Using the ModulePopup Component */}
         <ModulePopup
           isOpen={showModulePopup}
-          onClose={() => setShowModulePopup(false)}
+          onClose={() => {
+            setShowModulePopup(false);
+            setIsEditing(false);
+            setSelectedModule(null);
+          }}
           onSave={handleAddModule}
+          initialData={selectedModule}
+          isEditing={isEditing}
         />
 
         {/* Delete Confirmation Popup */}

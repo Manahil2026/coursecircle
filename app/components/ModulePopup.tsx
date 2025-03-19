@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface ModuleFormData {
   title: string;
@@ -9,7 +9,12 @@ interface ModuleFormData {
   moduleId: string;  // Make moduleId required
 }
 
-
+interface Module {
+  id: string;
+  title: string;
+  sections: { title: string; content: string }[];
+  files: { name: string; url: string; type: string }[];
+}
 
 interface ModuleFormErrors {
   title: string;
@@ -20,11 +25,12 @@ interface ModuleFormErrors {
 interface ModulePopupProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (moduleData: ModuleFormData) => void; // expects ModuleFormData
+  onSave: (moduleData: ModuleFormData) => void;
+  initialData?: Module | null;
+  isEditing?: boolean;
 }
 
-
-const ModulePopup: React.FC<ModulePopupProps> = ({ isOpen, onClose, onSave }) => {
+const ModulePopup: React.FC<ModulePopupProps> = ({ isOpen, onClose, onSave, initialData, isEditing }) => {
   const [moduleData, setModuleData] = useState<ModuleFormData>({
     title: "",
     sections: [{ title: "", content: "" }],
@@ -37,6 +43,32 @@ const ModulePopup: React.FC<ModulePopupProps> = ({ isOpen, onClose, onSave }) =>
     sections: [{ title: "", content: "" }],
     files: [{ name: "" }],
   });
+
+  // Initialize form data when editing
+  useEffect(() => {
+    if (isEditing && initialData) {
+      setModuleData({
+        title: initialData.title,
+        sections: initialData.sections.map(section => ({
+          title: section.title,
+          content: section.content
+        })),
+        files: initialData.files.map(file => ({
+          name: file.name,
+          file: null
+        })),
+        moduleId: initialData.id
+      });
+    } else {
+      // Reset form when not editing
+      setModuleData({
+        title: "",
+        sections: [{ title: "", content: "" }],
+        files: [{ name: "", file: null }],
+        moduleId: "",
+      });
+    }
+  }, [isEditing, initialData]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -144,15 +176,13 @@ const ModulePopup: React.FC<ModulePopupProps> = ({ isOpen, onClose, onSave }) =>
   const handleSave = () => {
     if (!validateForm()) return;
     
-    onSave(moduleData);
+    // Ensure moduleId is included in the data
+    const dataToSave = {
+      ...moduleData,
+      moduleId: isEditing && initialData ? initialData.id : moduleData.moduleId
+    };
     
-    // Reset form after saving
-    setModuleData({
-      title: "",
-      sections: [{ title: "", content: "" }],
-      files: [{ name: "", file: null }],
-      moduleId: '',
-    });
+    onSave(dataToSave);
   };
 
   if (!isOpen) return null;
@@ -160,7 +190,7 @@ const ModulePopup: React.FC<ModulePopupProps> = ({ isOpen, onClose, onSave }) =>
   return (
     <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 z-50">
       <div className="bg-white p-6 rounded-sm shadow-md w-3/4 max-w-2xl max-h-screen overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-4">Add Module</h2>
+        <h2 className="text-lg font-semibold mb-4">{isEditing ? 'Edit Module' : 'Add Module'}</h2>
 
         <div className="mb-4">
           <label className="block text-sm font-medium mb-1">
@@ -314,7 +344,7 @@ const ModulePopup: React.FC<ModulePopupProps> = ({ isOpen, onClose, onSave }) =>
             onClick={handleSave}
             className="px-4 py-2 bg-[#AAFF45] text-black rounded-sm hover:bg-[#B9FF66]"
           >
-            Create Module
+            {isEditing ? 'Update Module' : 'Create Module'}
           </button>
         </div>
       </div>
