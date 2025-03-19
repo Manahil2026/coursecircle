@@ -30,6 +30,8 @@ const Coursepage: React.FC = () => {
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [expandedRows, setExpandedRows] = useState<{ [key: string]: boolean }>({});
   const [loading, setLoading] = useState(true);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
 
   const params = useParams();
   const courseId = params?.courseId as string;
@@ -191,8 +193,15 @@ const Coursepage: React.FC = () => {
       return;
     }
 
+    setModuleToDelete(moduleId);
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDeleteModule = async () => {
+    if (!moduleToDelete) return;
+
     try {
-      const deleteResponse = await fetch(`/api/modules/${moduleId}`, {
+      const deleteResponse = await fetch(`/api/modules/${moduleToDelete}`, {
         method: "DELETE",
       });
 
@@ -202,12 +211,16 @@ const Coursepage: React.FC = () => {
       }
 
       // Update local state after successful deletion
-      setModules((prevModules) => prevModules.filter(module => module.id !== moduleId));
+      setModules((prevModules) => prevModules.filter(module => module.id !== moduleToDelete));
       
       // If the deleted module was selected, clear the selection
-      if (selectedModule?.id === moduleId) {
+      if (selectedModule?.id === moduleToDelete) {
         setSelectedModule(null);
       }
+
+      // Close the confirmation popup
+      setShowDeleteConfirmation(false);
+      setModuleToDelete(null);
     } catch (error) {
       console.error("Error deleting module:", error);
       // You might want to show an error message to the user here
@@ -329,6 +342,33 @@ const Coursepage: React.FC = () => {
           onClose={() => setShowModulePopup(false)}
           onSave={handleAddModule}
         />
+
+        {/* Delete Confirmation Popup */}
+        {showDeleteConfirmation && (
+          <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 z-50">
+            <div className="bg-white p-6 rounded-sm shadow-md w-96">
+              <h2 className="text-lg font-semibold mb-4">Confirm Delete</h2>
+              <p className="mb-4">Are you sure you want to delete this module? This action cannot be undone.</p>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirmation(false);
+                    setModuleToDelete(null);
+                  }}
+                  className="px-4 py-2 bg-gray-400 text-white rounded-sm hover:bg-gray-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteModule}
+                  className="px-4 py-2 bg-red-500 text-white rounded-sm hover:bg-red-600"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
