@@ -57,6 +57,11 @@ const AdminCoursesPage: React.FC = () => {
   // Loading and error states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Professor assignment states
+  const [showProfessorForm, setShowProfessorForm] = useState(false);
+  const [selectedProfessorId, setSelectedProfessorId] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Admin navigation links
   const adminLinks = [
@@ -195,11 +200,52 @@ const AdminCoursesPage: React.FC = () => {
   // Handle course selection
   const handleCourseSelect = (course: Course) => {
     setSelectedCourse(course);
+    setShowProfessorForm(false);
+    setSelectedProfessorId(course.professorId || "");
   };
   
   // Close course details
   const handleCloseDetails = () => {
     setSelectedCourse(null);
+    setShowProfessorForm(false);
+  };
+  
+  // Handle professor assignment
+  const handleProfessorAssignment = async (professorId: string | null) => {
+    if (!selectedCourse) return;
+    
+    try {
+      setIsUpdating(true);
+      setError(null);
+      
+      const response = await fetch(`/api/admin/courses/${selectedCourse.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ professorId })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update professor');
+      }
+      
+      // Reset form state
+      setShowProfessorForm(false);
+      setSelectedProfessorId("");
+      
+      // Refresh data to show updated professor
+      fetchData();
+      
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unknown error occurred');
+      }
+      console.error(err);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -331,12 +377,74 @@ const AdminCoursesPage: React.FC = () => {
                   
                   <div className="mb-4">
                     <h4 className="font-medium">Professor</h4>
-                    {selectedCourse.professor ? (
-                      <p>
-                        {selectedCourse.professor.firstName} {selectedCourse.professor.lastName} ({selectedCourse.professor.id})
-                      </p>
-                    ) : (
-                      <p className="italic text-gray-500">No professor assigned</p>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        {selectedCourse.professor ? (
+                          <p>
+                            {selectedCourse.professor.firstName} {selectedCourse.professor.lastName} ({selectedCourse.professor.id})
+                          </p>
+                        ) : (
+                          <p className="italic text-gray-500">No professor assigned</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setShowProfessorForm(true)}
+                        className="px-2 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600"
+                      >
+                        {selectedCourse.professor ? "Change" : "Assign"} Professor
+                      </button>
+                    </div>
+                    
+                    {showProfessorForm && (
+                      <div className="mt-3 p-3 border rounded-md bg-gray-50">
+                        <div className="flex justify-between items-center mb-2">
+                          <h5 className="text-sm font-medium">
+                            {selectedCourse.professor ? "Change" : "Assign"} Professor
+                          </h5>
+                          <button 
+                            onClick={() => setShowProfessorForm(false)}
+                            className="text-gray-500 hover:text-gray-700 text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                        
+                        <div className="mb-2">
+                          <select
+                            value={selectedProfessorId}
+                            onChange={(e) => setSelectedProfessorId(e.target.value)}
+                            className="w-full p-2 border rounded-md text-sm"
+                          >
+                            <option value="">-- Select a professor --</option>
+                            {users
+                              .filter(user => user.role === 'PROFESSOR')
+                              .map(professor => (
+                                <option key={professor.id} value={professor.id}>
+                                  {professor.firstName} {professor.lastName} ({professor.email})
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+                        
+                        <div className="flex justify-end space-x-2">
+                          {selectedCourse.professor && (
+                            <button
+                              onClick={() => handleProfessorAssignment(null)}
+                              className="px-2 py-1 bg-red-500 text-white text-sm rounded-md hover:bg-red-600"
+                              disabled={isUpdating}
+                            >
+                              Remove Professor
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleProfessorAssignment(selectedProfessorId)}
+                            className="px-2 py-1 bg-green-500 text-white text-sm rounded-md hover:bg-green-600"
+                            disabled={isUpdating || !selectedProfessorId}
+                          >
+                            {isUpdating ? "Updating..." : "Save"}
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                   

@@ -1,4 +1,3 @@
-// Path: app/api/admin/courses/[id]/route.ts
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 
@@ -76,20 +75,27 @@ export async function PUT(
     if (name !== undefined) updateData.name = name;
     if (code !== undefined) updateData.code = code;
     if (description !== undefined) updateData.description = description;
+    
+    // Handle professor updates 
     if (professorId !== undefined) {
-      // Verify professor exists if provided
-      const professor = await prisma.user.findUnique({
-        where: { id: professorId }
-      });
-      
-      if (!professor) {
-        return NextResponse.json(
-          { error: 'Professor not found' },
-          { status: 404 }
-        );
+      if (professorId === null) {
+        // Remove professor relationship
+        updateData.professor = { disconnect: true };
+      } else {
+        // Verify professor exists if provided
+        const professor = await prisma.user.findUnique({
+          where: { id: professorId }
+        });
+        
+        if (!professor) {
+          return NextResponse.json(
+            { error: 'Professor not found' },
+            { status: 404 }
+          );
+        }
+        
+        updateData.professor = { connect: { id: professorId } };
       }
-      
-      updateData.professor = { connect: { id: professorId } };
     }
     
     // Update the course
@@ -103,7 +109,15 @@ export async function PUT(
             firstName: true, 
             lastName: true 
           } 
-        }
+        },
+        students: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
+          }
+        },
+        assignments: true
       }
     });
     
