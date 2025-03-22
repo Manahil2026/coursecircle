@@ -49,8 +49,8 @@ const ProfessorAssignments = () => {
     dueTime: "",
   });
 
-  const handleNavigate = () => {
-    router.push(`/pages/professor/view_assignment`); // change later
+  const handleNavigate = (assignmentId: string) => {
+    router.push(`/pages/professor/assignments/${courseId}/${assignmentId}`);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -228,25 +228,26 @@ const ProfessorAssignments = () => {
     setShowGroupModal(true);
   };
 
-  const handleEdit = (groupIndex: number, index: number) => { // edit assignment details
+  const handleEdit = (groupIndex: number, index: number) => { //edit assignment
     const assignment = groups[groupIndex].assignments[index];
-
-    // Ensure dueTime is in HH:MM format
-    const formattedDueTime = assignment.dueTime ? assignment.dueTime.slice(0, 5) : "";
-
+    const dt = assignment.dueDate ? new Date(assignment.dueDate) : null;
+  
     setNewAssignment({
       id: assignment.id,
       title: assignment.title,
       points: assignment.points,
-      dueDate: assignment.dueDate ? new Date(assignment.dueDate).toISOString().split('T')[0] : "", // Ensure it's always controlled and formatted as YYYY-MM-DD
-      dueTime: formattedDueTime, // Ensure it's always controlled and formatted as HH:MM
+      dueDate: assignment.dueDate ? dt!.toISOString().split("T")[0] : "",
+      dueTime: dt
+        ? `${dt.getHours().toString().padStart(2, "0")}:${dt.getMinutes().toString().padStart(2, "0")}`
+        : "",
     });
-
+  
     setEditGroupIndex(groupIndex);
     setEditIndex(index);
-    setSelectedGroupIndex(groupIndex); // Preserve the group selection
+    setSelectedGroupIndex(groupIndex);
     setShowModal(true);
   };
+  
 
   const convertTo12HourFormat = (time: string) => {
     if (!time) return "";
@@ -312,12 +313,30 @@ const ProfessorAssignments = () => {
                     {(group.assignments ?? []).map((assignment, index) => (
                       <li key={index} className="flex justify-between items-center border-b border-gray-300 py-2 bg-white p-2 rounded-md">
                         <div>
-                          <p className="text-lg font-bold text-black hover:underline cursor-pointer py-1" onClick={handleNavigate}>
+                          <p className="text-lg font-bold text-black hover:underline cursor-pointer py-1"
+                            onClick={() => handleNavigate(assignment.id)}
+                          >
                             {assignment.title}
                           </p>
                           <div className="text-sm text-gray-600">
-                            <b>Due</b>: {new Date(assignment.dueDate).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}{" "}
-                            at {convertTo12HourFormat(assignment.dueTime)} - {assignment.points} pts
+                            <b>Due</b>:{" "}
+                            {assignment.dueDate
+                              ? new Date(assignment.dueDate).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "2-digit",
+                                year: "numeric",
+                              })
+                              : ""}
+                            {" "}at{" "}
+                            {assignment.dueDate
+                              ? (() => {
+                                const dt = new Date(assignment.dueDate);
+                                const hh = dt.getHours().toString().padStart(2, "0");
+                                const mm = dt.getMinutes().toString().padStart(2, "0");
+                                return convertTo12HourFormat(`${hh}:${mm}`);
+                              })()
+                              : ""}
+                            {" "} - {assignment.points} pts
                           </div>
                         </div>
 
