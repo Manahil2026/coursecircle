@@ -299,7 +299,7 @@ const ProfessorAssignments = () => {
             <p>No assignment groups yet.</p>
           ) : (
             groups.map((group, groupIndex) => (
-              <div key={groupIndex} className="border border-gray-400 rounded-md p-4 mb-4 bg-gray-200">
+              <div key={groupIndex} className="border border-gray-400 rounded-md p-4 mb-4 bg-[#B9FF66]">
                 <details open>
                   <summary className="text-lg font-bold flex items-center cursor-pointer">
                     <span className="flex-1">{group.name}</span>
