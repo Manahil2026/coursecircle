@@ -114,7 +114,7 @@ const ProfessorAssignments = () => {
     }
   };
 
-  const handlePublish = async () => {
+  const handleSave = async () => { // Save the assignment on the professor's end
     if (!newAssignment.title.trim()) {
       alert("Please provide a title.");
       return;
@@ -130,7 +130,7 @@ const ProfessorAssignments = () => {
       title: newAssignment.title,
       points: newAssignment.points,
       dueDate: newAssignment.dueDate,
-      dueTime: newAssignment.dueTime, // Ensure it's in HH:MM format
+      dueTime: newAssignment.dueTime,
       groupId,
       assignmentId,
     };
@@ -268,7 +268,11 @@ const ProfessorAssignments = () => {
           <h1 className="text-lg font-medium">Assignments</h1>
           <div className="flex gap-2">
             <button
-              onClick={() => setShowGroupModal(true)}
+              onClick={() => {
+                setNewGroupName("");
+                setEditGroupIndex(null);
+                setShowGroupModal(true);
+              }}
               className="p-2 mt-2 bg-[#AAFF45] text-black text-sm rounded-sm hover:bg-[#B9FF66]"
             >
               Add Group
@@ -296,7 +300,7 @@ const ProfessorAssignments = () => {
           ) : (
             groups.map((group, groupIndex) => (
               <div key={groupIndex} className="border border-gray-400 rounded-md p-4 mb-4 bg-gray-200">
-                <details>
+                <details open>
                   <summary className="text-lg font-bold flex items-center cursor-pointer">
                     <span className="flex-1">{group.name}</span>
                     <div className="flex gap-4">
@@ -417,7 +421,7 @@ const ProfessorAssignments = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={handlePublish}
+                  onClick={handleSave}
                   className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                 >
                   {editIndex !== null ? "Save" : "Create"}
