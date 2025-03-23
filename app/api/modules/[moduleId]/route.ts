@@ -39,24 +39,37 @@ export async function PUT(req: Request, { params }: { params: { moduleId: string
     const { moduleId } = params;
     const data = await req.json();
 
-    // Ensure data.files is correctly typed
-    const files: FileItem[] = data.files || []; // Ensure it's an array of file items
-
+    // First, update the module title and sections
     const updatedModule = await prisma.module.update({
       where: { id: moduleId },
       data: {
-        files: {
-          updateMany: files.map((fileItem: FileItem) => ({
-            where: { id: fileItem.id }, // Assuming you have file ID here from previous upload
-            data: {
-              name: fileItem.name,
-              url: fileItem.url,
-              type: fileItem.type,
-            },
+        title: data.title,
+        sections: {
+          deleteMany: {}, // Delete all existing sections
+          create: data.sections.map((section: { title: string; content: string }) => ({
+            title: section.title,
+            content: section.content,
           })),
         },
       },
+      include: {
+        sections: true,
+        files: true,
+      },
     });
+
+    // If files are provided, update them
+    if (data.files) {
+      const files: FileItem[] = data.files;
+      await prisma.moduleFile.updateMany({
+        where: { moduleId },
+        data: {
+          name: files[0]?.name || "",
+          url: files[0]?.url || "",
+          type: files[0]?.type || "",
+        },
+      });
+    }
 
     return NextResponse.json(updatedModule, { status: 200 });
   } catch (error) {
@@ -100,4 +113,5 @@ export async function DELETE(req: Request, { params }: { params: { moduleId: str
     return NextResponse.json({ error: "Failed to delete module" }, { status: 500 });
   }
 }
+
 
