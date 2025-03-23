@@ -26,7 +26,6 @@ const AssignmentDetails = () => {
 
   useEffect(() => {
     if (courseId && assignmentId) {
-      // Fetch assignment details using the individual assignment API route
       fetch(`/api/courses/${courseId}/assignments/${assignmentId}`)
         .then((res) => res.json())
         .then((data) => {
@@ -42,15 +41,14 @@ const AssignmentDetails = () => {
   const handleSaveDescription = async () => {
     if (!assignment) return;
     const payload = { ...assignment, description };
+
     try {
-      const res = await fetch(
-        `/api/courses/${courseId}/assignments/${assignment.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch(`/api/courses/${courseId}/assignments/${assignment.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
       if (res.ok) {
         alert("Assignment updated successfully!");
         setIsEditingDescription(false);
@@ -72,7 +70,7 @@ const AssignmentDetails = () => {
     );
   }
 
-  // For displaying local due time correctly:
+  // Format local due time
   const localDueTime = assignment.dueDate
     ? (() => {
         const dt = new Date(assignment.dueDate);
@@ -86,88 +84,102 @@ const AssignmentDetails = () => {
     <div className="flex">
       <Sidebar_dashboard />
       <CourseMenu courseId={courseId} />
-      <div className="flex-1 pl-52 px-6">
-        <h1 className="text-2xl font-bold mb-6">Edit Assignment: {assignment.title}</h1>
 
-        <div className="mb-4">
-          <label className="block font-medium mb-1">Title</label>
-          <input
-            type="text"
-            value={assignment.title}
-            readOnly
-            className="w-full border p-2 rounded bg-gray-100"
-          />
-        </div>
+      <div className="flex-1 pl-52 px-6 py-6">
+        <div className="bg-white rounded shadow-md p-6">
+          <h1 className="text-2xl font-bold mb-6">
+            Edit Assignment: {assignment.title}
+          </h1>
 
-        {/* Description Section */}
-        <div className="mb-4 relative">
-          <label className="block font-medium mb-1">Description</label>
-          {isEditingDescription ? (
-            <>
-              <ReactQuillEditor
-                value={description}
-                onChange={setDescription}
-                height="200px"
-              />
-              <button
-                onClick={handleSaveDescription}
-                className="absolute top-0 right-0 bg-blue-500 text-white px-2 py-1 rounded"
-              >
-                Save
-              </button>
-            </>
-          ) : (
-            <div className="border p-2 rounded bg-gray-100 relative">
-              {/* Render HTML content. Make sure your description is sanitized if coming from an external source */}
-              <div dangerouslySetInnerHTML={{ __html: description }} />
-              <button
-                onClick={() => setIsEditingDescription(true)}
-                className="absolute top-0 right-0 bg-blue-500 text-white px-2 py-1 rounded"
-              >
-                Edit
-              </button>
+          {/* Title */}
+          <div className="mb-6">
+            <label className="block font-semibold mb-2 text-gray-700">Title</label>
+            <input
+              type="text"
+              value={assignment.title}
+              readOnly
+              className="w-full border border-gray-300 p-2 rounded bg-gray-100"
+            />
+          </div>
+
+          {/* Description Section */}
+          <div className="mb-20">
+            {/* Heading + Edit/Save Button on the same line */}
+            <div className="flex justify-between items-center mb-2">
+              <label className="font-semibold text-gray-700">Description</label>
+              {isEditingDescription ? (
+                <button
+                  onClick={handleSaveDescription}
+                  className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
+                >
+                  Save
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsEditingDescription(true)}
+                  className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
+                >
+                  Edit
+                </button>
+              )}
             </div>
-          )}
-        </div>
 
-        <div className="mb-4">
-          <label className="block font-medium mb-1">Points</label>
-          <input
-            type="text"
-            value={assignment.points}
-            readOnly
-            className="w-full border p-2 rounded bg-gray-100"
-          />
-        </div>
+            {/* If editing, show Quill with NO behind box; if not, show a bordered box */}
+            {isEditingDescription ? (
+              <ReactQuillEditor 
+                value={description} 
+                onChange={setDescription} 
+                height="200px" 
+              />
+            ) : (
+              <div className="border border-gray-300 rounded p-2 bg-gray-50 w-full">
+                <div dangerouslySetInnerHTML={{ __html: description }} />
+              </div>
+            )}
+          </div>
 
-        <div className="mb-4 flex gap-4">
-          <div>
-            <label className="block font-medium mb-1">Due Date</label>
+          {/* Points */}
+          <div className="mb-6">
+            <label className="block font-semibold mb-2 text-gray-700">Points</label>
             <input
-              type="date"
-              value={assignment.dueDate.split("T")[0]} // assuming ISO string
+              type="text"
+              value={assignment.points}
               readOnly
-              className="border p-2 rounded bg-gray-100"
+              className="w-full border border-gray-300 p-2 rounded bg-gray-100"
             />
           </div>
-          <div>
-            <label className="block font-medium mb-1">Due Time</label>
-            <input
-              type="time"
-              value={localDueTime}
-              readOnly
-              className="border p-2 rounded bg-gray-100"
-            />
-          </div>
-        </div>
 
-        <div className="flex gap-4 mt-6">
-          <button
-            onClick={() => router.back()}
-            className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-          >
-            Cancel
-          </button>
+          {/* Due Date and Due Time */}
+          <div className="mb-6 flex flex-wrap gap-6">
+            <div className="flex-1 min-w-[150px]">
+              <label className="block font-semibold mb-2 text-gray-700">Due Date</label>
+              <input
+                type="date"
+                value={assignment.dueDate.split("T")[0]}
+                readOnly
+                className="border border-gray-300 p-2 rounded bg-gray-100 w-full"
+              />
+            </div>
+            <div className="flex-1 min-w-[150px]">
+              <label className="block font-semibold mb-2 text-gray-700">Due Time</label>
+              <input
+                type="time"
+                value={localDueTime}
+                readOnly
+                className="border border-gray-300 p-2 rounded bg-gray-100 w-full"
+              />
+            </div>
+          </div>
+
+          {/* Button Row */}
+          <div className="flex justify-end gap-4">
+            <button
+              onClick={() => router.back()}
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
     </div>
