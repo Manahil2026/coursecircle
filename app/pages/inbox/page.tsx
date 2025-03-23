@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import Image from "next/image";
 
@@ -14,112 +14,24 @@ interface Email {
   isStarred: boolean;
 }
 
-const mockEmails: Email[] = [
-  {
-    id: 1,
-    sender: "John Doe",
-    subject: "Project Update",
-    preview: "Here are the latest updates on the project timeline...",
-    time: "10:30 AM",
-    isRead: false,
-    isStarred: false,
-  },
-  {
-    id: 2,
-    sender: "Jane Smith",
-    subject: "Meeting Tomorrow",
-    preview: "Don't forget about our team meeting tomorrow at 2 PM...",
-    time: "9:15 AM",
-    isRead: false,
-    isStarred: true,
-  },
-  {
-    id: 3,
-    sender: "Mike Johnson",
-    subject: "New Feature Request",
-    preview: "I have a new feature idea for the next sprint...",
-    time: "Yesterday",
-    isRead: false,
-    isStarred: false,
-  },
-  {
-    id: 4,
-    sender: "Sarah Wilson",
-    subject: "Documentation Review",
-    preview: "Please review the updated API documentation...",
-    time: "Yesterday",
-    isRead: false,
-    isStarred: false,
-  },
-  {
-    id: 5,
-    sender: "David Brown",
-    subject: "Client Meeting Notes",
-    preview: "Here are the key points from our client meeting...",
-    time: "2 days ago",
-    isRead: false,
-    isStarred: false,
-  },
-  {
-    id: 6,
-    sender: "Emily Davis",
-    subject: "Bug Report",
-    preview: "I've found a critical bug in the authentication system...",
-    time: "2 days ago",
-    isRead: false,
-    isStarred: true,
-  },
-  {
-    id: 7,
-    sender: "Robert Taylor",
-    subject: "Code Review",
-    preview: "Please review my pull request for the new feature...",
-    time: "3 days ago",
-    isRead: false,
-    isStarred: false,
-  },
-  {
-    id: 8,
-    sender: "Lisa Anderson",
-    subject: "Team Building Event",
-    preview: "Planning for next month's team building event...",
-    time: "3 days ago",
-    isRead: false,
-    isStarred: false,
-  },
-  {
-    id: 9,
-    sender: "Alex Thompson",
-    subject: "New Design System",
-    preview: "I've completed the new design system documentation...",
-    time: "4 days ago",
-    isRead: false,
-    isStarred: true,
-  },
-  {
-    id: 10,
-    sender: "Maria Garcia",
-    subject: "Client Presentation",
-    preview: "Here's the updated presentation for tomorrow's client meeting...",
-    time: "5 days ago",
-    isRead: false,
-    isStarred: false,
-  },
-  {
-    id: 11,
-    sender: "Kevin Chen",
-    subject: "Performance Optimization",
-    preview:
-      "I've identified several areas where we can improve performance...",
-    time: "1 week ago",
-    isRead: false,
-    isStarred: false,
-  },
-];
+const mockEmails: Email[] = [];
 
 export default function InboxPage() {
   const [emails, setEmails] = useState<Email[]>(mockEmails);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+
+  useEffect(() => {
+    const fetchEmails = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/emails");
+        const data = await response.json();
+        setEmails(data);
+      } catch (error) {
+        console.error("error fetching emails:", error);
+      }
+    };
+    fetchEmails();
+  }, []);
 
   const toggleStar = (id: number) => {
     setEmails(
@@ -129,12 +41,20 @@ export default function InboxPage() {
     );
   };
 
-  const markAsRead = (id: number) => {
-    setEmails(
-      emails.map((email) =>
-        email.id === id ? { ...email, isRead: true } : email
-      )
-    );
+  const markAsRead = async (id: number) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/emails/${id}/markAsRead`, {
+        method: "PUT",
+      });
+      const updatedEmail = await response.json();
+      setEmails((prevEmails) => 
+        prevEmails.map((email) => 
+          email.id === updatedEmail.id ? updatedEmail : email
+        )
+      );
+    } catch (error) {
+      console.error("Error marking as read:", error);
+    }
   };
 
   const getInitialColor = (name: string) => {
