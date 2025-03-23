@@ -29,14 +29,23 @@ const ProfessorAssignments = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [newGroupName, setNewGroupName] = useState("");
   const [selectedGroupIndex, setSelectedGroupIndex] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const courseId = params?.courseId as string; // Extract courseId from URL
 
   useEffect(() => {
     if (courseId) {
+      setIsLoading(true);
       fetch(`/api/courses/${courseId}/assignments`)
         .then((res) => res.json())
-        .then(setGroups);
+        .then((data) => {
+          setGroups(data);
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching assignments:", error);
+          setIsLoading(false);
+        });
     }
   }, [courseId]);
 
@@ -231,7 +240,7 @@ const ProfessorAssignments = () => {
   const handleEdit = (groupIndex: number, index: number) => { //edit assignment
     const assignment = groups[groupIndex].assignments[index];
     const dt = assignment.dueDate ? new Date(assignment.dueDate) : null;
-  
+
     setNewAssignment({
       id: assignment.id,
       title: assignment.title,
@@ -241,13 +250,13 @@ const ProfessorAssignments = () => {
         ? `${dt.getHours().toString().padStart(2, "0")}:${dt.getMinutes().toString().padStart(2, "0")}`
         : "",
     });
-  
+
     setEditGroupIndex(groupIndex);
     setEditIndex(index);
     setSelectedGroupIndex(groupIndex);
     setShowModal(true);
   };
-  
+
 
   const convertTo12HourFormat = (time: string) => {
     if (!time) return "";
@@ -293,76 +302,80 @@ const ProfessorAssignments = () => {
           </div>
         </div>
 
-        {/* Groups and Assignments List */}
-        <div className="mt-2">
-          {groups.length === 0 ? (
-            <p>No assignment groups yet.</p>
-          ) : (
-            groups.map((group, groupIndex) => (
-              <div key={groupIndex} className="border border-gray-400 rounded-md p-4 mb-4 bg-[#B9FF66]">
-                <details open>
-                  <summary className="text-lg font-bold flex items-center cursor-pointer">
-                    <span className="flex-1">{group.name}</span>
-                    <div className="flex gap-4">
-                      <button onClick={() => handleEditGroup(groupIndex)}>
-                        <Image src="/asset/edit_icon.svg" alt="Edit" width={18} height={18} />
-                      </button>
-                      <button onClick={() => handleDeleteGroup(groupIndex)}>
-                        <Image src="/asset/delete_icon.svg" alt="Delete" width={18} height={18} />
-                      </button>
-                    </div>
-                  </summary>
-
-                  <ul className="mt-2">
-                    {(group.assignments ?? []).map((assignment, index) => (
-                      <li key={index} className="flex justify-between items-center border-b border-gray-300 py-2 bg-white p-2 rounded-md">
-                        <div>
-                          <p className="text-lg font-bold text-black hover:underline cursor-pointer py-1"
-                            onClick={() => handleNavigate(assignment.id)}
-                          >
-                            {assignment.title}
-                          </p>
-                          <div className="text-sm text-gray-600">
-                            <b>Due</b>:{" "}
-                            {assignment.dueDate
-                              ? new Date(assignment.dueDate).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "2-digit",
-                                year: "numeric",
-                              })
-                              : ""}
-                            {" "}at{" "}
-                            {assignment.dueDate
-                              ? (() => {
-                                const dt = new Date(assignment.dueDate);
-                                const hh = dt.getHours().toString().padStart(2, "0");
-                                const mm = dt.getMinutes().toString().padStart(2, "0");
-                                return convertTo12HourFormat(`${hh}:${mm}`);
-                              })()
-                              : ""}
-                            {" "} - {assignment.points} pts
+        {/* Loading screen */}
+        {isLoading ? (
+          <div className="mt-2">
+            <p>Loading assignments...</p>
+          </div>
+        ) : (
+          // Groups and Assignments List
+          <div className="mt-2">
+            {groups.length === 0 ? (
+              <p>No assignment groups yet.</p>
+            ) : (
+              groups.map((group, groupIndex) => (
+                <div key={groupIndex} className="border border-gray-400 rounded-md p-4 mb-4 bg-[#B9FF66]">
+                  <details open>
+                    <summary className="text-lg font-bold flex items-center cursor-pointer">
+                      <span className="flex-1">{group.name}</span>
+                      <div className="flex gap-4">
+                        <button onClick={() => handleEditGroup(groupIndex)}>
+                          <Image src="/asset/edit_icon.svg" alt="Edit" width={18} height={18} />
+                        </button>
+                        <button onClick={() => handleDeleteGroup(groupIndex)}>
+                          <Image src="/asset/delete_icon.svg" alt="Delete" width={18} height={18} />
+                        </button>
+                      </div>
+                    </summary>
+                    <ul className="mt-2">
+                      {(group.assignments ?? []).map((assignment, index) => (
+                        <li key={index} className="flex justify-between items-center border-b border-gray-300 py-2 bg-white p-2 rounded-md">
+                          <div>
+                            <p
+                              className="text-lg font-bold text-black hover:underline cursor-pointer py-1"
+                              onClick={() => handleNavigate(assignment.id)}
+                            >
+                              {assignment.title}
+                            </p>
+                            <div className="text-sm text-gray-600">
+                              <b>Due</b>:{" "}
+                              {assignment.dueDate
+                                ? new Date(assignment.dueDate).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "2-digit",
+                                  year: "numeric",
+                                })
+                                : ""}
+                              {" "}at{" "}
+                              {assignment.dueDate
+                                ? (() => {
+                                  const dt = new Date(assignment.dueDate);
+                                  const hh = dt.getHours().toString().padStart(2, "0");
+                                  const mm = dt.getMinutes().toString().padStart(2, "0");
+                                  return convertTo12HourFormat(`${hh}:${mm}`);
+                                })()
+                                : ""}
+                              {" "} - {assignment.points} pts
+                            </div>
                           </div>
-                        </div>
+                          <div className="flex gap-4">
+                            <button onClick={() => handleEdit(groupIndex, index)}>
+                              <Image src="/asset/edit_icon.svg" alt="Edit" width={18} height={18} />
+                            </button>
+                            <button onClick={() => handleDelete(groupIndex, index)}>
+                              <Image src="/asset/delete_icon.svg" alt="Delete" width={18} height={18} />
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                </div>
+              ))
+            )}
+          </div>
+        )}
 
-                        <div className="flex gap-4">
-                          <button onClick={() => handleEdit(groupIndex, index)}>
-                            <Image src="/asset/edit_icon.svg" alt="Edit" width={18} height={18} />
-                          </button>
-                          <button onClick={() => handleDelete(groupIndex, index)}>
-                            <Image src="/asset/delete_icon.svg" alt="Delete" width={18} height={18} />
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-
-                </details>
-              </div>
-
-
-            ))
-          )}
-        </div>
 
         {/* Create/Edit Assignment Modal */}
         {showModal && (
