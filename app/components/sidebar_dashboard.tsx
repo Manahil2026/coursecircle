@@ -23,10 +23,10 @@ const Sidebar_dashboard: React.FC = () => {
   const sidebarItems = [
     { component: <UserButton afterSignOutUrl="/" />, label: "", isLogo: true },
     { icon: "/asset/home_icon.svg", label: "Home", alt: "Home Icon", onClick: handleHomeClick },
-    { icon: "/asset/inbox_icon.svg", label: "Inbox", alt: "Inbox Icon" },
+    { icon: "/asset/inbox_icon.svg", label: "Inbox", alt: "Inbox Icon" , onClick: () => router.push("/pages/inbox") },
     { icon: "/asset/calendar_icon.svg", label: "Calendar", alt: "Calendar Icon" },
     { icon: "/asset/folder_icon.svg", label: "Files", alt: "Folder Icon" },
-    { icon: "/asset/ai_icon.svg", label: "AI Tools", alt: "AI Icon" },
+    { icon: "/asset/ai_icon.svg", label: "AI Tools", alt: "AI Icon", onClick: () => router.push("/pages/chat") },
   ];
 
   return (
