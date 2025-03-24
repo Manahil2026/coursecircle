@@ -305,7 +305,9 @@ const ProfessorAssignments = () => {
         {/* Loading screen */}
         {isLoading ? (
           <div className="mt-2">
-            <p>Loading assignments...</p>
+            <div className="flex flex-col items-center space-y-2">
+              <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
+            </div>
           </div>
         ) : (
           // Groups and Assignments List
