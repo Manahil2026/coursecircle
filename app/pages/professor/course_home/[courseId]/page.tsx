@@ -312,7 +312,7 @@ const Coursepage: React.FC = () => {
             <h1 className="text-base font-medium">Professor Homepage</h1>
             <button
               onClick={() => setShowModulePopup(true)}
-              className="p-2 mt-2 bg-[#AAFF45] text-black text-sm rounded-sm hover:bg-[#B9FF66]"
+              className="p-2 mt-2 bg-[#AAFF45] text-black text-sm rounded hover:bg-[#B9FF66]"
             >
               Add Module
             </button>
@@ -324,88 +324,104 @@ const Coursepage: React.FC = () => {
           )}
   
           {/* Modules with flex layout */}
-          <div className="w-full mt-4">
+            <div className="w-full mt-4">
             {modules.map((module) => (
               <div key={module.id} className="mb-6 text-sm">
-                <div className="bg-[#AAFF45] border border-gray-400 p-2 rounded-t-sm flex justify-between items-center">
-                  <span>{module.title}</span>
-                  <div className="flex gap-2">
-                    <button onClick={() => handleEditModule(module.id)}>
-                      <Image 
-                        src="/asset/edit_icon.svg"
-                        alt="Edit"
-                        width={18}
-                        height={18}
-                      />
-                    </button>
-                    <button onClick={() => handleDeleteModule(module.id)}>
-                      <Image
-                        src="/asset/delete_icon.svg"
-                        alt="Delete"
-                        width={18}
-                        height={18}
-                      />
-                    </button>
-                  </div>
+              <div className="bg-[#AAFF45] border border-gray-400 p-2 rounded-t-sm flex justify-between items-center">
+                <span>{module.title}</span>
+                <div className="flex gap-2">
+                <button onClick={() => handleEditModule(module.id)}>
+                  <Image 
+                  src="/asset/edit_icon.svg"
+                  alt="Edit"
+                  width={18}
+                  height={18}
+                  />
+                </button>
+                <button onClick={() => handleDeleteModule(module.id)}>
+                  <Image
+                  src="/asset/delete_icon.svg"
+                  alt="Delete"
+                  width={18}
+                  height={18}
+                  />
+                </button>
                 </div>
-  
-                {/* Sections */}
-                {(module.sections || []).map((section, sectionIndex) => (
-                  <div
-                    key={`section-${module.id}-${sectionIndex}`}
-                    className="border border-gray-400 border-t-0 rounded-sm"
-                  >
-                    <div
-                      className="flex justify-between items-center p-2 cursor-pointer"
-                      onClick={() =>
-                        toggleExpand(`section-${module.id}-${sectionIndex}`)
-                      }
-                    >
-                      {section.title}
-                      <Image
-                        src={
-                          expandedRows[`section-${module.id}-${sectionIndex}`]
-                            ? "/asset/arrowup_icon.svg"
-                          : "/asset/arrowdown_icon.svg"
-                        }
-                        alt="Expand arrow"
-                        width={16}
-                        height={16}
-                      />
-                    </div>
-                    {expandedRows[`section-${module.id}-${sectionIndex}`] && (
-                      <p className="p-2 bg-gray-200">{section.content}</p>
-                    )}
+              </div>
+        
+              {/* Sections */}
+              {(module.sections || []).map((section, sectionIndex) => (
+                <div
+                key={`section-${module.id}-${sectionIndex}`}
+                className="border border-gray-400 border-t-0 rounded-sm"
+                >
+                <div
+                  className="flex justify-between items-center p-2 cursor-pointer"
+                  onClick={() =>
+                  toggleExpand(`section-${module.id}-${sectionIndex}`)
+                  }
+                >
+                  <div className="flex items-center gap-2">
+                  <Image
+                    src="/asset/file_icon.svg"
+                    alt="Section"
+                    width={16}
+                    height={16}
+                  />
+                  {section.title}
                   </div>
-                ))}
-  
-                {/* Files */}
-                {(module.files || []).map((file, fileIndex) => (
-                  <div key={`file-${module.id}-${fileIndex}`} className="border border-gray-400 border-t-0 rounded-sm">
-                    <div className="flex justify-between items-center p-2 cursor-pointer" onClick={() => toggleExpand(`file-${module.id}-${fileIndex}`)}>
-                      {file.name}
-                      <Image
-                        src={
-                          expandedRows[`file-${module.id}-${fileIndex}`]
-                            ? "/asset/arrowup_icon.svg"
-                          : "/asset/arrowdown_icon.svg"
-                        }
-                        alt="Expand arrow"
-                        width={16}
-                        height={16}
-                      />
-                    </div>
-                    {expandedRows[`file-${module.id}-${fileIndex}`] && (
-                      <p className="p-2 bg-gray-200">{file.name}</p>
-                    )}
+                  <Image
+                  src={
+                    expandedRows[`section-${module.id}-${sectionIndex}`]
+                    ? "/asset/arrowup_icon.svg"
+                    : "/asset/arrowdown_icon.svg"
+                  }
+                  alt="Expand arrow"
+                  width={12}
+                  height={12}
+                  />
+                </div>
+                {expandedRows[`section-${module.id}-${sectionIndex}`] && (
+                  <p className="p-2 bg-gray-200">{section.content}</p>
+                )}
+                </div>
+              ))}
+        
+              {/* Files */}
+              {(module.files || []).map((file, fileIndex) => (
+                <div key={`file-${module.id}-${fileIndex}`} className="border border-gray-400 border-t-0 rounded-sm">
+                <div className="flex justify-between items-center p-2 cursor-pointer" onClick={() => toggleExpand(`file-${module.id}-${fileIndex}`)}>
+                  <div className="flex items-center gap-2">
+                  <Image
+                    src="/asset/pdf_icon.svg"
+                    alt="File"
+                    width={16}
+                    height={16}
+                  />
+                  {file.name}
                   </div>
-                ))}
-  
-                {/* Empty bottom border for the last item */}
-                <div className="border-t-0 rounded-b-sm h-1"></div>
+                  <Image
+                  src={
+                    expandedRows[`file-${module.id}-${fileIndex}`]
+                    ? "/asset/arrowup_icon.svg"
+                    : "/asset/arrowdown_icon.svg"
+                  }
+                  alt="Expand arrow"
+                  width={12}
+                  height={12}
+                  />
+                </div>
+                {expandedRows[`file-${module.id}-${fileIndex}`] && (
+                  <p className="p-2 bg-gray-200">{file.name}</p>
+                )}
+                </div>
+              ))}
+        
+              {/* Empty bottom border for the last item */}
+              <div className="border-t-0 rounded-b-sm h-1"></div>
               </div>
             ))}
-          </div>
+            </div>
         </div>
   
         {/* Using the ModulePopup Component */}
@@ -423,29 +439,29 @@ const Coursepage: React.FC = () => {
 
         {/* Delete Confirmation Popup */}
         {showDeleteConfirmation && (
-          <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 z-50">
-            <div className="bg-white p-6 rounded-sm shadow-md w-96">
-              <h2 className="text-lg font-semibold mb-4">Confirm Delete</h2>
-              <p className="mb-4">Are you sure you want to delete this module? This action cannot be undone.</p>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirmation(false);
-                    setModuleToDelete(null);
-                  }}
-                  className="px-4 py-2 bg-gray-400 text-white rounded-sm hover:bg-gray-500"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDeleteModule}
-                  className="px-4 py-2 bg-red-500 text-white rounded-sm hover:bg-red-600"
-                >
-                  Delete
-                </button>
+            <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white p-8 rounded-lg shadow-lg w-96">
+              <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
+              <p className="mb-6 text-gray-700">Are you sure you want to delete this module? This action cannot be undone.</p>
+              <div className="flex justify-end gap-4">
+              <button
+                onClick={() => {
+                setShowDeleteConfirmation(false);
+                setModuleToDelete(null);
+                }}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteModule}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Delete
+              </button>
               </div>
             </div>
-          </div>
+            </div>
         )}
       </div>
     </div>
