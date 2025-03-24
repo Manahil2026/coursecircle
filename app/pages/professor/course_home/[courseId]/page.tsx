@@ -120,7 +120,7 @@ const Coursepage: React.FC = () => {
             files: selectedModule.files, // Keep existing files
           }),
         });
-
+        
         if (!updateResponse.ok) {
           const errorData = await updateResponse.json();
           throw new Error(errorData.error || "Failed to update module");
