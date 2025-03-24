@@ -33,6 +33,7 @@ const Coursepage: React.FC = () => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isModulesLoading, setIsModulesLoading] = useState(true);
 
   const params = useParams();
   const courseId = params?.courseId as string;
@@ -40,12 +41,15 @@ const Coursepage: React.FC = () => {
 
   const fetchModules = async () => {
     try {
+      setIsModulesLoading(true);
       const response = await fetch(`/api/modules?courseId=${courseId}`);
       if (!response.ok) throw new Error("Failed to fetch modules");
       const data = await response.json();
       setModules(data);
     } catch (error) {
       console.error("Error fetching modules:", error);
+    } finally {
+      setIsModulesLoading(false);
     }
   };
 
@@ -88,6 +92,7 @@ const Coursepage: React.FC = () => {
 
   const handleEditModule = async (moduleId: string) => {
     try {
+      setLoading(true);
       const response = await fetch(`/api/modules/${moduleId}`);
       if (!response.ok) throw new Error("Module not found");
       const moduleData = await response.json();
@@ -96,6 +101,8 @@ const Coursepage: React.FC = () => {
       setShowModulePopup(true);
     } catch (error) {
       console.error("Error fetching module for edit:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -106,6 +113,7 @@ const Coursepage: React.FC = () => {
     }
 
     try {
+      setLoading(true);
       if (isEditing && selectedModule) {
         // Update existing module
         const updateResponse = await fetch(`/api/modules/${selectedModule.id}`, {
@@ -237,18 +245,33 @@ const Coursepage: React.FC = () => {
               moduleId: moduleId,
             }));
 
-          if (fileData.length > 0) {
-            const updateResponse = await fetch(`/api/modules/${moduleId}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ files: fileData }),
-            });
-
-            if (!updateResponse.ok) {
-              const errorData = await updateResponse.json();
-              throw new Error(errorData.error || "Failed to update module with files");
+            if (fileData.length > 0) {
+              // Fetch the latest module data first
+              const moduleResponse = await fetch(`/api/modules/${moduleId}`);
+              if (!moduleResponse.ok) {
+                throw new Error("Failed to fetch updated module data");
+              }
+              const currentModule = await moduleResponse.json();
+              
+              // Combine existing and new files
+              const allFiles = [...currentModule.files, ...fileData];
+              
+              // Update the module with complete data
+              const updateResponse = await fetch(`/api/modules/${moduleId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  title: currentModule.title,
+                  sections: currentModule.sections,
+                  files: allFiles
+                }),
+              });
+            
+              if (!updateResponse.ok) {
+                const errorData = await updateResponse.json();
+                throw new Error(errorData.error || "Failed to update module with files");
+              }
             }
-          }
         }
       }
       
@@ -261,6 +284,8 @@ const Coursepage: React.FC = () => {
       setSelectedModule(null);
     } catch (error) {
       console.error("Error saving module:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -279,6 +304,7 @@ const Coursepage: React.FC = () => {
     if (!moduleToDelete) return;
 
     try {
+      setLoading(true);
       const deleteResponse = await fetch(`/api/modules/${moduleToDelete}`, {
         method: "DELETE",
       });
@@ -296,8 +322,21 @@ const Coursepage: React.FC = () => {
       setModuleToDelete(null);
     } catch (error) {
       console.error("Error deleting module:", error);
+    } finally {
+      setLoading(false);
     }
   };
+  
+  // Show loading screen if either course or modules are still loading
+  if (loading || isModulesLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center space-y-2">
+          <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="flex">
