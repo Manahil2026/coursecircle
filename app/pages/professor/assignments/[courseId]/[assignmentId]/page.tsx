@@ -65,7 +65,7 @@ const AssignmentDetails = () => {
   if (!assignment) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p>Loading assignment details...</p>
+        <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
       </div>
     );
   }
