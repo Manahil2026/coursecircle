@@ -19,7 +19,6 @@ export async function GET(req: Request, { params }: { params: { courseId: string
       return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
     }
   
-    console.log("Assignment found:", assignment);
     return NextResponse.json(assignment);
   } catch (error: any) {
     console.error("Error fetching assignment:", error.message, error.stack);
