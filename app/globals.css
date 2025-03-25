@@ -22,6 +22,16 @@ body {
   font-style: italic;
 }
 
+.ql-editor a {
+  color: #007bff; 
+  text-decoration: underline;
+}
+
+.ql-editor span {
+  background-color: transparent !important;
+}
+
+
 .ql-editor u {
   text-decoration: underline;
 }
