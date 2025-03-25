@@ -5,6 +5,9 @@ import { useRouter, useParams } from "next/navigation";
 import CourseMenu from "@/app/components/course_menu";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import ReactQuillEditor from "@/app/components/text_editor";
+import "react-quill-new/dist/quill.snow.css";
+import FileUpload from "@/app/components/file_upload";
+
 
 interface Assignment {
   id: string;
@@ -15,6 +18,12 @@ interface Assignment {
   dueTime: string;
 }
 
+interface AssignmentFile {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+}
+
 const AssignmentDetails = () => {
   const router = useRouter();
   const params = useParams() as { courseId: string; assignmentId: string };
@@ -23,6 +32,7 @@ const AssignmentDetails = () => {
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [description, setDescription] = useState("");
   const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [files, setFiles] = useState<AssignmentFile[]>([]);
 
   useEffect(() => {
     if (courseId && assignmentId) {
@@ -31,6 +41,7 @@ const AssignmentDetails = () => {
         .then((data) => {
           setAssignment(data);
           setDescription(data.description || "");
+          setFiles(data.files || []);
         })
         .catch((error) => {
           console.error("Error fetching assignment:", error);
@@ -73,11 +84,11 @@ const AssignmentDetails = () => {
   // Format local due time
   const localDueTime = assignment.dueDate
     ? (() => {
-        const dt = new Date(assignment.dueDate);
-        const hh = dt.getHours().toString().padStart(2, "0");
-        const mm = dt.getMinutes().toString().padStart(2, "0");
-        return `${hh}:${mm}`;
-      })()
+      const dt = new Date(assignment.dueDate);
+      const hh = dt.getHours().toString().padStart(2, "0");
+      const mm = dt.getMinutes().toString().padStart(2, "0");
+      return `${hh}:${mm}`;
+    })()
     : "";
 
   return (
@@ -126,14 +137,14 @@ const AssignmentDetails = () => {
 
             {/* If editing, show Quill with NO behind box; if not, show a bordered box */}
             {isEditingDescription ? (
-              <ReactQuillEditor 
-                value={description} 
-                onChange={setDescription} 
-                height="200px" 
+              <ReactQuillEditor
+                value={description}
+                onChange={setDescription}
+                height="200px"
               />
             ) : (
               <div className="border border-gray-300 rounded p-2 bg-gray-50 w-full">
-                <div dangerouslySetInnerHTML={{ __html: description }} />
+                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: description }} />
               </div>
             )}
           </div>
@@ -169,6 +180,30 @@ const AssignmentDetails = () => {
                 className="border border-gray-300 p-2 rounded bg-gray-100 w-full"
               />
             </div>
+          </div>
+
+          {/* File Upload Section (for professors) */}
+          <FileUpload
+            assignmentId={assignment.id}
+            courseId={courseId}
+            onUpload={(fileUrl, fileName) => setFiles(prev => [...prev, { id: Date.now().toString(), fileUrl, fileName }])}
+          />
+
+          {/* List Uploaded Files */}
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-2">Uploaded Files</h2>
+            <ul className="list-disc pl-5">
+              {files.map((file) => (
+                <li key={file.id}>
+                  <a
+                    href={`/courses/${courseId}/assignments/${assignment.id}/file/${file.id}`}
+                    className="text-blue-500 hover:underline"
+                  >
+                    {file.fileName}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
 
           {/* Button Row */}
