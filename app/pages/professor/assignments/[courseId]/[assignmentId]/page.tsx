@@ -45,6 +45,7 @@ const AssignmentDetails = () => {
         .then((data) => {
           setAssignment(data);
           setDescription(data.description || "");
+          setFiles(data.files || []);
         })
         .catch((error) => {
           console.error("Error fetching assignment:", error);
@@ -81,11 +82,16 @@ const AssignmentDetails = () => {
     try {
       const response = await fetch(`/api/courses/${courseId}/assignments/${assignmentId}/files`);
       if (!response.ok) throw new Error("Failed to fetch files");
-      return await response.json();
+      const data = await response.json();
+      return data.files; // Return only the files array
     } catch (error) {
       console.error("Error fetching files:", error);
       return [];
     }
+  };  
+
+  const handleNavigate = (fileId: string) => {
+    router.push(`/pages/professor/assignments/${courseId}/${assignmentId}/file/${fileId}`);
   };
 
   if (!assignment) {
@@ -212,7 +218,7 @@ const AssignmentDetails = () => {
                 files.map((file) => (
                   <li key={file.id}>
                     <a
-                      href={`/courses/${courseId}/assignments/${assignment.id}/file/${file.id}`}
+                      onClick={() => handleNavigate(file.id)}
                       className="text-blue-500 hover:underline"
                     >
                       {file.fileName}
