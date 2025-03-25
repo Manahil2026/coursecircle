@@ -8,7 +8,6 @@ import ReactQuillEditor from "@/app/components/text_editor";
 import "react-quill-new/dist/quill.snow.css";
 import FileUpload from "@/app/components/file_upload";
 
-
 interface Assignment {
   id: string;
   title: string;
@@ -37,15 +36,20 @@ const AssignmentDetails = () => {
   useEffect(() => {
     if (courseId && assignmentId) {
       fetch(`/api/courses/${courseId}/assignments/${assignmentId}`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          return res.json();
+        })
         .then((data) => {
           setAssignment(data);
           setDescription(data.description || "");
-          setFiles(data.files || []);
         })
         .catch((error) => {
           console.error("Error fetching assignment:", error);
         });
+      fetchFiles(courseId, assignmentId).then(setFiles);
     }
   }, [courseId, assignmentId]);
 
@@ -70,6 +74,17 @@ const AssignmentDetails = () => {
     } catch (error) {
       console.error("Error updating assignment:", error);
       alert("An error occurred while updating the assignment.");
+    }
+  };
+
+  const fetchFiles = async (courseId: string, assignmentId: string) => {
+    try {
+      const response = await fetch(`/api/courses/${courseId}/assignments/${assignmentId}/files`);
+      if (!response.ok) throw new Error("Failed to fetch files");
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching files:", error);
+      return [];
     }
   };
 
@@ -193,16 +208,20 @@ const AssignmentDetails = () => {
           <div className="mb-6">
             <h2 className="text-lg font-semibold mb-2">Uploaded Files</h2>
             <ul className="list-disc pl-5">
-              {files.map((file) => (
-                <li key={file.id}>
-                  <a
-                    href={`/courses/${courseId}/assignments/${assignment.id}/file/${file.id}`}
-                    className="text-blue-500 hover:underline"
-                  >
-                    {file.fileName}
-                  </a>
-                </li>
-              ))}
+              {files.length > 0 ? (
+                files.map((file) => (
+                  <li key={file.id}>
+                    <a
+                      href={`/courses/${courseId}/assignments/${assignment.id}/file/${file.id}`}
+                      className="text-blue-500 hover:underline"
+                    >
+                      {file.fileName}
+                    </a>
+                  </li>
+                ))
+              ) : (
+                <li>No files uploaded yet.</li>
+              )}
             </ul>
           </div>
 
