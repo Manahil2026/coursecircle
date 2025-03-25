@@ -9,10 +9,12 @@ interface Params {
 export async function GET(req: NextRequest, { params }: Params) {
   const { courseId, assignmentId } = params;
 
-  // Fetch assignment that belongs to the course
+  // Fetch assignment and assignment files that belongs to the course
   const assignment = await prisma.assignment.findFirst({
     where: { id: assignmentId, courseId },
+    include: { files: true },
   });
+  
 
   if (!assignment) {
     return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
