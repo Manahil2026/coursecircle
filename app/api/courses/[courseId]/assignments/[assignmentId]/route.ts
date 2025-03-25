@@ -6,21 +6,26 @@ interface Params {
   params: { courseId: string; assignmentId: string };
 }
 
-export async function GET(req: NextRequest, { params }: Params) {
+export async function GET(req: Request, { params }: { params: { courseId: string, assignmentId: string }}) {
   const { courseId, assignmentId } = params;
 
-  // Fetch assignment and assignment files that belongs to the course
-  const assignment = await prisma.assignment.findFirst({
-    where: { id: assignmentId, courseId },
-    include: { files: true },
-  });
+  try {
+    const assignment = await prisma.assignment.findUnique({
+      where: { id: assignmentId },
+    });
   
-
-  if (!assignment) {
-    return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
+    if (!assignment) {
+      console.log("Assignment not found");
+      return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
+    }
+  
+    console.log("Assignment found:", assignment);
+    return NextResponse.json(assignment);
+  } catch (error: any) {
+    console.error("Error fetching assignment:", error.message, error.stack);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
-  return NextResponse.json(assignment);
+  
 }
 
 export async function PUT(req: NextRequest, { params }: Params) {
