@@ -66,6 +66,7 @@ model Course {
 
   assignmentGroups AssignmentGroup[] //one to many relation btw Course and AssignmentGroup
 
+  
   @@index([professorId])
   @@map("courses")
 }
@@ -100,9 +101,9 @@ model AssignmentGroup {
 }
 
 model Assignment {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   title       String
   description String?
@@ -115,8 +116,22 @@ model Assignment {
   group   AssignmentGroup? @relation("GroupAssignments", fields: [groupId], references: [id])
   groupId String?
 
+  files   AssignmentFile[] @relation("AssignmentFiles")
+
   @@index([courseId])
   @@map("assignments")
+}
+
+model AssignmentFile {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  fileName     String
+  fileUrl      String
+
+  assignment   Assignment @relation("AssignmentFiles", fields: [assignmentId], references: [id], onDelete: Cascade)
+  assignmentId String
+
+  @@map("assignment_files")
 }
 
 model Module {
