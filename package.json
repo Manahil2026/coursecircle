@@ -22,9 +22,11 @@
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "next": "^15.2.0",
+    "pdfjs-dist": "^5.0.375",
     "react": "^19.0.0",
     "react-doc-viewer": "^0.1.14",
     "react-dom": "^19.0.0",
+    "react-pdf": "^9.2.1",
     "react-quill-new": "^3.3.3",
     "svix": "^1.61.0"
   },
