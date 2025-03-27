@@ -17,7 +17,7 @@ export default function AssignmentFilePage() {
 
   useEffect(() => {
     if (fileId) {
-      fetch(`/api/assignment-files/${fileId}`)
+      fetch(`/api/courses/assignment-files/${fileId}`)
         .then((res) => res.json())
         .then((data) => setFile(data))
         .catch((error) => console.error("Error fetching file:", error));
