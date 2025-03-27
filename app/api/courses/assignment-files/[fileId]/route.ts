@@ -18,3 +18,19 @@ export async function GET(req: Request, { params }: { params: { fileId: string }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request, { params }: { params: { fileId: string } }) {
+  const { fileId } = params;
+
+  try {
+    // Delete the file record from the database
+    await prisma.assignmentFile.delete({
+      where: { id: fileId },
+    });
+
+    return NextResponse.json({ message: "File deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting file:", error);
+    return NextResponse.json({ error: "Failed to delete file" }, { status: 500 });
+  }
+}
