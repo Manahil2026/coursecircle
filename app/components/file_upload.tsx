@@ -52,7 +52,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ assignmentId, courseId, onUploa
       {/* Upload button */}
       <button 
         onClick={handleUpload}
-        className="bg-green-500 text-white px-4 py-1 rounded hover:bg-green-600 ml-2"
+        className="bg-[#B9FF66] text-black px-4 py-1 rounded hover:bg-[#A8FF00]"
         disabled={!selectedFile} // Disable the button if no file is selected
       >
         Upload File
@@ -62,3 +62,5 @@ const FileUpload: React.FC<FileUploadProps> = ({ assignmentId, courseId, onUploa
 };
 
 export default FileUpload;
+
+
