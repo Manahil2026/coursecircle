@@ -100,6 +100,16 @@ model AssignmentGroup {
   @@map("assignment_groups")
 }
 
+enum SubmissionType {
+  NO_SUBMISSIONS
+  ONLINE
+}
+
+enum OnlineSubmissionMethod {
+  TEXT_ENTRY
+  FILE_UPLOAD
+}
+
 model Assignment {
   id          String   @id @default(cuid())
   createdAt   DateTime @default(now())
@@ -118,9 +128,14 @@ model Assignment {
 
   files   AssignmentFile[] @relation("AssignmentFiles")
 
+  // Add the submission type and method fields
+  submissionType       SubmissionType      @default(NO_SUBMISSIONS)
+  onlineSubmissionMethod OnlineSubmissionMethod? // Only relevant if submissionType is ONLINE
+
   @@index([courseId])
   @@map("assignments")
 }
+
 
 model AssignmentFile {
   id           String   @id @default(cuid())
