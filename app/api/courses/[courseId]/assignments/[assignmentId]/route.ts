@@ -7,7 +7,7 @@ interface Params {
 }
 
 export async function GET(req: Request, { params }: { params: { courseId: string, assignmentId: string }}) {
-  const { courseId, assignmentId } = params;
+  const { courseId,  assignmentId } = params;
 
   try {
     const assignment = await prisma.assignment.findUnique({
@@ -34,13 +34,11 @@ export async function PUT(req: NextRequest, { params }: Params) {
   try {
     const data = JSON.parse(body);
 
-    // Optionally, validate the data here (e.g., check for required fields)
-
     // Update the assignment.
-    // You can now include additional fields like description if your prisma model supports it.
+    
     const updatedAssignment = await prisma.assignment.update({
       where: { id: assignmentId },
-      data, // This will update any fields passed in the payload
+      data, 
     });
 
     return NextResponse.json(updatedAssignment);
