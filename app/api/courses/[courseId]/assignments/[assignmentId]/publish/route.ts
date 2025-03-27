@@ -1,19 +1,21 @@
-
 import { prisma } from "@/lib/prisma";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function PUT(req: NextRequest, { params }: { params: { courseId: string; assignmentId: string } }) {
+export async function PUT(req: Request, { params }: { params: { courseId: string; assignmentId: string } }) {
   const { assignmentId } = params;
-  const body = await req.json();
 
   try {
+    const body = await req.json();
+    const { published } = body;
+
     const updatedAssignment = await prisma.assignment.update({
       where: { id: assignmentId },
-      data: { published: true },
+      data: { published },
     });
+
     return NextResponse.json(updatedAssignment);
   } catch (error) {
     console.error("Error publishing assignment:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to publish assignment" }, { status: 500 });
   }
 }
