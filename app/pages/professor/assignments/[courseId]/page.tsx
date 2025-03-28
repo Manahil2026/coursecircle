@@ -11,6 +11,7 @@ interface Assignment {
   points: string;
   dueDate: string;
   dueTime: string;
+  published: boolean;
 }
 
 interface Group {
@@ -56,6 +57,7 @@ const ProfessorAssignments = () => {
     points: "",
     dueDate: "",
     dueTime: "",
+    published: false,
   });
 
   const handleNavigate = (assignmentId: string) => {
@@ -249,6 +251,7 @@ const ProfessorAssignments = () => {
       dueTime: dt
         ? `${dt.getHours().toString().padStart(2, "0")}:${dt.getMinutes().toString().padStart(2, "0")}`
         : "",
+      published: assignment.published,
     });
 
     setEditGroupIndex(groupIndex);
@@ -264,6 +267,79 @@ const ProfessorAssignments = () => {
     const ampm = hours >= 12 ? "PM" : "AM";
     const formattedHours = hours % 12 || 12; // Convert 0 to 12 for AM
     return `${formattedHours}:${minutes.toString().padStart(2, "0")} ${ampm}`;
+  };
+
+  const handlePublishAssignment = async (groupIndex: number, index: number) => {
+    const assignment = groups[groupIndex].assignments[index];
+    const confirmPublish = confirm("Are you sure you want to publish this assignment?");
+    if (!confirmPublish) return;
+
+    try {
+      const payload = { published: true };
+      const res = await fetch(`/api/courses/${courseId}/assignments/${assignment.id}/publish`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        alert("Assignment published successfully!");
+        // Update the local state to reflect the change
+        setGroups(prev =>
+          prev.map((group, gIndex) => {
+            if (gIndex === groupIndex) {
+              const updatedAssignments = group.assignments.map((a, aIndex) =>
+                aIndex === index ? { ...a, published: true } : a
+              );
+              return { ...group, assignments: updatedAssignments };
+            }
+            return group;
+          })
+        );
+      } else {
+        const errorData = await res.json();
+        alert(`Failed to publish assignment: ${errorData.error || "Unknown error"}`);
+      }
+    } catch (error) {
+      console.error("Error publishing assignment:", error);
+      alert("An error occurred while publishing the assignment.");
+    }
+  };
+
+  const handleUnpublishAssignment = async (groupIndex: number, index: number) => {
+    const assignment = groups[groupIndex].assignments[index];
+    const confirmUnpublish = confirm("Are you sure you want to unpublish this assignment?");
+    if (!confirmUnpublish) return;
+
+    try {
+      const payload = { published: false };
+      const res = await fetch(`/api/courses/${courseId}/assignments/${assignment.id}/publish`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        alert("Assignment unpublished successfully!");
+        setGroups(prev =>
+          prev.map((group, gIndex) => {
+            if (gIndex === groupIndex) {
+              const updatedAssignments = group.assignments.map((a, aIndex) =>
+                aIndex === index ? { ...a, published: false } : a
+              );
+              return { ...group, assignments: updatedAssignments };
+            }
+            return group;
+          })
+        );
+      } else {
+        const errorData = await res.json();
+        alert(`Failed to unpublish assignment: ${errorData.error || "Unknown error"}`);
+      }
+    } catch (error) {
+      console.error("Error unpublishing assignment:", error);
+      alert("An error occurred while unpublishing the assignment.");
+    }
   };
 
   return (
@@ -288,7 +364,7 @@ const ProfessorAssignments = () => {
             </button>
             <button
               onClick={() => {
-                setNewAssignment({ id: "", title: "", points: "", dueDate: "", dueTime: "" }); // Reset form
+                setNewAssignment({ id: "", title: "", points: "", dueDate: "", dueTime: "", published: false }); // Reset form
                 setEditIndex(null); // Ensure it's not in edit mode
                 setEditGroupIndex(null);
                 setSelectedGroupIndex(null);
@@ -361,6 +437,25 @@ const ProfessorAssignments = () => {
                             </div>
                           </div>
                           <div className="flex gap-4">
+                            {assignment.published ? (
+                              <div className="relative group">
+                                <button onClick={() => handleUnpublishAssignment(groupIndex, index)}>
+                                  <Image src="/asset/publish_icon.svg" alt="Published" width={18} height={18} className="cursor-pointer" />
+                                </button>
+                                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
+                                  Unpublish
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="relative group">
+                                <button onClick={() => handlePublishAssignment(groupIndex, index)}>
+                                  <Image src="/asset/unpublish_icon.svg" alt="Unpublished" width={18} height={18} className="cursor-pointer" />
+                                </button>
+                                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
+                                  Publish
+                                </span>
+                              </div>
+                            )}
                             <button onClick={() => handleEdit(groupIndex, index)}>
                               <Image src="/asset/edit_icon.svg" alt="Edit" width={18} height={18} />
                             </button>
