@@ -1,3 +1,4 @@
+// This API route is responsible for fetching all files related to a specific assignment for the assignment detail page.
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma"; 
 

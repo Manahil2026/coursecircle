@@ -1,3 +1,5 @@
+// This API route handles file uploads for course modules.
+// It validates the file type, saves the file to the server, and stores its metadata in the database.
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { writeFile } from "fs/promises";

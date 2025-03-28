@@ -1,3 +1,5 @@
+// This API route handles the creation, editing, and deletion of assignment groups for a specific course.
+// This file is called by the overall assignments page to manage assignment groups.
 import { prisma } from "@/lib/prisma";
 import { NextResponse, NextRequest } from "next/server";
 

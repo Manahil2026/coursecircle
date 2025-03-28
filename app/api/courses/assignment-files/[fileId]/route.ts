@@ -1,3 +1,5 @@
+// This file fetches the file details from the server and displays it using a FileViewer component.
+// This file handles the API routes for fetching and deleting assignment files.
 import { NextResponse } from "next/server";
 import {prisma} from "@/lib/prisma"; 
 

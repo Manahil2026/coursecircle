@@ -1,3 +1,4 @@
+// This API route handles the CRUD operations for modules in course homepage by using the moduleId.
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 

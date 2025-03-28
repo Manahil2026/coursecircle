@@ -1,3 +1,5 @@
+// This API route handles the creation, retrieval, update, and deletion of assignments for a specific course.
+// This API route is called by the overall assignments page. 
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";

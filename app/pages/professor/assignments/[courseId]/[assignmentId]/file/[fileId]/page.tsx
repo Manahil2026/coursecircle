@@ -1,3 +1,4 @@
+// This file imports the FileViewer component and calls the API to fetch the file details.
 "use client";
 
 import { useParams } from "next/navigation";

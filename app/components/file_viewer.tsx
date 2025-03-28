@@ -1,3 +1,5 @@
+// This file uses the FileViewer component to display the file.
+// This file handles the file viewer functionality, including loading the document and displaying it.
 "use client";
 
 import React, { useState, useEffect } from "react";

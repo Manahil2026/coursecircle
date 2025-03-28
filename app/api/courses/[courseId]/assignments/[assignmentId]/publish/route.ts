@@ -1,3 +1,4 @@
+// This API route is used to update the published status of an assignment.
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 

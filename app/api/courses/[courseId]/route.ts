@@ -1,4 +1,4 @@
-// app/api/courses/[courseId]/route.ts
+// This API route fetches course details based on the course ID provided in the URL.
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 

@@ -1,3 +1,4 @@
+// This API route handles the fetching and updating of assignment details for the assignment details page.
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
