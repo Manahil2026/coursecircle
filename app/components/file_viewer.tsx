@@ -5,12 +5,12 @@
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 
-// Dynamically import DocViewer to prevent SSR issues
+// Dynamically import DocViewer
 const DocViewer = dynamic(() => import("react-doc-viewer"), { ssr: false });
 import { DocViewerRenderers } from "react-doc-viewer";
 import { GlobalWorkerOptions } from "pdfjs-dist";
 
-// Manually set the path for the PDF worker
+// Manually set the path for the PDF worker to try and fix the pdf issue
 GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
 
 interface FileViewerProps {
@@ -21,23 +21,9 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl }) => {
   const [docs, setDocs] = useState<{ uri: string }[] | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    async function loadFile() {
-      try {
-        if (!fileUrl) return;
-        await new Promise((resolve) => setTimeout(resolve, 300)); // Simulate delay
-
-        if (!signal.aborted) setDocs([{ uri: fileUrl }]);
-      } catch (error) {
-        if (error !== "AbortError") console.error("File loading error:", error);
-      }
-    }
-
-    loadFile();
-
-    return () => controller.abort();
+    if (!fileUrl) return;
+    console.log("Loading file:", fileUrl); // Debugging log
+    setDocs([{ uri: fileUrl }]);
   }, [fileUrl]);
 
   if (!docs) return <div>Loading document...</div>;
