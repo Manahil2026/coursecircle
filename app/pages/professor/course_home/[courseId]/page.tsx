@@ -15,6 +15,7 @@ interface Module {
   title: string;
   sections: { title: string; content: string }[];
   files: { name: string; url: string; type: string }[];
+  published: boolean;
 }
 
 // Interface for the form data when creating a module
@@ -34,6 +35,7 @@ const Coursepage: React.FC = () => {
   const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isModulesLoading, setIsModulesLoading] = useState(true);
+  //const [isPublished, setIsPublished] = useState(false);
 
   const params = useParams();
   const courseId = params?.courseId as string;
@@ -61,6 +63,7 @@ const Coursepage: React.FC = () => {
         if (!response.ok) throw new Error("Failed to fetch course details");
         const data = await response.json();
         setCourse(data);
+        //setIsPublished(data.published || false);
       } catch (error) {
         console.error("Error fetching course:", error);
       } finally {
@@ -337,6 +340,56 @@ const Coursepage: React.FC = () => {
       </div>
     );
   }
+
+  // Publish a module 
+  const handlePublishModule = async (moduleId: string) => {
+    if (!moduleId) {
+      return;
+    }
+    const confirmPublish = confirm("Are you sure you want to publish this module?");
+    if (!confirmPublish) return;
+    try {
+      // Update the module to be published
+      const response = await fetch(`/api/modules/${moduleId}/publish`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ published: true }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to publish module");
+      }
+      // Refresh the modules list after publishing
+      await fetchModules();
+    } catch (error) {
+      console.error("Error publishing module:", error);
+    }
+  };
+
+  // Unpublish a module
+  const handleUnpublishModule = async (moduleId: string) => {
+    if (!moduleId) {
+      return;
+    }
+    const confirmUnpublish = confirm("Are you sure you want to unpublish this module?");
+    if (!confirmUnpublish) return;
+    try {
+      // Update the module to be unpublished
+      const response = await fetch(`/api/modules/${moduleId}/publish`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ published: false }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to unpublish module");
+      }
+      // Refresh the modules list after unpublishing
+      await fetchModules();
+    } catch (error) {
+      console.error("Error unpublishing module:", error);
+    }
+  };
   
   return (
     <div className="flex">
@@ -369,6 +422,31 @@ const Coursepage: React.FC = () => {
               <div className="bg-[#AAFF45] border border-gray-400 p-2 rounded-t-sm flex justify-between items-center">
                 <span>{module.title}</span>
                 <div className="flex gap-2">
+                {module.published ? (
+                  <div className="relative group">
+                    <img
+                      src="/asset/publish_icon.svg"
+                      alt="Published"
+                      className="w-5 h-5 cursor-pointer"
+                      onClick={() => handleUnpublishModule(module.id)}
+                    />
+                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
+                      unpublish
+                    </span>
+                  </div>
+                ) : (
+                  <div className="relative group">
+                    <img
+                      src="/asset/unpublish_icon.svg"
+                      alt="Unpublished"
+                      className="w-5 h-5 cursor-pointer"
+                      onClick={() => handlePublishModule(module.id)}
+                    />
+                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
+                      publish
+                    </span>
+                  </div>
+                )}
                 <button onClick={() => handleEditModule(module.id)}>
                   <Image 
                   src="/asset/edit_icon.svg"
