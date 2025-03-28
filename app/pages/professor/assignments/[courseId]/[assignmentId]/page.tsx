@@ -259,34 +259,45 @@ const AssignmentDetails = () => {
 
       <div className="flex-1 pl-52 px-6 py-6">
         <div className="bg-white rounded shadow-md p-6">
-          <h1 className="text-2xl font-bold mb-6 flex items-center gap-4">
-            {assignment.title}
-            {isPublished ? (
-              <div className="relative group">
-                <img
-                  src="/asset/publish_icon.svg"
-                  alt="Published"
-                  className="w-6 h-6 cursor-pointer"
-                  onClick={handleUnpublish}
-                />
-                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
-                  unpublish
-                </span>
-              </div>
-            ) : (
-              <div className="relative group">
-                <img
-                  src="/asset/unpublish_icon.svg"
-                  alt="Unpublished"
-                  className="w-6 h-6 cursor-pointer"
-                  onClick={handlePublish}
-                />
-                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
-                  publish
-                </span>
-              </div>
-            )}
+          <h1 className="text-2xl font-bold mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {assignment.title}
+              {isPublished ? (
+                <div className="relative group">
+                  <img
+                    src="/asset/publish_icon.svg"
+                    alt="Published"
+                    className="w-6 h-6 cursor-pointer"
+                    onClick={handleUnpublish}
+                  />
+                  <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
+                    Unpublish
+                  </span>
+                </div>
+              ) : (
+                <div className="relative group">
+                  <img
+                    src="/asset/unpublish_icon.svg"
+                    alt="Unpublished"
+                    className="w-6 h-6 cursor-pointer"
+                    onClick={handlePublish}
+                  />
+                  <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
+                    Publish
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Speed Grader Button */}
+            <button
+              onClick={() => router.push(`/courses/${courseId}/assignments/${assignmentId}/speed-grader`)}
+              className="px-3 py-2 text-sm rounded bg-[#B9FF66] text-black hover:bg-[#A8FF00]"
+            >
+              Speed Grader
+            </button>
           </h1>
+
 
           {/* Title */}
           <div className="mb-6">
@@ -447,7 +458,7 @@ const AssignmentDetails = () => {
                         title="Delete file"
                       >
                         <img
-                          src="/asset/delete_icon.svg" 
+                          src="/asset/delete_icon.svg"
                           alt="Delete"
                           className="w-5 h-5"
                         />
