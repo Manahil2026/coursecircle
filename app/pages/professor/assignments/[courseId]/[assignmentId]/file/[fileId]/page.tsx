@@ -1,4 +1,5 @@
 // This file imports the FileViewer component and calls the API to fetch the file details.
+// This file is called by the handle Navigate function in assignments detail page.
 "use client";
 
 import { useParams } from "next/navigation";
