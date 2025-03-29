@@ -3,13 +3,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuth } from "@clerk/nextjs/server";
+import { NextRequest } from "next/server";
 
 export async function GET(
   req: Request,
   { params }: { params: { courseId: string } }
 ) {
   try {
-    const { userId } = getAuth(req);
+    const nextReq = new NextRequest(req);
+    const { userId } = getAuth(nextReq);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
