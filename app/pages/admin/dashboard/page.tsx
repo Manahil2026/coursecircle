@@ -38,10 +38,10 @@ const AdminDashboard: React.FC = () => {
         {/* Admin Menu Sidebar */}
         <div className="w-32 bg-white shadow-lg border border-[#aeaeae85] h-screen fixed left-16 top-0 pt-3">
           <nav>
-            <ul className="space-y-2">
+            <nav className="flex flex-col">
               {adminLinks.map((link) => (
-                <li key={link.key}>
                   <button
+                    key={link.key}
                     onClick={link.onClick}
                     className={`px-4 py-1 text-left text-black text-sm hover:underline ${
                       activeSection === link.key
@@ -51,9 +51,8 @@ const AdminDashboard: React.FC = () => {
                   >
                     {link.label}
                   </button>
-                </li>
               ))}
-            </ul>
+            </nav>
           </nav>
         </div>
 
