@@ -60,6 +60,9 @@ const CoursesManagement: React.FC = () => {
   const [showProfessorForm, setShowProfessorForm] = useState(false);
   const [selectedProfessorId, setSelectedProfessorId] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // State for tab management
+  const [activeTab, setActiveTab] = useState<"ADMIN_COURSES" | "ENROLL_STUDENTS" | "AVAILABLE_COURSES">("ADMIN_COURSES");
   
   // Fetch courses and users when component mounts
   useEffect(() => {
@@ -248,195 +251,225 @@ const CoursesManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Course Creation Using CourseForm Component */}
-      <CourseForm onCreateCourse={createCourse} />
-
-      {/* Student Enrollment Section */}
-      <div className="mt-6 p-6 bg-white shadow-md rounded-md border">
-        <h2 className="text-xl font-semibold">Enroll Students in Course</h2>
-        <div className="space-y-4 mt-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Select Course</label>
-            <select
-              value={enrollmentCourse}
-              onChange={(e) => setEnrollmentCourse(e.target.value)}
-              className="w-full mt-2 p-2 border rounded-md"
-            >
-              <option value="">Select a course</option>
-              {courses.map(course => (
-                <option key={course.id} value={course.id}>
-                  {course.code} - {course.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Select Students (hold Ctrl/Cmd to select multiple)</label>
-            <select
-              multiple
-              value={enrollmentStudents}
-              onChange={handleStudentSelect}
-              className="w-full mt-2 p-2 border rounded-md h-40"
-            >
-              {users
-                .filter(user => user.role === 'STUDENT')
-                .map(student => (
-                  <option key={student.id} value={student.id}>
-                    {student.firstName} {student.lastName} ({student.email})
-                  </option>
-                ))}
-            </select>
-          </div>
-          <button
-            onClick={enrollStudents}
-            className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-700"
-          >
-            Enroll Students
-          </button>
-        </div>
+      {/* Tabs */}
+      <div className="flex space-x-4 mb-6 border-b">
+        <button
+          onClick={() => setActiveTab("ADMIN_COURSES")}
+          className={`px-4 py-2 ${activeTab === "ADMIN_COURSES" ? "border-b-2 border-blue-500 font-semibold" : "text-gray-500"}`}
+        >
+          Admin Courses
+        </button>
+        <button
+          onClick={() => setActiveTab("ENROLL_STUDENTS")}
+          className={`px-4 py-2 ${activeTab === "ENROLL_STUDENTS" ? "border-b-2 border-blue-500 font-semibold" : "text-gray-500"}`}
+        >
+          Enroll Students in Course
+        </button>
+        <button
+          onClick={() => setActiveTab("AVAILABLE_COURSES")}
+          className={`px-4 py-2 ${activeTab === "AVAILABLE_COURSES" ? "border-b-2 border-blue-500 font-semibold" : "text-gray-500"}`}
+        >
+          Available Courses
+        </button>
       </div>
 
-      {/* Course List and Details Section */}
-      <div className="mt-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Course List */}
-          <div className="w-full md:w-1/2 bg-white p-6 shadow-md rounded-md border">
-            <h3 className="text-xl font-semibold mb-4">Available Courses</h3>
-            {loading ? (
-              <p className="text-gray-500 mt-2">Loading courses...</p>
-            ) : (
-              <ul className="space-y-4 mt-4">
-                {courses.length === 0 ? (
-                  <p className="text-gray-500">No courses available</p>
-                ) : (
-                  courses.map((course) => (
-                    <li
-                      key={course.id}
-                      onClick={() => handleCourseSelect(course)}
-                      className={`p-4 rounded-md shadow-sm cursor-pointer hover:bg-gray-100 transition-colors ${
-                        selectedCourse?.id === course.id ? 'border-2 border-blue-500' : 'border border-gray-200'
-                      }`}
-                    >
-                      <h4 className="font-semibold">{course.name}</h4>
-                      <p className="text-sm text-gray-700">{course.code}</p>
-                      <p className="text-sm mt-1">{course.description}</p>
-                      <p className="text-sm text-gray-500 mt-2">
-                        Professor: {course.professor 
-                          ? `${course.professor.firstName} ${course.professor.lastName}` 
-                          : <span className="italic">Not assigned</span>}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Students: {course.students ? course.students.length : 0}
-                      </p>
-                    </li>
-                  ))
-                )}
-              </ul>
-            )}
+      {/* Tab Content */}
+      {activeTab === "ADMIN_COURSES" && (
+        <div>
+          {/* Course Creation Using CourseForm Component */}
+          <CourseForm onCreateCourse={createCourse} />
+        </div>
+      )}
+
+      {activeTab === "ENROLL_STUDENTS" && (
+        <div className="mt-6 p-6 bg-white shadow-md rounded-md border">
+          <h2 className="text-xl font-semibold">Enroll Students in Course</h2>
+          <div className="space-y-4 mt-4">
+            {/* Enrollment Form */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Select Course</label>
+              <select
+                value={enrollmentCourse}
+                onChange={(e) => setEnrollmentCourse(e.target.value)}
+                className="w-full mt-2 p-2 border rounded-md"
+              >
+                <option value="">Select a course</option>
+                {courses.map(course => (
+                  <option key={course.id} value={course.id}>
+                    {course.code} - {course.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Select Students (hold Ctrl/Cmd to select multiple)</label>
+              <select
+                multiple
+                value={enrollmentStudents}
+                onChange={handleStudentSelect}
+                className="w-full mt-2 p-2 border rounded-md h-40"
+              >
+                {users
+                  .filter(user => user.role === 'STUDENT')
+                  .map(student => (
+                    <option key={student.id} value={student.id}>
+                      {student.firstName} {student.lastName} ({student.email})
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <button
+              onClick={enrollStudents}
+              className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-700"
+            >
+              Enroll Students
+            </button>
           </div>
-          
-          {/* Course Details */}
-          {selectedCourse && (
+        </div>
+      )}
+
+      {activeTab === "AVAILABLE_COURSES" && (
+        <div className="mt-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Course List */}
             <div className="w-full md:w-1/2 bg-white p-6 shadow-md rounded-md border">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold">Course Details</h3>
-                <button 
-                  onClick={handleCloseDetails}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  Close
-                </button>
-              </div>
-              
-              <div className="mb-4">
-                <h4 className="text-lg font-medium">{selectedCourse.name}</h4>
-                <p className="text-gray-700">{selectedCourse.code}</p>
-                <p className="mt-2">{selectedCourse.description}</p>
-              </div>
-              
-              <div className="mb-4">
-                <h4 className="font-medium">Professor</h4>
-                <div className="flex justify-between items-center">
-                  <div>
-                    {selectedCourse.professor ? (
-                      <p>
-                        {selectedCourse.professor.firstName} {selectedCourse.professor.lastName} ({selectedCourse.professor.id})
-                      </p>
-                    ) : (
-                      <p className="italic text-gray-500">No professor assigned</p>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => setShowProfessorForm(true)}
-                    className="px-2 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600"
+              <h3 className="text-xl font-semibold mb-4">Available Courses</h3>
+              {loading ? (
+                <p className="text-gray-500 mt-2">Loading courses...</p>
+              ) : (
+                <ul className="space-y-4 mt-4">
+                  {courses.length === 0 ? (
+                    <p className="text-gray-500">No courses available</p>
+                  ) : (
+                    courses.map((course) => (
+                      <li
+                        key={course.id}
+                        onClick={() => handleCourseSelect(course)}
+                        className={`p-4 rounded-md shadow-sm cursor-pointer hover:bg-gray-100 transition-colors ${
+                          selectedCourse?.id === course.id ? 'border-2 border-blue-500' : 'border border-gray-200'
+                        }`}
+                      >
+                        <h4 className="font-semibold">{course.name}</h4>
+                        <p className="text-sm text-gray-700">{course.code}</p>
+                        <p className="text-sm mt-1">{course.description}</p>
+                        <p className="text-sm text-gray-500 mt-2">
+                          Professor: {course.professor 
+                            ? `${course.professor.firstName} ${course.professor.lastName}` 
+                            : <span className="italic">Not assigned</span>}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Students: {course.students ? course.students.length : 0}
+                        </p>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+            </div>
+            
+            {/* Course Details */}
+            {selectedCourse && (
+              <div className="w-full md:w-1/2 bg-white p-6 shadow-md rounded-md border">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold">Course Details</h3>
+                  <button 
+                    onClick={handleCloseDetails}
+                    className="text-gray-500 hover:text-gray-700"
                   >
-                    {selectedCourse.professor ? "Change" : "Assign"} Professor
+                    Close
                   </button>
                 </div>
                 
-                {showProfessorForm && (
-                  <div className="mt-3 p-3 border rounded-md bg-gray-50">
-                    <div className="flex justify-between items-center mb-2">
-                      <h5 className="text-sm font-medium">
-                        {selectedCourse.professor ? "Change" : "Assign"} Professor
-                      </h5>
-                      <button 
-                        onClick={() => setShowProfessorForm(false)}
-                        className="text-gray-500 hover:text-gray-700 text-sm"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                    
-                    <div className="mb-2">
-                      <select
-                        value={selectedProfessorId}
-                        onChange={(e) => setSelectedProfessorId(e.target.value)}
-                        className="w-full p-2 border rounded-md text-sm"
-                      >
-                        <option value="">-- Select a professor --</option>
-                        {users
-                          .filter(user => user.role === 'PROFESSOR')
-                          .map(professor => (
-                            <option key={professor.id} value={professor.id}>
-                              {professor.firstName} {professor.lastName} ({professor.email})
-                            </option>
-                          ))}
-                      </select>
-                    </div>
-                    
-                    <div className="flex justify-end space-x-2">
-                      {selectedCourse.professor && (
-                        <button
-                          onClick={() => handleProfessorAssignment(null)}
-                          className="px-2 py-1 bg-red-500 text-white text-sm rounded-md hover:bg-red-600"
-                          disabled={isUpdating}
-                        >
-                          Remove Professor
-                        </button>
+                <div className="mb-4">
+                  <h4 className="text-lg font-medium">{selectedCourse.name}</h4>
+                  <p className="text-gray-700">{selectedCourse.code}</p>
+                  <p className="mt-2">{selectedCourse.description}</p>
+                </div>
+                
+                <div className="mb-4">
+                  <h4 className="font-medium">Professor</h4>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      {selectedCourse.professor ? (
+                        <p>
+                          {selectedCourse.professor.firstName} {selectedCourse.professor.lastName} ({selectedCourse.professor.id})
+                        </p>
+                      ) : (
+                        <p className="italic text-gray-500">No professor assigned</p>
                       )}
-                      <button
-                        onClick={() => handleProfessorAssignment(selectedProfessorId)}
-                        className="px-2 py-1 bg-green-500 text-white text-sm rounded-md hover:bg-green-600"
-                        disabled={isUpdating || !selectedProfessorId}
-                      >
-                        {isUpdating ? "Updating..." : "Save"}
-                      </button>
                     </div>
+                    <button
+                      onClick={() => setShowProfessorForm(true)}
+                      className="px-2 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600"
+                    >
+                      {selectedCourse.professor ? "Change" : "Assign"} Professor
+                    </button>
                   </div>
-                )}
+                  
+                  {showProfessorForm && (
+                    <div className="mt-3 p-3 border rounded-md bg-gray-50">
+                      <div className="flex justify-between items-center mb-2">
+                        <h5 className="text-sm font-medium">
+                          {selectedCourse.professor ? "Change" : "Assign"} Professor
+                        </h5>
+                        <button 
+                          onClick={() => setShowProfessorForm(false)}
+                          className="text-gray-500 hover:text-gray-700 text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                      
+                      <div className="mb-2">
+                        <select
+                          value={selectedProfessorId}
+                          onChange={(e) => setSelectedProfessorId(e.target.value)}
+                          className="w-full p-2 border rounded-md text-sm"
+                        >
+                          <option value="">-- Select a professor --</option>
+                          {users
+                            .filter(user => user.role === 'PROFESSOR')
+                            .map(professor => (
+                              <option key={professor.id} value={professor.id}>
+                                {professor.firstName} {professor.lastName} ({professor.email})
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                      
+                      <div className="flex justify-end space-x-2">
+                        {selectedCourse.professor && (
+                          <button
+                            onClick={() => handleProfessorAssignment(null)}
+                            className="px-2 py-1 bg-red-500 text-white text-sm rounded-md hover:bg-red-600"
+                            disabled={isUpdating}
+                          >
+                            Remove Professor
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleProfessorAssignment(selectedProfessorId)}
+                          className="px-2 py-1 bg-green-500 text-white text-sm rounded-md hover:bg-green-600"
+                          disabled={isUpdating || !selectedProfessorId}
+                        >
+                          {isUpdating ? "Updating..." : "Save"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Enrolled Students List Component */}
+                <EnrolledStudentsList 
+                  courseId={selectedCourse.id}
+                  students={selectedCourse.students}
+                  onStudentsRemoved={handleStudentsRemoved}
+                />
               </div>
-              
-              {/* Enrolled Students List Component */}
-              <EnrolledStudentsList 
-                courseId={selectedCourse.id}
-                students={selectedCourse.students}
-                onStudentsRemoved={handleStudentsRemoved}
-              />
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
