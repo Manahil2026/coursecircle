@@ -57,7 +57,7 @@ const AdminDashboard: React.FC = () => {
 
         {/* Main Content Area */}
         <div className="flex-1 pl-6 pt-4">
-          <h1 className="text-lg font-medium mb-6">
+          <h1 className="text-lg font-medium mb-4">
             Admin {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}
           </h1>
           

@@ -75,25 +75,25 @@ const UsersManagement: React.FC = () => {
           <div className="flex space-x-2">
             <button 
               onClick={() => setUserFilter('ALL')}
-              className={`px-4 py-2 rounded-md ${userFilter === 'ALL' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+              className={`px-4 py-2 rounded-md ${userFilter === 'ALL' ? 'bg-[#AAFF45] text-black' : 'bg-gray-200 hover:bg-gray-300'}`}
             >
               All
             </button>
             <button 
               onClick={() => setUserFilter('STUDENT')}
-              className={`px-4 py-2 rounded-md ${userFilter === 'STUDENT' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+              className={`px-4 py-2 rounded-md ${userFilter === 'STUDENT' ? 'bg-[#AAFF45] text-black' : 'bg-gray-200 hover:bg-gray-300'}`}
             >
               Students
             </button>
             <button 
               onClick={() => setUserFilter('PROFESSOR')}
-              className={`px-4 py-2 rounded-md ${userFilter === 'PROFESSOR' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+              className={`px-4 py-2 rounded-md ${userFilter === 'PROFESSOR' ? 'bg-[#AAFF45] text-black' : 'bg-gray-200 hover:bg-gray-300'}`}
             >
               Professors
             </button>
             <button 
               onClick={() => setUserFilter('ADMIN')}
-              className={`px-4 py-2 rounded-md ${userFilter === 'ADMIN' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+              className={`px-4 py-2 rounded-md ${userFilter === 'ADMIN' ? 'bg-[#AAFF45] text-black' : 'bg-gray-200 hover:bg-gray-300'}`}
             >
               Admins
             </button>
