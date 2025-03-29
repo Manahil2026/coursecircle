@@ -2,7 +2,6 @@
 "use client";
 import React, { useState } from "react";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
-import SectionNavLinks from "@/app/components/section_nav_links";
 import CoursesManagement from "@/app/components/admin/courses_management";
 import UsersManagement from "@/app/components/admin/users_management";
 import DashboardSummary from "@/app/components/admin/dashboard_summary";
@@ -57,8 +56,8 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 p-8">
-          <h1 className="text-2xl font-bold mb-6">
+        <div className="flex-1 pl-6 pt-4">
+          <h1 className="text-lg font-medium mb-6">
             Admin {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}
           </h1>
           

@@ -255,19 +255,19 @@ const CoursesManagement: React.FC = () => {
       <div className="flex space-x-4 mb-6 border-b">
         <button
           onClick={() => setActiveTab("ADMIN_COURSES")}
-          className={`px-4 py-2 ${activeTab === "ADMIN_COURSES" ? "border-b-2 border-blue-500 font-semibold" : "text-gray-500"}`}
+          className={`px-1 py-1 ${activeTab === "ADMIN_COURSES" ? "border-b-2 border-[#73b029] font-medium" : "text-black"}`}
         >
           Admin Courses
         </button>
         <button
           onClick={() => setActiveTab("ENROLL_STUDENTS")}
-          className={`px-4 py-2 ${activeTab === "ENROLL_STUDENTS" ? "border-b-2 border-blue-500 font-semibold" : "text-gray-500"}`}
+          className={`px-1 py-1 ${activeTab === "ENROLL_STUDENTS" ? "border-b-2 border-[#73b029] font-medium" : "text-black"}`}
         >
-          Enroll Students in Course
+          Enrollment
         </button>
         <button
           onClick={() => setActiveTab("AVAILABLE_COURSES")}
-          className={`px-4 py-2 ${activeTab === "AVAILABLE_COURSES" ? "border-b-2 border-blue-500 font-semibold" : "text-gray-500"}`}
+          className={`px-1 py-1 ${activeTab === "AVAILABLE_COURSES" ? "border-b-2 border-[#73b029] font-medium" : "text-black"}`}
         >
           Available Courses
         </button>
