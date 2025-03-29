@@ -153,7 +153,7 @@ const AssignmentDetails = () => {
   const handleShowFiles = async () => {
     const fetchedFiles = await fetchFiles(courseId, assignmentId);
     setFiles(fetchedFiles);
-    setShowFiles(true);
+    setShowFiles(!showFiles);
   };
 
   const handleNavigate = (fileId: string) => {
@@ -292,7 +292,8 @@ const AssignmentDetails = () => {
             {/* Speed Grader Button */}
             <button
               onClick={() => router.push(`/courses/${courseId}/assignments/${assignmentId}/speed-grader`)}
-              className="px-3 py-2 text-sm rounded bg-[#B9FF66] text-black hover:bg-[#A8FF00]"
+              className="px-4 py-2 text-sm rounded bg-[#B9FF66] text-black hover:bg-[#A8FF00] shadow-md"
+              style={{ marginLeft: "auto" }} // Aligns it to the right
             >
               Speed Grader
             </button>
@@ -431,24 +432,25 @@ const AssignmentDetails = () => {
             }
           />
 
-          {/* Uploaded Files Section with Show Files Button */}
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-2">Uploaded Files</h2>
-            {!showFiles ? (
-              <button
+          {/* Uploaded Files Section */}
+          <div className="bg-gray-100 shadow-md rounded p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-black">Uploaded Files</h2>
+              <img
+                src={showFiles ? "/asset/arrowup_icon.svg" : "/asset/arrowdown_icon.svg"}
+                alt={showFiles ? "Collapse" : "Expand"}
+                className="w-6 h-6 cursor-pointer hover:opacity-80"
                 onClick={handleShowFiles}
-                className="bg-[#AAFF45] text-gray-700 px-4 py-2 rounded hover:bg-[#B9FF66]"
-              >
-                Show Files
-              </button>
-            ) : (
-              <ul className="list-disc pl-5">
+              />
+            </div>
+            {showFiles && (
+              <ul className="list-disc pl-5 mt-4">
                 {files.length > 0 ? (
                   files.map((file) => (
                     <li key={file.id} className="flex items-center gap-4">
                       <a
                         onClick={() => handleNavigate(file.id)}
-                        className="text-blue-500 hover:underline cursor-pointer"
+                        className="text-lime-600 hover:underline cursor-pointer"
                       >
                         {file.fileName}
                       </a>
@@ -466,40 +468,24 @@ const AssignmentDetails = () => {
                     </li>
                   ))
                 ) : (
-                  <li>No files uploaded yet.</li>
+                  <li className="text-gray-600">No files uploaded yet.</li>
                 )}
               </ul>
             )}
           </div>
 
           {/* Bottom Button Row */}
-          <div className="flex justify-end gap-4">
-            {isEditing ? (
-              <button
-                onClick={handleSaveAll}
-                className="bg-[#AAFF45] text-gray-700 px-4 py-2 rounded hover:bg-[#B9FF66]"
-              >
-                Save
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="bg-[#AAFF45] text-gray-700 px-4 py-2 rounded hover:bg-[#B9FF66]"
-              >
-                Edit
-              </button>
-            )}
-
-            {/* Publish button */}
+          <div className="flex justify-end gap-2">
             <button
-              onClick={handlePublish}
-              disabled={isPublished}
-              className={`px-4 py-2 rounded ${isPublished ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"}`}
+              onClick={isEditing ? handleSaveAll : () => setIsEditing(true)}
+              className={`px-4 py-2 rounded text-white ${
+                isEditing
+                  ? "bg-[#B9FF66] hover:bg-[#A8FF00]" // Lime green for "Save"
+                  : "bg-gray-500 hover:bg-gray-600"    // Neutral grey for "Edit"
+              }`}
             >
-              {isPublished ? "Published" : "Publish"}
+              {isEditing ? "Save" : "Edit"}
             </button>
-
-            {/* Cancel button */}
             <button
               onClick={() => router.back()}
               className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
