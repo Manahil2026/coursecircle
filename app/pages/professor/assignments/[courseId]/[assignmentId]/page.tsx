@@ -13,7 +13,7 @@ interface Assignment {
   description: string;
   points: string;
   dueDate: string;
-  dueTime: string; // you might remove this if you store time with dueDate in the DB
+  dueTime: string;
   submissionType: string;
   onlineSubmissionMethod?: string;
   published: boolean;
@@ -32,7 +32,7 @@ const AssignmentDetails = () => {
 
   const [assignment, setAssignment] = useState<Assignment | null>(null);
 
-  // States for all editable fields
+  // Editable fields
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [points, setPoints] = useState("");
@@ -45,6 +45,11 @@ const AssignmentDetails = () => {
   const [selectedOnlineMethod, setSelectedOnlineMethod] = useState<string | null>(null);
   const [showFiles, setShowFiles] = useState(false);
 
+  // New state variables for submissions count
+  const [submissionCount, setSubmissionCount] = useState<number>(0);
+  const [totalStudents, setTotalStudents] = useState<number>(0);
+
+  // Fetch assignment details
   useEffect(() => {
     if (courseId && assignmentId) {
       fetch(`/api/courses/${courseId}/assignments/${assignmentId}`)
@@ -63,9 +68,6 @@ const AssignmentDetails = () => {
           setPoints(data.points?.toString() || "0");
           setIsPublished(data.published || false);
 
-
-          // If the DB stores date/time in data.dueDate (DateTime),
-          // parse them for separate date & time inputs
           if (data.dueDate) {
             const dateObj = new Date(data.dueDate);
             setDueDate(dateObj.toISOString().split("T")[0]); // yyyy-mm-dd
@@ -80,9 +82,13 @@ const AssignmentDetails = () => {
 
           setSubmissionType(data.submissionType || "NO_SUBMISSIONS");
           setSelectedOnlineMethod(data.onlineSubmissionMethod || null);
-
-          // If the API returns an array of files in data.files
           setFiles(data.files || []);
+
+          // If the assignment is published, fetch submission stats
+          if (data.published) {
+            fetchSubmissionsCount();
+            fetchEnrolledStudents();
+          }
         })
         .catch((error) => {
           console.error("Error fetching assignment:", error);
@@ -90,7 +96,36 @@ const AssignmentDetails = () => {
     }
   }, [courseId, assignmentId]);
 
-  // This function will save all fields, not just description
+  // Fetch submissions for the assignment and count unique student submissions
+  const fetchSubmissionsCount = async () => {
+    try {
+      const res = await fetch(`/api/courses/${courseId}/assignments/${assignmentId}/submissions/count`);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      setSubmissionCount(data.submissionCount);
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
+    }
+  };
+
+  // Fetch course details to get total enrolled students
+  const fetchEnrolledStudents = async () => {
+    try {
+      const res = await fetch(`/api/courses/${courseId}`);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      // Assuming data.students is an array of enrolled students
+      setTotalStudents(data.students?.length || 0);
+    } catch (error) {
+      console.error("Error fetching course details:", error);
+    }
+  };
+
+  // Save assignment changes
   const handleSaveAll = async () => {
     if (!assignment) return;
 
@@ -100,7 +135,6 @@ const AssignmentDetails = () => {
       alert("Invalid submission type");
       return;
     }
-
 
     const combinedDueDateTime = dueDate && dueTime
       ? new Date(`${dueDate}T${dueTime}:00`)
@@ -112,7 +146,6 @@ const AssignmentDetails = () => {
       description,
       points: parseInt(points, 10),
       dueDate: combinedDueDateTime ? combinedDueDateTime.toISOString() : null,
-
       submissionType: formattedSubmissionType,
       onlineSubmissionMethod:
         formattedSubmissionType === "ONLINE" ? selectedOnlineMethod?.toUpperCase() : null,
@@ -143,7 +176,7 @@ const AssignmentDetails = () => {
       const response = await fetch(`/api/courses/${courseId}/assignments/${assignmentId}/files`);
       if (!response.ok) throw new Error("Failed to fetch files");
       const data = await response.json();
-      return data.files; // Return only the files array
+      return data.files;
     } catch (error) {
       console.error("Error fetching files:", error);
       return [];
@@ -167,9 +200,7 @@ const AssignmentDetails = () => {
     if (!confirmPublish) return;
 
     try {
-      const payload = {
-        published: true,
-      };
+      const payload = { published: true };
 
       const res = await fetch(`/api/courses/${courseId}/assignments/${assignment.id}/publish`, {
         method: "PUT",
@@ -181,6 +212,9 @@ const AssignmentDetails = () => {
         alert("Assignment published successfully!");
         setIsPublished(true);
         setAssignment((prev) => prev ? { ...prev, published: true } : null);
+        // Fetch submission stats when published
+        fetchSubmissionsCount();
+        fetchEnrolledStudents();
       } else {
         const errorData = await res.json();
         alert(`Failed to publish assignment: ${errorData.error || "Unknown error"}`);
@@ -198,9 +232,7 @@ const AssignmentDetails = () => {
     if (!confirmUnpublish) return;
 
     try {
-      const payload = {
-        published: false,
-      };
+      const payload = { published: false };
 
       const res = await fetch(`/api/courses/${courseId}/assignments/${assignment.id}/publish`, {
         method: "PUT",
@@ -212,6 +244,9 @@ const AssignmentDetails = () => {
         alert("Assignment unpublished successfully!");
         setIsPublished(false);
         setAssignment((prev) => prev ? { ...prev, published: false } : null);
+        // Reset submission stats when unpublished
+        setSubmissionCount(0);
+        setTotalStudents(0);
       } else {
         const errorData = await res.json();
         alert(`Failed to unpublish assignment: ${errorData.error || "Unknown error"}`);
@@ -289,16 +324,27 @@ const AssignmentDetails = () => {
               )}
             </div>
 
-            {/* Speed Grader Button */}
-            <button
-              onClick={() => router.push(`/courses/${courseId}/assignments/${assignmentId}/speed-grader`)}
-              className="px-4 py-2 text-sm rounded bg-[#B9FF66] text-black hover:bg-[#A8FF00] shadow-md"
-              style={{ marginLeft: "auto" }} // Aligns it to the right
-            >
-              Speed Grader
-            </button>
+            {/* Submission Stats and Quick Grader Button */}
+            <div className="flex items-center gap-4">
+              {isPublished && (
+                <div className="text-sm text-gray-700">
+                  {totalStudents > 0 ? (
+                    <span>
+                      {submissionCount} student{submissionCount !== 1 && "s"} submitted out of {totalStudents}
+                    </span>
+                  ) : (
+                    <span>Loading submission data...</span>
+                  )}
+                </div>
+              )}
+              <button
+                onClick={() => router.push(`/courses/${courseId}/assignments/${assignmentId}/quick-grader`)}
+                className="px-4 py-2 text-sm rounded bg-[#B9FF66] text-black hover:bg-[#A8FF00] shadow-md"
+              >
+                Quick Grader
+              </button>
+            </div>
           </h1>
-
 
           {/* Title */}
           <div className="mb-6">
@@ -308,8 +354,7 @@ const AssignmentDetails = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               readOnly={!isEditing}
-              className={`w-full border p-2 rounded ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"
-                }`}
+              className={`w-full border p-2 rounded ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"}`}
             />
           </div>
 
@@ -340,8 +385,7 @@ const AssignmentDetails = () => {
               value={points}
               onChange={(e) => setPoints(e.target.value)}
               readOnly={!isEditing}
-              className={`w-full border p-2 rounded ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"
-                }`}
+              className={`w-full border p-2 rounded ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"}`}
             />
           </div>
 
@@ -354,8 +398,7 @@ const AssignmentDetails = () => {
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 readOnly={!isEditing}
-                className={`border p-2 rounded w-full ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"
-                  }`}
+                className={`border p-2 rounded w-full ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"}`}
               />
             </div>
             <div className="flex-1 min-w-[150px]">
@@ -365,8 +408,7 @@ const AssignmentDetails = () => {
                 value={dueTime}
                 onChange={(e) => setDueTime(e.target.value)}
                 readOnly={!isEditing}
-                className={`border p-2 rounded w-full ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"
-                  }`}
+                className={`border p-2 rounded w-full ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"}`}
               />
             </div>
           </div>
@@ -378,8 +420,7 @@ const AssignmentDetails = () => {
               value={submissionType}
               onChange={(e) => setSubmissionType(e.target.value)}
               disabled={!isEditing}
-              className={`w-full border p-2 rounded ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"
-                }`}
+              className={`w-full border p-2 rounded ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"}`}
             >
               <option value="NO_SUBMISSIONS">No Submissions</option>
               <option value="ONLINE">Online Submission</option>
@@ -478,11 +519,7 @@ const AssignmentDetails = () => {
           <div className="flex justify-end gap-2">
             <button
               onClick={isEditing ? handleSaveAll : () => setIsEditing(true)}
-              className={`px-4 py-2 rounded text-white ${
-                isEditing
-                  ? "bg-[#B9FF66] hover:bg-[#A8FF00]" // Lime green for "Save"
-                  : "bg-gray-500 hover:bg-gray-600"    // Neutral grey for "Edit"
-              }`}
+              className={`px-4 py-2 rounded text-white ${isEditing ? "bg-[#B9FF66] hover:bg-[#A8FF00]" : "bg-gray-500 hover:bg-gray-600"}`}
             >
               {isEditing ? "Save" : "Edit"}
             </button>
@@ -493,7 +530,6 @@ const AssignmentDetails = () => {
               Cancel
             </button>
           </div>
-
         </div>
       </div>
     </div>
