@@ -23,7 +23,7 @@ export async function POST(
       headers: req.headers,
     });
     
-    const { userId } = getAuth(authRequest);
+    const { userId } = getAuth(req as NextRequest);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -117,7 +117,7 @@ export async function GET(
       headers: req.headers,
     });
     
-    const { userId } = getAuth(authRequest);
+    const { userId } = getAuth(req as NextRequest);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -233,7 +233,7 @@ export async function PUT(
       headers: req.headers,
     });
     
-    const { userId } = getAuth(authRequest);
+    const { userId } = getAuth(req as NextRequest);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
