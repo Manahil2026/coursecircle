@@ -14,13 +14,19 @@ export async function POST(
   { params }: { params: { courseId: string; assignmentId: string } }
 ) {
   try {
-    const nextReq = new NextRequest(req); // Wrap the Request object
-    const { userId } = getAuth(nextReq);
+    // Await the params object before destructuring
+    const { courseId, assignmentId } = await params;
+    
+    // Clone the request before using it for auth
+    const authRequest = new Request(req.url, {
+      method: req.method,
+      headers: req.headers,
+    });
+    
+    const { userId } = getAuth(authRequest);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const { courseId, assignmentId } = params;
     
     // Check if the student is enrolled in the course
     const student = await prisma.user.findUnique({
@@ -49,6 +55,7 @@ export async function POST(
       return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
     }
 
+    // Now safely read the formData for the first time
     const formData = await req.formData();
     const file = formData.get("file") as File;
 
@@ -101,13 +108,19 @@ export async function GET(
   { params }: { params: { courseId: string; assignmentId: string } }
 ) {
   try {
-    const nextReq = new NextRequest(req); // Wrap the Request object
-    const { userId } = getAuth(nextReq); // Use the wrapped NextRequest
+    // Await the params object before destructuring
+    const { courseId, assignmentId } = await params;
+    
+    // Clone the request before using it for auth
+    const authRequest = new Request(req.url, {
+      method: req.method,
+      headers: req.headers,
+    });
+    
+    const { userId } = getAuth(authRequest);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const { courseId, assignmentId } = params;
 
     // First check if assignment exists and belongs to the course
     const assignment = await prisma.assignment.findUnique({
@@ -211,14 +224,23 @@ export async function PUT(
   { params }: { params: { courseId: string; assignmentId: string } }
 ) {
   try {
-    const nextReq = new NextRequest(req); // Wrap the Request object
-    const { userId } = getAuth(nextReq); // Use the wrapped NextRequest
+    // Await the params object before destructuring
+    const { courseId } = await params;
+    
+    // Clone the request before using it for auth
+    const authRequest = new Request(req.url, {
+      method: req.method,
+      headers: req.headers,
+    });
+    
+    const { userId } = getAuth(authRequest);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { submissionId, grade, feedback, status } = await req.json();
-    const { courseId } = params;
+    // Clone the request again for reading the JSON body
+    const reqClone = req.clone();
+    const { submissionId, grade, feedback, status } = await reqClone.json();
 
     // Check if user is a professor for this course or an admin
     const user = await prisma.user.findUnique({

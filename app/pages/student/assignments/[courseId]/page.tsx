@@ -1,3 +1,5 @@
+//Student page that lists all assignments for a selected course with submission status for each assignment
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -12,6 +14,7 @@ interface Assignment {
   points: number;
   dueDate: string;
   description?: string;
+  submissionStatus?: "NOT_SUBMITTED" | "SUBMITTED" | "GRADED";
 }
 
 interface Group {
@@ -26,6 +29,7 @@ const StudentAssignments = () => {
   const courseId = params?.courseId as string;
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusLoading, setStatusLoading] = useState(true);
 
   useEffect(() => {
     if (courseId) {
@@ -39,6 +43,35 @@ const StudentAssignments = () => {
         .catch((error) => {
           console.error("Error fetching assignments:", error);
           setLoading(false);
+        });
+        
+      // Fetch submission statuses
+      fetch(`/api/courses/${courseId}/submissions/status`)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Failed to fetch submission statuses");
+          }
+          return res.json();
+        })
+        .then((data) => {
+          // Update groups with submission status
+          if (data.statuses) {
+            setGroups(prevGroups => {
+              const newGroups = JSON.parse(JSON.stringify(prevGroups));
+              newGroups.forEach((group: Group) => {
+                group.assignments.forEach((assignment: Assignment) => {
+                  assignment.submissionStatus = data.statuses[assignment.id] || "NOT_SUBMITTED";
+                });
+              });
+              return newGroups;
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching submission statuses:", error);
+        })
+        .finally(() => {
+          setStatusLoading(false);
         });
     }
   }, [courseId]);
@@ -70,6 +103,30 @@ const StudentAssignments = () => {
     const formattedHours = hours % 12 || 12; // Convert 0 to 12 for AM
     
     return `${formattedHours}:${minutes} ${ampm}`;
+  };
+
+  // Function to get status badge for an assignment
+  const getStatusBadge = (status?: string) => {
+    switch (status) {
+      case "GRADED":
+        return (
+          <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">
+            Graded
+          </span>
+        );
+      case "SUBMITTED":
+        return (
+          <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+            Submitted
+          </span>
+        );
+      default:
+        return (
+          <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">
+            Not Submitted
+          </span>
+        );
+    }
   };
 
   return (
@@ -113,9 +170,7 @@ const StudentAssignments = () => {
                               </div>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                                Not Submitted
-                              </span>
+                              {getStatusBadge(assignment.submissionStatus)}
                               <Image 
                                 src="/asset/arrowdown_icon.svg" 
                                 alt="View assignment" 
