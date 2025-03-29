@@ -338,7 +338,7 @@ const AssignmentDetails = () => {
                 </div>
               )}
               <button
-                onClick={() => router.push(`/courses/${courseId}/assignments/${assignmentId}/quick-grader`)}
+                onClick={() => router.push(`/pages/professor/assignments/${courseId}/${assignmentId}/quick-grader`)}
                 className="px-4 py-2 text-sm rounded bg-[#B9FF66] text-black hover:bg-[#A8FF00] shadow-md"
               >
                 Quick Grader
