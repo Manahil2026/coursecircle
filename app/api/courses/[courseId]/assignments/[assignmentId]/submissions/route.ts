@@ -1,10 +1,10 @@
 // This route has endpoints for POST (student assignment submissions), GET (retrieve submissions; prof sees everyone's), and PUT (updating of submissions with grades by prof).
- 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuth } from "@clerk/nextjs/server";
 import { promises as fs } from "fs";
 import path from "path";
+import { NextRequest } from "next/server";
 
 const uploadDir = path.join(process.cwd(), "public", "uploads");
 
@@ -14,7 +14,8 @@ export async function POST(
   { params }: { params: { courseId: string; assignmentId: string } }
 ) {
   try {
-    const { userId } = getAuth(req);
+    const nextReq = new NextRequest(req); // Wrap the Request object
+    const { userId } = getAuth(nextReq);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -100,82 +101,84 @@ export async function GET(
   { params }: { params: { courseId: string; assignmentId: string } }
 ) {
   try {
-    const { userId } = getAuth(req);
+    const nextReq = new NextRequest(req); // Wrap the Request object
+    const { userId } = getAuth(nextReq); // Use the wrapped NextRequest
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { courseId, assignmentId } = params;
-    
+
     // First check if assignment exists and belongs to the course
     const assignment = await prisma.assignment.findUnique({
-      where: { 
+      where: {
         id: assignmentId,
-        courseId
-      }
+        courseId,
+      },
     });
 
     if (!assignment) {
       return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
     }
-    
+
     // Get user's role
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { role: true }
+      select: { role: true },
     });
-    
+
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-    
+
     // For students, only return their own submissions
     if (user.role === "STUDENT") {
-      // Check if the student is enrolled in the course
       const isEnrolled = await prisma.course.findFirst({
         where: {
           id: courseId,
           students: {
-            some: { id: userId }
-          }
-        }
+            some: { id: userId },
+          },
+        },
       });
-      
+
       if (!isEnrolled) {
         return NextResponse.json({ error: "Not enrolled in this course" }, { status: 403 });
       }
-      
+
       const submissions = await prisma.submission.findMany({
         where: {
           assignmentId,
-          studentId: userId
+          studentId: userId,
         },
         orderBy: {
-          createdAt: 'desc'
-        }
+          createdAt: "desc",
+        },
       });
-      
+
       return NextResponse.json({ submissions });
-    } 
+    }
     // For professors, return all submissions with student info
     else if (user.role === "PROFESSOR" || user.role === "ADMIN") {
-      // Check if the professor teaches this course
       if (user.role === "PROFESSOR") {
         const course = await prisma.course.findUnique({
           where: {
             id: courseId,
-            professorId: userId
-          }
+            professorId: userId,
+          },
         });
-        
+
         if (!course) {
-          return NextResponse.json({ error: "Not authorized to view this course's submissions" }, { status: 403 });
+          return NextResponse.json(
+            { error: "Not authorized to view this course's submissions" },
+            { status: 403 }
+          );
         }
       }
-      
+
       const submissions = await prisma.submission.findMany({
         where: {
-          assignmentId
+          assignmentId,
         },
         include: {
           student: {
@@ -183,18 +186,18 @@ export async function GET(
               id: true,
               firstName: true,
               lastName: true,
-              email: true
-            }
-          }
+              email: true,
+            },
+          },
         },
         orderBy: {
-          createdAt: 'desc'
-        }
+          createdAt: "desc",
+        },
       });
-      
+
       return NextResponse.json({ submissions });
     }
-    
+
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   } catch (error) {
     console.error("Error fetching submissions:", error);
@@ -208,49 +211,56 @@ export async function PUT(
   { params }: { params: { courseId: string; assignmentId: string } }
 ) {
   try {
-    const { userId } = getAuth(req);
+    const nextReq = new NextRequest(req); // Wrap the Request object
+    const { userId } = getAuth(nextReq); // Use the wrapped NextRequest
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { submissionId, grade, feedback, status } = await req.json();
     const { courseId } = params;
-    
+
     // Check if user is a professor for this course or an admin
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { role: true }
+      select: { role: true },
     });
-    
+
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-    
+
     if (user.role === "PROFESSOR") {
       const course = await prisma.course.findUnique({
         where: {
           id: courseId,
-          professorId: userId
-        }
+          professorId: userId,
+        },
       });
-      
+
       if (!course) {
-        return NextResponse.json({ error: "Not authorized to grade submissions for this course" }, { status: 403 });
+        return NextResponse.json(
+          { error: "Not authorized to grade submissions for this course" },
+          { status: 403 }
+        );
       }
     } else if (user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Only professors and admins can grade submissions" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Only professors and admins can grade submissions" },
+        { status: 403 }
+      );
     }
-    
+
     // Update the submission
     const updatedSubmission = await prisma.submission.update({
       where: { id: submissionId },
       data: {
         grade: grade !== undefined ? grade : undefined,
         feedback: feedback !== undefined ? feedback : undefined,
-        status: status !== undefined ? status : undefined
-      }
+        status: status !== undefined ? status : undefined,
+      },
     });
-    
+
     return NextResponse.json({ submission: updatedSubmission });
   } catch (error) {
     console.error("Error updating submission:", error);
