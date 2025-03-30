@@ -73,7 +73,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ onCreateCourse }) => {
               name="name"
               value={courseData.name}
               onChange={handleInputChange}
-              className="w-full mt-2 p-2 border rounded"
+              className="w-full mt-2 p-2 border rounded border-black"
               placeholder="Course Name"
             />
           </div>
@@ -86,7 +86,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ onCreateCourse }) => {
               name="code"
               value={courseData.code}
               onChange={handleInputChange}
-              className="w-full mt-2 p-2 border rounded"
+              className="w-full mt-2 p-2 border rounded border-black"
               placeholder="Course Code (e.g., CS101)"
             />
           </div>
@@ -100,7 +100,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ onCreateCourse }) => {
               name="description"
               value={courseData.description}
               onChange={handleInputChange}
-              className="w-full mt-2 p-2 border rounded"
+              className="w-full mt-2 p-2 border rounded border-black"
               placeholder="Course Description"
               rows={1}
             />
@@ -114,7 +114,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ onCreateCourse }) => {
               name="professorId"
               value={courseData.professorId}
               onChange={handleInputChange}
-              className="w-full mt-2 p-2 border rounded"
+              className="w-full mt-2 p-2 border rounded border-black"
               placeholder="Professor ID (leave blank if not assigned yet)"
             />
           </div>

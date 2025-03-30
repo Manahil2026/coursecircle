@@ -71,7 +71,7 @@ const EnrolledStudentsList: React.FC<EnrolledStudentsListProps> = ({
   return (
     <div className="mt-4">
       <div className="flex justify-between items-center mb-2">
-        <h3 className="font-medium">Enrolled Students ({students.length})</h3>
+        {/* <h3 className="font-medium">Enrolled Students ({students.length})</h3> */}
         {selectedStudents.length > 0 && (
           <button
             onClick={handleRemoveStudents}
