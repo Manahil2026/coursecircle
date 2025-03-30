@@ -38,7 +38,7 @@ async function main() {
     professors.push(professor)
   }
 
-  console.log('Created professors')
+  console.log('Created professors', professors)
 
   // Create students
   const students = []
@@ -55,7 +55,7 @@ async function main() {
     students.push(student)
   }
 
-  console.log('Created students')
+  console.log('Created students', students)
 
   // Course subjects and their codes
   const subjects = [

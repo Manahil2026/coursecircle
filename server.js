@@ -1,46 +1,48 @@
-const express = require("express");
-const cors = require("cors");
+import express from 'express';
+import cors from 'cors';
+
 const app = express();
-const port = process.env.PORT || 5000;
+const PORT = 5000;
 
 app.use(cors());
 app.use(express.json());
-const mockEmails = [
+
+let emails = [
     {
         id: 1,
-        sender: "Jane Doe",
-        subject: "schedule",
-        preview: "here is my availability",
-        time: "9:00 pm",
+        sender: "John Doe",
+        subject: "Meeting Reminder",
+        preview: "Don't forget our meeting at 3 PM...",
+        time: "10:30 AM",
         isRead: false,
-        isStarred: false,
+        isStarred: false
     },
     {
         id: 2,
-        sender: "John Doe",
-        subject: "confirm",
-        preview: "lets meet",
-        time: "8:20 am",
+        sender: "Jane Smith",
+        subject: "Project Update",
+        preview: "Here is the latest update on the project...",
+        time: "11:15 AM",
         isRead: false,
-        isStarred: true,
-    },
+        isStarred: false
+    }
 ];
-app.get("/api/emails", (req, res) => {
-    res.json(mockEmails);
+app.get('/api/emails', (req, res) => {
+    res.json(emails);
 });
-app.put("/api/emails/:id/markasRead", (req, res) => {
+app.put('/api/emails/:id/markAsRead', (req, res) => {
     const emailId = parseInt(req.params.id);
-    const email = mockEmails.find((e) => e.id === emailId);
+    const email = emails.find(e => e.id === emailId);
     if (email) {
         email.isRead = true;
         res.json(email);
     } else {
-        res.status(404).json({message: "Email not found" });
+        res.status(404).json({ message: "Email not found" });
     }
 });
-app.put("/api/emails/:id/toggleStar", (req, res) => {
+app.put('/api/emails/:id/toggleStar', (req, res) => {
     const emailId = parseInt(req.params.id);
-    const email = mockEmails.find((e) => e.id === emailId);
+    const email = emails.find(e => e.id === emailId);
     if (email) {
         email.isStarred = !email.isStarred;
         res.json(email);
@@ -48,6 +50,7 @@ app.put("/api/emails/:id/toggleStar", (req, res) => {
         res.status(404).json({ message: "Email not found" });
     }
 });
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-})
+
+app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+});

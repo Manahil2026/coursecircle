@@ -59,5 +59,7 @@
   "bugs": {
     "url": "https://github.com/Manahil2026/coursecircle/issues"
   },
-  "homepage": "https://github.com/Manahil2026/coursecircle#readme"
+  "homepage": "https://github.com/Manahil2026/coursecircle#readme",
+  "main": "jest.config.js",
+  "type": "commonjs"
 }
