@@ -353,7 +353,12 @@ const CoursesManagement: React.FC = () => {
             className="flex items-center border-b rounded-md p-2 shadow-md border-[#aeaeae85] w-full max-w-xl cursor-pointer transition-all duration-300 hover:transform hover:bg-gray-200"
           >
             <div
-              className={`bg-gray-300 w-24 h-24 flex items-center justify-center text-7xl font-bold rounded-md`}
+              className={`w-24 h-24 flex items-center justify-center text-7xl font-bold rounded-md`}
+              style={{
+              backgroundColor: `#${(
+                (course.name.length * 1234567) % 0xffffff
+              ).toString(16).padStart(6, "0")}`,
+              }}
             >
               {course.name.charAt(0)}
             </div>

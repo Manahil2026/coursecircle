@@ -115,13 +115,18 @@ const UsersManagement: React.FC = () => {
         )}
 
       <div className="p-4">
-        <div className="mt-4 mb-6">
+        <div className="mt-4 mb-6 relative">
           <input
             type="text"
             placeholder="Search by name or email"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-auto px-4 py-2 border rounded border-black focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-auto px-4 py-2 pl-10 border rounded border-black focus:outline-none focus:ring-1 focus:ring-black"
+          />
+          <img
+            src="/asset/search_icon.svg"
+            alt="Search"
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500"
           />
         </div>
 
