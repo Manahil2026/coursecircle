@@ -1,6 +1,8 @@
+// This API route fetches the courses a student is enrolled in.
+// It uses the Clerk authentication to get the userId and fetches the courses from the database.
 import { NextRequest, NextResponse } from "next/server";
-import { getAuth } from "@clerk/nextjs/server"; // Assuming you use Clerk for authentication
-import { prisma } from "@/lib/prisma"; // Ensure this is your Prisma client instance
+import { getAuth } from "@clerk/nextjs/server"; 
+import { prisma } from "@/lib/prisma"; 
 
 export async function GET(req: NextRequest) {
   const { userId } = getAuth(req);

@@ -37,6 +37,9 @@ model User {
   // A student can be enrolled in many courses, and a course can have many students
   // Prisma automatically creates a join table to manage this relationship
   enrolledCourses Course[] @relation("StudentCourses")
+
+  // Added relation for submissions
+  submissions Submission[]
 }
 
 model Course {
@@ -66,6 +69,7 @@ model Course {
 
   assignmentGroups AssignmentGroup[] //one to many relation btw Course and AssignmentGroup
 
+  
   @@index([professorId])
   @@map("courses")
 }
@@ -99,15 +103,27 @@ model AssignmentGroup {
   @@map("assignment_groups")
 }
 
+enum SubmissionType {
+  NO_SUBMISSIONS
+  ONLINE
+}
+
+enum OnlineSubmissionMethod {
+  TEXT_ENTRY
+  FILE_UPLOAD
+}
+
 model Assignment {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   title       String
   description String?
   dueDate     DateTime?
   points      Int       @default(0)
+
+  published   Boolean   @default(false)
 
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId String
@@ -115,8 +131,29 @@ model Assignment {
   group   AssignmentGroup? @relation("GroupAssignments", fields: [groupId], references: [id])
   groupId String?
 
+  files   AssignmentFile[] @relation("AssignmentFiles")
+
+  // Add the submission type and method fields
+  submissionType       SubmissionType      @default(NO_SUBMISSIONS)
+  onlineSubmissionMethod OnlineSubmissionMethod? // Only relevant if submissionType is ONLINE
+
+  // Add relation to submissions
+  submissions Submission[]
+
   @@index([courseId])
   @@map("assignments")
+}
+
+model AssignmentFile {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  fileName     String
+  fileUrl      String
+
+  assignment   Assignment @relation("AssignmentFiles", fields: [assignmentId], references: [id], onDelete: Cascade)
+  assignmentId String
+
+  @@map("assignment_files")
 }
 
 model Module {
@@ -124,6 +161,7 @@ model Module {
   title     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  published Boolean        @default(false)
 
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId String
@@ -156,4 +194,34 @@ model ModuleFile {
 
   @@index([moduleId])
   @@map("module_files")
+}
+
+// New model for submissions
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  GRADED
+}
+
+model Submission {
+  id           String           @id @default(cuid())
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  
+  fileName     String
+  fileUrl      String
+  status       SubmissionStatus @default(SUBMITTED)
+  
+  grade        Float?
+  feedback     String?
+  
+  assignment   Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  assignmentId String
+  
+  student      User             @relation(fields: [studentId], references: [id])
+  studentId    String
+  
+  @@index([assignmentId])
+  @@index([studentId])
+  @@map("submissions")
 }

@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import CourseMenu from "@/app/components/course_menu";
+import { useParams } from "next/navigation";
 
 const Section: React.FC<{ title: string; items: string[] }> = ({ title, items }) => (
   <div className="border border-gray-400 flex flex-col text-sm mb-6 rounded-sm">
@@ -15,12 +16,16 @@ const Section: React.FC<{ title: string; items: string[] }> = ({ title, items })
 );
 
 const Coursepage: React.FC = () => {
+  const params = useParams();
+  const courseId = params?.courseId as string;
   const [progress, setProgress] = useState(43);
+  
+  console.log("Course ID in course_home page:", courseId);
 
   return (
     <div className="flex">
       <Sidebar_dashboard />
-      <CourseMenu />
+      <CourseMenu courseId={courseId} />
       <main className="min-h-screen flex-1 p-6 pl-52">
         <h2 className="text-base font-semibold mb-4">Welcome to Your Course</h2>
         <Section title="Course Overview" items={["Get Started", "Syllabus", "Resources"]} />

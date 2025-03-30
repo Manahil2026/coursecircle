@@ -1,3 +1,9 @@
+// This API route fetches file details from the database and handles both regular course files and module files. 
+// It first attempts to find a regular course file by its ID. 
+// If not found, it checks for a module file with the same ID. 
+// If either is found, it returns the file details in JSON format. 
+// If neither is found, it returns a 404 error. 
+// In case of any server errors, it returns a 500 error.
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 

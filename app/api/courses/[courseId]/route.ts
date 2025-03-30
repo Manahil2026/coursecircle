@@ -1,4 +1,3 @@
-// app/api/courses/[courseId]/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -7,7 +6,7 @@ export async function GET(request: Request, { params }: { params: { courseId: st
     const courseId = params.courseId;
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      
+      include: { students: true } 
     });
     if (!course) {
       return NextResponse.json({ error: "Course not found" }, { status: 404 });
@@ -18,4 +17,3 @@ export async function GET(request: Request, { params }: { params: { courseId: st
     return NextResponse.json({ error: "Failed to fetch course" }, { status: 500 });
   }
 }
-

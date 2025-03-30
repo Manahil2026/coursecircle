@@ -1,8 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import Image from "next/image";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// Initialize the Google AI client
+const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+if (!apiKey) {
+  throw new Error("API key is not defined");
+}
+const genAI = new GoogleGenerativeAI(apiKey);
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 interface Message {
   id: number;
@@ -14,31 +23,83 @@ interface Message {
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatHistory = useRef<{ role: string; parts: { text: string }[] }[]>([]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  // Scroll to bottom of messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const generateAIResponse = async (userMessage: string) => {
+    setIsLoading(true);
+
+    try {
+      // Update chat history with user message
+      chatHistory.current.push({
+        role: "user",
+        parts: [{ text: userMessage }],
+      });
+
+      // Start a chat and get a response
+      const chat = model.startChat({
+        history: chatHistory.current,
+        generationConfig: {
+          maxOutputTokens: 1000,
+        },
+      });
+
+      const result = await chat.sendMessage(userMessage);
+      const aiResponse = result.response.text();
+
+      // Update chat history with AI response
+      chatHistory.current.push({
+        role: "model",
+        parts: [{ text: aiResponse }],
+      });
+
+      return aiResponse;
+    } catch (error) {
+      console.error("Error generating AI response:", error);
+      return "Sorry, I encountered an error. Please try again.";
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isLoading) return;
 
-    const newMessage: Message = {
+    const userMessage: Message = {
       id: Date.now(),
       content: inputMessage,
       sender: "user",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     };
 
-    setMessages((prev) => [...prev, newMessage]);
+    setMessages((prev) => [...prev, userMessage]);
+    const currentMessage = inputMessage;
     setInputMessage("");
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse: Message = {
-        id: Date.now(),
-        content: "I'm an AI assistant. How can I help you today?",
-        sender: "ai",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages((prev) => [...prev, aiResponse]);
-    }, 1000);
+    // Get AI response
+    const aiResponseText = await generateAIResponse(currentMessage);
+
+    const aiResponseMessage: Message = {
+      id: Date.now(),
+      content: aiResponseText,
+      sender: "ai",
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+
+    setMessages((prev) => [...prev, aiResponseMessage]);
   };
 
   return (
@@ -56,7 +117,7 @@ export default function ChatPage() {
                 height={20}
                 className="text-black mr-2"
               />
-              <h1 className="text-lg font-bold">AI Assistant</h1>
+              <h1 className="text-lg font-bold">AI Assistant (Gemini)</h1>
             </div>
 
             {/* Chat Messages */}
@@ -64,7 +125,9 @@ export default function ChatPage() {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+                  className={`flex ${
+                    message.sender === "user" ? "justify-end" : "justify-start"
+                  }`}
                 >
                   <div
                     className={`max-w-[70%] rounded-lg p-3 ${
@@ -73,7 +136,9 @@ export default function ChatPage() {
                         : "bg-gray-100 text-black"
                     }`}
                   >
-                    <p className="text-sm">{message.content}</p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {message.content}
+                    </p>
                     <span className="text-xs opacity-70 mt-1 block">
                       {message.timestamp}
                     </span>
@@ -82,9 +147,13 @@ export default function ChatPage() {
               ))}
               {messages.length === 0 && (
                 <div className="flex items-center justify-center h-full text-gray-500">
-                  <p className="text-base">Start a conversation with the AI assistant</p>
+                  <p className="text-base">
+                    Start a conversation with the AI assistant
+                  </p>
                 </div>
               )}
+              {/* Auto-scroll anchor */}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Chat Input */}
@@ -96,12 +165,18 @@ export default function ChatPage() {
                   onChange={(e) => setInputMessage(e.target.value)}
                   placeholder="Type your message..."
                   className="flex-1 p-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#AAFF45]"
+                  disabled={isLoading}
                 />
                 <button
                   type="submit"
-                  className="bg-[#AAFF45] text-black px-4 py-2 rounded-lg hover:bg-[#8FE03D] transition-colors"
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    isLoading
+                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                      : "bg-[#AAFF45] text-black hover:bg-[#8FE03D]"
+                  }`}
+                  disabled={isLoading}
                 >
-                  Send
+                  {isLoading ? "Sending..." : "Send"}
                 </button>
               </div>
             </form>
@@ -110,4 +185,4 @@ export default function ChatPage() {
       </div>
     </div>
   );
-} 
+}

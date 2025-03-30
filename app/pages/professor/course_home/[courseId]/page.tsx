@@ -15,6 +15,7 @@ interface Module {
   title: string;
   sections: { title: string; content: string }[];
   files: { name: string; url: string; type: string }[];
+  published: boolean;
 }
 
 // Interface for the form data when creating a module
@@ -33,6 +34,8 @@ const Coursepage: React.FC = () => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isModulesLoading, setIsModulesLoading] = useState(true);
+  //const [isPublished, setIsPublished] = useState(false);
 
   const params = useParams();
   const courseId = params?.courseId as string;
@@ -40,12 +43,15 @@ const Coursepage: React.FC = () => {
 
   const fetchModules = async () => {
     try {
+      setIsModulesLoading(true);
       const response = await fetch(`/api/modules?courseId=${courseId}`);
       if (!response.ok) throw new Error("Failed to fetch modules");
       const data = await response.json();
       setModules(data);
     } catch (error) {
       console.error("Error fetching modules:", error);
+    } finally {
+      setIsModulesLoading(false);
     }
   };
 
@@ -57,6 +63,7 @@ const Coursepage: React.FC = () => {
         if (!response.ok) throw new Error("Failed to fetch course details");
         const data = await response.json();
         setCourse(data);
+        //setIsPublished(data.published || false);
       } catch (error) {
         console.error("Error fetching course:", error);
       } finally {
@@ -88,6 +95,7 @@ const Coursepage: React.FC = () => {
 
   const handleEditModule = async (moduleId: string) => {
     try {
+      setLoading(true);
       const response = await fetch(`/api/modules/${moduleId}`);
       if (!response.ok) throw new Error("Module not found");
       const moduleData = await response.json();
@@ -96,6 +104,8 @@ const Coursepage: React.FC = () => {
       setShowModulePopup(true);
     } catch (error) {
       console.error("Error fetching module for edit:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -106,6 +116,7 @@ const Coursepage: React.FC = () => {
     }
 
     try {
+      setLoading(true);
       if (isEditing && selectedModule) {
         // Update existing module
         const updateResponse = await fetch(`/api/modules/${selectedModule.id}`, {
@@ -120,7 +131,7 @@ const Coursepage: React.FC = () => {
             files: selectedModule.files, // Keep existing files
           }),
         });
-
+        
         if (!updateResponse.ok) {
           const errorData = await updateResponse.json();
           throw new Error(errorData.error || "Failed to update module");
@@ -237,18 +248,33 @@ const Coursepage: React.FC = () => {
               moduleId: moduleId,
             }));
 
-          if (fileData.length > 0) {
-            const updateResponse = await fetch(`/api/modules/${moduleId}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ files: fileData }),
-            });
-
-            if (!updateResponse.ok) {
-              const errorData = await updateResponse.json();
-              throw new Error(errorData.error || "Failed to update module with files");
+            if (fileData.length > 0) {
+              // Fetch the latest module data first
+              const moduleResponse = await fetch(`/api/modules/${moduleId}`);
+              if (!moduleResponse.ok) {
+                throw new Error("Failed to fetch updated module data");
+              }
+              const currentModule = await moduleResponse.json();
+              
+              // Combine existing and new files
+              const allFiles = [...currentModule.files, ...fileData];
+              
+              // Update the module with complete data
+              const updateResponse = await fetch(`/api/modules/${moduleId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  title: currentModule.title,
+                  sections: currentModule.sections,
+                  files: allFiles
+                }),
+              });
+            
+              if (!updateResponse.ok) {
+                const errorData = await updateResponse.json();
+                throw new Error(errorData.error || "Failed to update module with files");
+              }
             }
-          }
         }
       }
       
@@ -261,6 +287,8 @@ const Coursepage: React.FC = () => {
       setSelectedModule(null);
     } catch (error) {
       console.error("Error saving module:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -279,6 +307,7 @@ const Coursepage: React.FC = () => {
     if (!moduleToDelete) return;
 
     try {
+      setLoading(true);
       const deleteResponse = await fetch(`/api/modules/${moduleToDelete}`, {
         method: "DELETE",
       });
@@ -296,6 +325,69 @@ const Coursepage: React.FC = () => {
       setModuleToDelete(null);
     } catch (error) {
       console.error("Error deleting module:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Show loading screen if either course or modules are still loading
+  if (loading || isModulesLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center space-y-2">
+          <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Publish a module 
+  const handlePublishModule = async (moduleId: string) => {
+    if (!moduleId) {
+      return;
+    }
+    const confirmPublish = confirm("Are you sure you want to publish this module?");
+    if (!confirmPublish) return;
+    try {
+      // Update the module to be published
+      const response = await fetch(`/api/modules/${moduleId}/publish`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ published: true }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to publish module");
+      }
+      // Refresh the modules list after publishing
+      await fetchModules();
+    } catch (error) {
+      console.error("Error publishing module:", error);
+    }
+  };
+
+  // Unpublish a module
+  const handleUnpublishModule = async (moduleId: string) => {
+    if (!moduleId) {
+      return;
+    }
+    const confirmUnpublish = confirm("Are you sure you want to unpublish this module?");
+    if (!confirmUnpublish) return;
+    try {
+      // Update the module to be unpublished
+      const response = await fetch(`/api/modules/${moduleId}/publish`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ published: false }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to unpublish module");
+      }
+      // Refresh the modules list after unpublishing
+      await fetchModules();
+    } catch (error) {
+      console.error("Error unpublishing module:", error);
     }
   };
   
@@ -312,7 +404,7 @@ const Coursepage: React.FC = () => {
             <h1 className="text-base font-medium">Professor Homepage</h1>
             <button
               onClick={() => setShowModulePopup(true)}
-              className="p-2 mt-2 bg-[#AAFF45] text-black text-sm rounded-sm hover:bg-[#B9FF66]"
+              className="p-2 mt-2 bg-[#AAFF45] text-black text-sm rounded hover:bg-[#B9FF66]"
             >
               Add Module
             </button>
@@ -324,88 +416,129 @@ const Coursepage: React.FC = () => {
           )}
   
           {/* Modules with flex layout */}
-          <div className="w-full mt-4">
+            <div className="w-full mt-4">
             {modules.map((module) => (
               <div key={module.id} className="mb-6 text-sm">
-                <div className="bg-[#AAFF45] border border-gray-400 p-2 rounded-t-sm flex justify-between items-center">
-                  <span>{module.title}</span>
-                  <div className="flex gap-2">
-                    <button onClick={() => handleEditModule(module.id)}>
-                      <Image 
-                        src="/asset/edit_icon.svg"
-                        alt="Edit"
-                        width={18}
-                        height={18}
-                      />
-                    </button>
-                    <button onClick={() => handleDeleteModule(module.id)}>
-                      <Image
-                        src="/asset/delete_icon.svg"
-                        alt="Delete"
-                        width={18}
-                        height={18}
-                      />
-                    </button>
+              <div className="bg-[#AAFF45] border border-gray-400 p-2 rounded-t-sm flex justify-between items-center">
+                <span>{module.title}</span>
+                <div className="flex gap-2">
+                {module.published ? (
+                  <div className="relative group">
+                    <img
+                      src="/asset/publish_icon.svg"
+                      alt="Published"
+                      className="w-5 h-5 cursor-pointer"
+                      onClick={() => handleUnpublishModule(module.id)}
+                    />
+                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
+                      unpublish
+                    </span>
                   </div>
+                ) : (
+                  <div className="relative group">
+                    <img
+                      src="/asset/unpublish_icon.svg"
+                      alt="Unpublished"
+                      className="w-5 h-5 cursor-pointer"
+                      onClick={() => handlePublishModule(module.id)}
+                    />
+                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
+                      publish
+                    </span>
+                  </div>
+                )}
+                <button onClick={() => handleEditModule(module.id)}>
+                  <Image 
+                  src="/asset/edit_icon.svg"
+                  alt="Edit"
+                  width={18}
+                  height={18}
+                  />
+                </button>
+                <button onClick={() => handleDeleteModule(module.id)}>
+                  <Image
+                  src="/asset/delete_icon.svg"
+                  alt="Delete"
+                  width={18}
+                  height={18}
+                  />
+                </button>
                 </div>
-  
-                {/* Sections */}
-                {(module.sections || []).map((section, sectionIndex) => (
-                  <div
-                    key={`section-${module.id}-${sectionIndex}`}
-                    className="border border-gray-400 border-t-0 rounded-sm"
-                  >
-                    <div
-                      className="flex justify-between items-center p-2 cursor-pointer"
-                      onClick={() =>
-                        toggleExpand(`section-${module.id}-${sectionIndex}`)
-                      }
-                    >
-                      {section.title}
-                      <Image
-                        src={
-                          expandedRows[`section-${module.id}-${sectionIndex}`]
-                            ? "/asset/arrowup_icon.svg"
-                          : "/asset/arrowdown_icon.svg"
-                        }
-                        alt="Expand arrow"
-                        width={16}
-                        height={16}
-                      />
-                    </div>
-                    {expandedRows[`section-${module.id}-${sectionIndex}`] && (
-                      <p className="p-2 bg-gray-200">{section.content}</p>
-                    )}
+              </div>
+        
+              {/* Sections */}
+              {(module.sections || []).map((section, sectionIndex) => (
+                <div
+                key={`section-${module.id}-${sectionIndex}`}
+                className="border border-gray-400 border-t-0 rounded-sm"
+                >
+                <div
+                  className="flex justify-between items-center p-2 cursor-pointer"
+                  onClick={() =>
+                  toggleExpand(`section-${module.id}-${sectionIndex}`)
+                  }
+                >
+                  <div className="flex items-center gap-2">
+                  <Image
+                    src="/asset/file_icon.svg"
+                    alt="Section"
+                    width={16}
+                    height={16}
+                  />
+                  {section.title}
                   </div>
-                ))}
-  
-                {/* Files */}
-                {(module.files || []).map((file, fileIndex) => (
-                  <div key={`file-${module.id}-${fileIndex}`} className="border border-gray-400 border-t-0 rounded-sm">
-                    <div className="flex justify-between items-center p-2 cursor-pointer" onClick={() => toggleExpand(`file-${module.id}-${fileIndex}`)}>
-                      {file.name}
-                      <Image
-                        src={
-                          expandedRows[`file-${module.id}-${fileIndex}`]
-                            ? "/asset/arrowup_icon.svg"
-                          : "/asset/arrowdown_icon.svg"
-                        }
-                        alt="Expand arrow"
-                        width={16}
-                        height={16}
-                      />
-                    </div>
-                    {expandedRows[`file-${module.id}-${fileIndex}`] && (
-                      <p className="p-2 bg-gray-200">{file.name}</p>
-                    )}
+                  <Image
+                  src={
+                    expandedRows[`section-${module.id}-${sectionIndex}`]
+                    ? "/asset/arrowup_icon.svg"
+                    : "/asset/arrowdown_icon.svg"
+                  }
+                  alt="Expand arrow"
+                  width={12}
+                  height={12}
+                  />
+                </div>
+                {expandedRows[`section-${module.id}-${sectionIndex}`] && (
+                  <p className="p-2 bg-gray-200">{section.content}</p>
+                )}
+                </div>
+              ))}
+        
+              {/* Files */}
+              {(module.files || []).map((file, fileIndex) => (
+                <div key={`file-${module.id}-${fileIndex}`} className="border border-gray-400 border-t-0 rounded-sm">
+                <div className="flex justify-between items-center p-2 cursor-pointer" onClick={() => toggleExpand(`file-${module.id}-${fileIndex}`)}>
+                  <div className="flex items-center gap-2">
+                  <Image
+                    src="/asset/pdf_icon.svg"
+                    alt="File"
+                    width={16}
+                    height={16}
+                  />
+                  {file.name}
                   </div>
-                ))}
-  
-                {/* Empty bottom border for the last item */}
-                <div className="border-t-0 rounded-b-sm h-1"></div>
+                  <Image
+                  src={
+                    expandedRows[`file-${module.id}-${fileIndex}`]
+                    ? "/asset/arrowup_icon.svg"
+                    : "/asset/arrowdown_icon.svg"
+                  }
+                  alt="Expand arrow"
+                  width={12}
+                  height={12}
+                  />
+                </div>
+                {expandedRows[`file-${module.id}-${fileIndex}`] && (
+                  <p className="p-2 bg-gray-200">{file.name}</p>
+                )}
+                </div>
+              ))}
+        
+              {/* Empty bottom border for the last item */}
+              <div className="border-t-0 rounded-b-sm h-1"></div>
               </div>
             ))}
-          </div>
+            </div>
         </div>
   
         {/* Using the ModulePopup Component */}
@@ -423,29 +556,29 @@ const Coursepage: React.FC = () => {
 
         {/* Delete Confirmation Popup */}
         {showDeleteConfirmation && (
-          <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 z-50">
-            <div className="bg-white p-6 rounded-sm shadow-md w-96">
-              <h2 className="text-lg font-semibold mb-4">Confirm Delete</h2>
-              <p className="mb-4">Are you sure you want to delete this module? This action cannot be undone.</p>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirmation(false);
-                    setModuleToDelete(null);
-                  }}
-                  className="px-4 py-2 bg-gray-400 text-white rounded-sm hover:bg-gray-500"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDeleteModule}
-                  className="px-4 py-2 bg-red-500 text-white rounded-sm hover:bg-red-600"
-                >
-                  Delete
-                </button>
+            <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white p-8 rounded-lg shadow-lg w-96">
+              <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
+              <p className="mb-6 text-gray-700">Are you sure you want to delete this module? This action cannot be undone.</p>
+              <div className="flex justify-end gap-4">
+              <button
+                onClick={() => {
+                setShowDeleteConfirmation(false);
+                setModuleToDelete(null);
+                }}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteModule}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Delete
+              </button>
               </div>
             </div>
-          </div>
+            </div>
         )}
       </div>
     </div>

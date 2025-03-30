@@ -7,6 +7,7 @@ import {
   UserButton,
 } from '@clerk/nextjs';
 import './globals.css';
+import "react-quill-new/dist/quill.snow.css";
 
 export const metadata: Metadata = {
   title: "CourseCircle",

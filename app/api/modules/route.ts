@@ -1,3 +1,5 @@
+// This API route handles the creation and retrieval of modules for a specific course.
+// This file is called by the course homepage to fetch and create modules.
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
