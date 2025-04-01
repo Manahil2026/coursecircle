@@ -208,8 +208,8 @@ model Submission {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   
-  fileName     String
-  fileUrl      String
+  fileName     String?
+  fileUrl      String?
   status       SubmissionStatus @default(SUBMITTED)
   
   grade        Float?
@@ -224,4 +224,5 @@ model Submission {
   @@index([assignmentId])
   @@index([studentId])
   @@map("submissions")
+  @@unique([studentId, assignmentId])
 }
