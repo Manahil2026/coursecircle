@@ -286,7 +286,6 @@ const AssignmentDetails = () => {
       </div>
     );
   }
-
   return (
     <div className="flex">
       <Sidebar_dashboard />

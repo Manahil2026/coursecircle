@@ -12,8 +12,6 @@ interface CourseCardProps {
   upcomingClassDate: string;
 }
 
-const colors = ["bg-pink-300", "bg-blue-300", "bg-green-300", "bg-yellow-300", "bg-purple-300", "bg-red-300"];
-
 const CourseCard: React.FC<CourseCardProps> = ({
   courseId,
   courseName,
@@ -38,15 +36,21 @@ const CourseCard: React.FC<CourseCardProps> = ({
 
     router.push(path);
   };
-
-  const randomColor = colors[Math.floor(Math.random() * colors.length)];
-
   return (
     <div
       className="flex items-center border-b rounded-md p-2 shadow-lg border-[#aeaeae85] w-full max-w-xl cursor-pointer transition-all duration-300 hover:transform hover:scale-105"
       onClick={handleClick}
     >
-      <div className={`${randomColor} w-24 h-24 flex items-center justify-center text-7xl font-bold rounded-md`}>
+      <div
+        style={{
+          backgroundColor: `#${(
+        (courseName.length * 1234567) % 0xffffff
+          )
+        .toString(16)
+        .padStart(6, "0")}`,
+        }}
+        className="w-24 h-24 flex items-center justify-center text-7xl font-bold rounded-md"
+      >
         {courseName.charAt(0)}
       </div>
       <div className="ml-4 flex-1">

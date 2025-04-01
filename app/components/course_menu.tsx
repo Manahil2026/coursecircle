@@ -15,7 +15,7 @@ const CourseMenu: React.FC<CourseMenuProps> = ({ courseId }) => {
   const menuItems = [
     { name: "Homepage", path: role === "prof" ? `/pages/professor/course_home/${courseId}` : `/pages/student/course_home/${courseId}` },
     { name: "Assignments", path: role === "prof" ? `/pages/professor/assignments/${courseId}` : `/pages/student/assignments/${courseId}` },
-    { name: "Gradebook", path: role === "prof" ? `/pages/professor/gradebook` : `/pages/student/gradebook` },
+    { name: "Gradebook", path: role === "prof" ? `/pages/professor/gradebook/${courseId}` : `/pages/student/gradebook` },
   ];
 
   return (

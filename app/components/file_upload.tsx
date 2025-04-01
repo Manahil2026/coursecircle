@@ -8,16 +8,10 @@ interface FileUploadProps {
   assignmentId: string;
   courseId: string;
   onUpload: (fileUrl: string, fileName: string) => void;
-  isSubmission?: boolean; // New prop to indicate if this is a student submission
 }
 
 // Define the FileUpload component
-const FileUpload: React.FC<FileUploadProps> = ({ 
-  assignmentId, 
-  courseId, 
-  onUpload,
-  isSubmission = false // Default to false (professor mode)
-}) => {
+const FileUpload: React.FC<FileUploadProps> = ({ assignmentId, courseId, onUpload }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false); // Add loading state
 
@@ -35,51 +29,28 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
-  // Handle file upload with conditional endpoint
+  // Handle file upload
   const handleUpload = async () => {
     if (!selectedFile) return;
 
     setLoading(true); // Set loading to true
     const formData = new FormData();
     formData.append("file", selectedFile);
-    
-    // Different endpoints based on whether this is a submission or not
-    const endpoint = isSubmission 
-      ? `/api/courses/${courseId}/assignments/${assignmentId}/submissions`
-      : `/api/courses/${courseId}/assignments/${assignmentId}/upload_file`;
+    formData.append("assignmentId", assignmentId);
+    formData.append("courseId", courseId);
 
-    try {
-      console.log(`Uploading file to ${endpoint}`);
-      
-      const res = await fetch(endpoint, {
-        method: "POST",
-        body: formData,
-      });
+    const res = await fetch(`/api/courses/${courseId}/assignments/${assignmentId}/upload_file`, {
+      method: "POST",
+      body: formData,
+    });
 
-      if (res.ok) {
-        const data = await res.json();
-        console.log("Upload response:", data);
-        
-        // Handle the response based on submission type
-        if (isSubmission) {
-          // For student submissions, we might get a different response format
-          const fileUrl = data.submission?.fileUrl || data.fileUrl || "";
-          const fileName = data.submission?.fileName || data.fileName || selectedFile.name;
-          onUpload(fileUrl, fileName);
-        } else {
-          // For professor uploads
-          onUpload(data.fileUrl, data.fileName);
-        }
-        setSelectedFile(null);
-      } else {
-        console.error("Upload failed:", await res.text());
-        alert("File upload failed. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error during upload:", error);
-      alert("An error occurred during file upload.");
-    } finally {
-      setLoading(false); // Set loading to false after upload
+    setLoading(false); // Set loading to false after upload
+    if (res.ok) {
+      const data = await res.json();
+      onUpload(data.fileUrl, data.fileName);
+      setSelectedFile(null);
+    } else {
+      alert("File upload failed.");
     }
   };
 
@@ -133,3 +104,4 @@ const FileUpload: React.FC<FileUploadProps> = ({
 };
 
 export default FileUpload;
+
