@@ -180,21 +180,39 @@ export async function POST(request: Request) {
       case 'user.updated': {
         console.log(`Updating user: ${id}`);
         try {
+          // Fetch the current user data from Clerk
+          const clerkUser = await clerkClient.users.getUser(id);
+
+          // Check the current role in Clerk's metadata
+          const currentRole = clerkUser.publicMetadata?.role;
+
+          // Only update the role if it's null
+          if (currentRole == null) {
+            await clerkClient.users.updateUser(id, {
+              publicMetadata: {
+                role: 'member',
+              },
+            });
+            console.log(`Assigned 'member' role in Clerk metadata for user ${id}`);
+          }
+
+          // Update the user in the database
           await prisma.user.update({
             where: { id },
             data: {
               email,
               firstName: first_name || '',
               lastName: last_name || '',
-              role
+              role,
             },
           });
           console.log(`User ${id} updated successfully`);
         } catch (dbError) {
           console.error("Update operation failed:", dbError);
-          return new NextResponse(`Update failed: ${dbError instanceof Error ? dbError.message : String(dbError)}`, {
-            status: 500
-          });
+          return new NextResponse(
+            `Update failed: ${dbError instanceof Error ? dbError.message : String(dbError)}`,
+            { status: 500 }
+          );
         }
         break;
       }
