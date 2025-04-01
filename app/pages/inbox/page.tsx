@@ -23,7 +23,7 @@ export default function InboxPage() {
   useEffect(() => {
     const fetchEmails = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/emails");
+        const response = await fetch("/api/emails");
         const data = await response.json();
         setEmails(data);
       } catch (error) {
@@ -43,7 +43,7 @@ export default function InboxPage() {
 
   const markAsRead = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/emails/${id}/markAsRead`, {
+      const response = await fetch(`/api/emails?id=${id}&action=markAsRead`, {
         method: "PUT",
       });
       const updatedEmail = await response.json();
