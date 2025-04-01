@@ -1,5 +1,4 @@
 //Student page that lists all assignments for a selected course with submission status for each assignment
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -14,6 +13,7 @@ interface Assignment {
   points: number;
   dueDate: string;
   description?: string;
+  published: boolean;
   submissionStatus?: "NOT_SUBMITTED" | "SUBMITTED" | "GRADED";
 }
 
@@ -37,7 +37,13 @@ const StudentAssignments = () => {
       fetch(`/api/courses/${courseId}/assignments`)
         .then((res) => res.json())
         .then((data) => {
-          setGroups(data);
+          // Filter to only show published assignments
+          const publishedGroups = data.map(group => ({
+            ...group,
+            assignments: group.assignments.filter(assignment => assignment.published)
+          })).filter(group => group.assignments.length > 0); // Only keep groups with assignments
+          
+          setGroups(publishedGroups);
           setLoading(false);
         })
         .catch((error) => {
@@ -195,3 +201,4 @@ const StudentAssignments = () => {
 };
 
 export default StudentAssignments;
+

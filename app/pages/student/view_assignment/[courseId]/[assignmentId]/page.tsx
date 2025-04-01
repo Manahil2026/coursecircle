@@ -1,10 +1,11 @@
+//page for viewing and interacting with specific assignments
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import CourseMenu from "@/app/components/course_menu";
-import FileUpload from "@/app/components/file_upload";
+import StudentFileUpload from "@/app/components/student_file_upload";
 import ReactQuillEditor from "@/app/components/text_editor";
 import FileViewer from "@/app/components/file_viewer";
 
@@ -113,7 +114,7 @@ const ViewAssignment = () => {
     }
   }, [courseId, assignmentId]);
 
-  // Handler for file uploads from the FileUpload component
+  // Handler for file uploads from the StudentFileUpload component
   const handleFileUpload = (fileUrl: string, fileName: string) => {
     setSubmitSuccess(true);
     
@@ -461,11 +462,10 @@ const ViewAssignment = () => {
                       {isFileSubmission && (
                         <div className="mb-6">
                           <h3 className="text-lg font-medium mb-4">File Upload</h3>
-                          <FileUpload
+                          <StudentFileUpload
                             assignmentId={assignmentId}
                             courseId={courseId}
                             onUpload={handleFileUpload}
-                            isSubmission={true} // Specify that this is a student submission
                           />
                           <p className="mt-1 text-sm text-gray-500">
                             Accepted file types: PDF, DOC, DOCX, ZIP
@@ -524,3 +524,4 @@ const ViewAssignment = () => {
 };
 
 export default ViewAssignment;
+
