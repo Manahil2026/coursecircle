@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   const { userId } = getAuth(req);
+  console.log("User ID from Clerk:", userId);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
