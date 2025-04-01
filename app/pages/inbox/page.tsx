@@ -24,6 +24,7 @@ export default function InboxPage() {
     const fetchEmails = async () => {
       try {
         const response = await fetch("/api/emails");
+        if (!response.ok) throw new Error("Failed to fetch");
         const data = await response.json();
         setEmails(data);
       } catch (error) {
