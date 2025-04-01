@@ -29,7 +29,7 @@ interface UserJSON {
   email_addresses: { id: string; email_address: string }[];
   primary_email_address_id: string;
   public_metadata?: {
-    role?: string;
+    role?: string; 
   };
 }
 
@@ -183,10 +183,10 @@ export async function POST(request: Request) {
           // Fetch the current user data from Clerk
           const clerkUser = await clerkClient.users.getUser(id);
 
-          // Check the current role in Clerk's metadata
-          const currentRole = clerkUser.publicMetadata?.role;
+          // Get the current role from Clerk's metadata
+          const currentRole = clerkUser.publicMetadata?.role as string | undefined;
 
-          // Only update the role if it's null
+          // If the role is null, assign the default 'member' role in Clerk
           if (currentRole == null) {
             await clerkClient.users.updateUser(id, {
               publicMetadata: {
@@ -196,17 +196,20 @@ export async function POST(request: Request) {
             console.log(`Assigned 'member' role in Clerk metadata for user ${id}`);
           }
 
-          // Update the user in the database
+          // Map Clerk role to Prisma role
+          const prismaRole = mapClerkRoleToPrisma(currentRole);
+
+          // Update the user in the database with the role from Clerk
           await prisma.user.update({
             where: { id },
             data: {
               email,
               firstName: first_name || '',
               lastName: last_name || '',
-              role,
+              role: prismaRole, // Synchronize the role
             },
           });
-          console.log(`User ${id} updated successfully`);
+          console.log(`User ${id} updated successfully in the database`);
         } catch (dbError) {
           console.error("Update operation failed:", dbError);
           return new NextResponse(
