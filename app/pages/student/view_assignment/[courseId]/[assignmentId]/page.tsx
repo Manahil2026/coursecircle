@@ -36,6 +36,14 @@ interface AssignmentFile {
   fileUrl: string;
 }
 
+interface AssignmentGrade {
+  pointsEarned: number | null;
+  totalPoints: number;
+  feedback?: string | null;
+  isLate?: boolean;
+  status?: "NOT_SUBMITTED" | "SUBMITTED" | "GRADED";
+}
+
 const ViewAssignment = () => {
   const params = useParams() as { courseId: string; assignmentId: string };
   const router = useRouter();
@@ -54,6 +62,7 @@ const ViewAssignment = () => {
   const [filesLoading, setFilesLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<AssignmentFile | null>(null);
   const [showFileViewer, setShowFileViewer] = useState(false);
+  const [assignmentGrade, setAssignmentGrade] = useState<AssignmentGrade | null>(null);
 
   useEffect(() => {
     const fetchAssignment = async () => {
@@ -107,10 +116,30 @@ const ViewAssignment = () => {
       }
     };
 
+    const fetchAssignmentGrade = async () => {
+      try {
+        const response = await fetch(`/api/courses/${courseId}/assignments/${assignmentId}/grade`);
+    
+        if (response.ok) {
+          const gradeData = await response.json();
+          setAssignmentGrade({
+            pointsEarned: gradeData.pointsEarned,
+            totalPoints: gradeData.totalPoints,
+            feedback: gradeData.feedback,
+            isLate: gradeData.isLate,
+            status: gradeData.status
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching assignment grade:", error);
+      }
+    };
+
     if (courseId && assignmentId) {
       fetchAssignment();
       fetchAssignmentFiles();
       fetchSubmissions();
+      fetchAssignmentGrade();
     }
   }, [courseId, assignmentId]);
 
@@ -417,14 +446,23 @@ const ViewAssignment = () => {
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {submission.grade !== null 
-                                ? `${submission.grade}/${assignment.points}` 
-                                : '-'}
-                              {submission.feedback && (
+                              {assignmentGrade ? (
+                                assignmentGrade.pointsEarned !== null 
+                                  ? `${assignmentGrade.pointsEarned}/${assignmentGrade.totalPoints}` 
+                                  : "—"
+                              ) : (
+                                '-'
+                              )}
+                              {assignmentGrade?.isLate && (
+                                <div className="text-xs text-yellow-600 mt-1">
+                                  Submitted Late
+                                </div>
+                              )}
+                              {assignmentGrade?.feedback && (
                                 <div className="mt-1">
                                   <button
                                     className="text-blue-600 text-xs hover:underline"
-                                    onClick={() => alert(`Feedback: ${submission.feedback}`)}
+                                    onClick={() => alert(assignmentGrade?.feedback)}
                                   >
                                     View Feedback
                                   </button>
@@ -524,4 +562,3 @@ const ViewAssignment = () => {
 };
 
 export default ViewAssignment;
-
