@@ -118,10 +118,12 @@ const ViewAssignment = () => {
 
     const fetchAssignmentGrade = async () => {
       try {
+        console.log(`Fetching grade data for assignment: ${assignmentId} in course: ${courseId}`);
         const response = await fetch(`/api/courses/${courseId}/assignments/${assignmentId}/grade`);
     
         if (response.ok) {
           const gradeData = await response.json();
+          console.log("Grade data received:", gradeData);
           setAssignmentGrade({
             pointsEarned: gradeData.pointsEarned,
             totalPoints: gradeData.totalPoints,
@@ -129,9 +131,21 @@ const ViewAssignment = () => {
             isLate: gradeData.isLate,
             status: gradeData.status
           });
+        } else {
+          // Log the HTTP error status
+          console.error(`Failed to fetch grade data: HTTP ${response.status}`);
+          try {
+            // Try to get error details from response
+            const errorData = await response.text();
+            console.error("Error response:", errorData);
+          } catch (parseError) {
+            console.error("Could not parse error response");
+          }
         }
       } catch (error) {
         console.error("Error fetching assignment grade:", error);
+        // Don't throw the error - just log it and continue
+        // This prevents the component from crashing
       }
     };
 
@@ -446,23 +460,22 @@ const ViewAssignment = () => {
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {assignmentGrade ? (
-                                assignmentGrade.pointsEarned !== null 
+                              {submission.grade !== null 
+                                ? `${submission.grade}/${assignment.points}` 
+                                : assignmentGrade?.pointsEarned !== null 
                                   ? `${assignmentGrade.pointsEarned}/${assignmentGrade.totalPoints}` 
-                                  : "—"
-                              ) : (
-                                '-'
-                              )}
+                                  : "Not graded yet"
+                              }
                               {assignmentGrade?.isLate && (
                                 <div className="text-xs text-yellow-600 mt-1">
                                   Submitted Late
                                 </div>
                               )}
-                              {assignmentGrade?.feedback && (
+                              {(submission.feedback || assignmentGrade?.feedback) && (
                                 <div className="mt-1">
                                   <button
                                     className="text-blue-600 text-xs hover:underline"
-                                    onClick={() => alert(assignmentGrade?.feedback)}
+                                    onClick={() => alert(submission.feedback || assignmentGrade?.feedback || "No detailed feedback available")}
                                   >
                                     View Feedback
                                   </button>
