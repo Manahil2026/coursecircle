@@ -1,5 +1,5 @@
 import React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
 interface CourseMenuProps {
@@ -8,6 +8,7 @@ interface CourseMenuProps {
 
 const CourseMenu: React.FC<CourseMenuProps> = ({ courseId }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useUser();
 
   const role = user?.publicMetadata?.role;
@@ -25,7 +26,9 @@ const CourseMenu: React.FC<CourseMenuProps> = ({ courseId }) => {
           <button
             key={item.path}
             onClick={() => router.push(item.path)}
-            className="px-4 py-1 text-left text-black text-sm hover:underline"
+            className={`px-4 py-1 text-left text-black text-sm hover:underline ${
+              pathname === item.path ? "underline" : ""
+            }`}
           >
             {item.name}
           </button>

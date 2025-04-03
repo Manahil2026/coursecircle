@@ -349,7 +349,7 @@ const ProfessorAssignments = () => {
         courseId={courseId}
       />
       <div className="flex-1 pl-52 px-6">
-        <div className="flex justify-between items-center py-2">
+        <div className="flex justify-between items-center">
           <h1 className="text-lg font-medium">Assignments</h1>
           <div className="flex gap-2">
             <button
