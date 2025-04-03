@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface Assignment {
   id: string;
@@ -19,6 +19,18 @@ const StudentGradeTable: React.FC<StudentGradeTableProps> = ({
   assignments, 
   attendance 
 }) => {
+  // State for feedback modal
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [activeFeedback, setActiveFeedback] = useState("");
+  const [activeFeedbackTitle, setActiveFeedbackTitle] = useState("");
+  
+  // Handle viewing feedback
+  const handleViewFeedback = (feedback: string | null | undefined, assignmentName: string) => {
+    setActiveFeedback(feedback || "No detailed feedback provided.");
+    setActiveFeedbackTitle(assignmentName);
+    setShowFeedback(true);
+  };
+
   // Calculate overall grade
   const calculateOverallGrade = () => {
     // Filter out assignments without grades
@@ -61,7 +73,35 @@ const StudentGradeTable: React.FC<StudentGradeTableProps> = ({
   const letterGrade = calculateLetterGrade(overallPercentage);
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full relative">
+      {/* Feedback Modal */}
+      {showFeedback && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Feedback: {activeFeedbackTitle}</h3>
+              <button 
+                onClick={() => setShowFeedback(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="prose">
+              {activeFeedback}
+            </div>
+            <div className="mt-6 text-right">
+              <button
+                onClick={() => setShowFeedback(false)}
+                className="px-4 py-2 bg-[#AAFF45] rounded hover:bg-[#9BEF36] focus:outline-none"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr className="bg-gray-100">
@@ -99,7 +139,7 @@ const StudentGradeTable: React.FC<StudentGradeTableProps> = ({
               <td className="p-2 border text-center">
                 {assignment.feedback ? (
                   <button 
-                    onClick={() => alert(assignment.feedback)}
+                    onClick={() => handleViewFeedback(assignment.feedback, assignment.name)}
                     className="text-blue-600 hover:underline"
                   >
                     View Feedback
@@ -133,4 +173,3 @@ const StudentGradeTable: React.FC<StudentGradeTableProps> = ({
 };
 
 export default StudentGradeTable;
-
