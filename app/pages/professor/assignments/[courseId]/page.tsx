@@ -358,7 +358,7 @@ const ProfessorAssignments = () => {
                 setEditGroupIndex(null);
                 setShowGroupModal(true);
               }}
-              className="p-2 mt-2 bg-[#AAFF45] text-black text-sm rounded-sm hover:bg-[#B9FF66]"
+              className="p-2 mt-2 bg-[#AAFF45] text-black text-sm rounded hover:bg-[#B9FF66]"
             >
               Add Group
             </button>
@@ -370,7 +370,7 @@ const ProfessorAssignments = () => {
                 setSelectedGroupIndex(null);
                 setShowModal(true);
               }}
-              className="p-2 mt-2 bg-[#AAFF45] text-black text-sm rounded-sm hover:bg-[#B9FF66]"
+              className="p-2 mt-2 bg-[#AAFF45] text-black text-sm rounded hover:bg-[#B9FF66]"
             >
               Create Assignment
             </button>
@@ -387,90 +387,108 @@ const ProfessorAssignments = () => {
           </div>
         ) : (
           // Groups and Assignments List
-          <div className="mt-2">
+            <div className="w-full mt-4">
             {groups.length === 0 ? (
               <p>No assignment groups yet.</p>
             ) : (
               groups.map((group, groupIndex) => (
-                <div key={groupIndex} className="border border-gray-400 rounded-md p-4 mb-4 bg-[#B9FF66]">
-                  <details open>
-                    <summary className="text-lg font-bold flex items-center cursor-pointer">
-                      <span className="flex-1">{group.name}</span>
-                      <div className="flex gap-4">
-                        <button onClick={() => handleEditGroup(groupIndex)}>
-                          <Image src="/asset/edit_icon.svg" alt="Edit" width={18} height={18} />
-                        </button>
-                        <button onClick={() => handleDeleteGroup(groupIndex)}>
-                          <Image src="/asset/delete_icon.svg" alt="Delete" width={18} height={18} />
-                        </button>
-                      </div>
-                    </summary>
-                    <ul className="mt-2">
-                      {(group.assignments ?? []).map((assignment, index) => (
-                        <li key={index} className="flex justify-between items-center border-b border-gray-300 py-2 bg-white p-2 rounded-md">
-                          <div>
-                            <p
-                              className="text-lg font-bold text-black hover:underline cursor-pointer py-1"
-                              onClick={() => handleNavigate(assignment.id)}
-                            >
-                              {assignment.title}
-                            </p>
-                            <div className="text-sm text-gray-600">
-                              <b>Due</b>:{" "}
-                              {assignment.dueDate
-                                ? new Date(assignment.dueDate).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "2-digit",
-                                  year: "numeric",
-                                })
-                                : ""}
-                              {" "}at{" "}
-                              {assignment.dueDate
-                                ? (() => {
-                                  const dt = new Date(assignment.dueDate);
-                                  const hh = dt.getHours().toString().padStart(2, "0");
-                                  const mm = dt.getMinutes().toString().padStart(2, "0");
-                                  return convertTo12HourFormat(`${hh}:${mm}`);
-                                })()
-                                : ""}
-                              {" "} - {assignment.points} pts
-                            </div>
-                          </div>
-                          <div className="flex gap-4">
-                            {assignment.published ? (
-                              <div className="relative group">
-                                <button onClick={() => handleUnpublishAssignment(groupIndex, index)}>
-                                  <Image src="/asset/publish_icon.svg" alt="Published" width={18} height={18} className="cursor-pointer" />
-                                </button>
-                                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
-                                  Unpublish
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="relative group">
-                                <button onClick={() => handlePublishAssignment(groupIndex, index)}>
-                                  <Image src="/asset/unpublish_icon.svg" alt="Unpublished" width={18} height={18} className="cursor-pointer" />
-                                </button>
-                                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
-                                  Publish
-                                </span>
-                              </div>
-                            )}
-                            <button onClick={() => handleEdit(groupIndex, index)}>
-                              <Image src="/asset/edit_icon.svg" alt="Edit" width={18} height={18} />
-                            </button>
-                            <button onClick={() => handleDelete(groupIndex, index)}>
-                              <Image src="/asset/delete_icon.svg" alt="Delete" width={18} height={18} />
-                            </button>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
+              <div key={group.id} className="mb-6 text-sm">
+                <div className="bg-[#AAFF45] border border-gray-400 p-2 rounded-t-sm flex justify-between items-center">
+                <span>{group.name}</span>
+                <div className="flex gap-2">
+                  <button onClick={() => handleEditGroup(groupIndex)}>
+                  <Image src="/asset/edit_icon.svg" alt="Edit" width={18} height={18} />
+                  </button>
+                  <button onClick={() => handleDeleteGroup(groupIndex)}>
+                  <Image src="/asset/delete_icon.svg" alt="Delete" width={18} height={18} />
+                  </button>
                 </div>
+                </div>
+
+                {/* Assignments */}
+                {(group.assignments || []).map((assignment, index) => (
+                <div
+                  key={assignment.id}
+                  className="border border-gray-400 border-t-0 rounded-sm"
+                >
+                  <div className="flex justify-between items-center p-2">
+                  <div>
+                    <p
+                    className="text-sm font-semibold text-gray-700 hover:underline cursor-pointer"
+                    onClick={() => handleNavigate(assignment.id)}
+                    >
+                    {assignment.title}
+                    </p>
+                    <div className="text-xs text-gray-600">
+                    <b>Due</b>:{" "}
+                    {assignment.dueDate
+                      ? new Date(assignment.dueDate).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "2-digit",
+                        year: "numeric",
+                      })
+                      : ""}
+                    {" "}at{" "}
+                    {assignment.dueDate
+                      ? (() => {
+                        const dt = new Date(assignment.dueDate);
+                        const hh = dt.getHours().toString().padStart(2, "0");
+                        const mm = dt.getMinutes().toString().padStart(2, "0");
+                        return convertTo12HourFormat(`${hh}:${mm}`);
+                      })()
+                      : ""}
+                    {" "} - {assignment.points} pts
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {assignment.published ? (
+                    <div className="relative group">
+                      <button onClick={() => handleUnpublishAssignment(groupIndex, index)}>
+                      <Image
+                        src="/asset/publish_icon.svg"
+                        alt="Published"
+                        width={18}
+                        height={18}
+                        className="cursor-pointer"
+                      />
+                      </button>
+                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
+                      Unpublish
+                      </span>
+                    </div>
+                    ) : (
+                    <div className="relative group">
+                      <button onClick={() => handlePublishAssignment(groupIndex, index)}>
+                      <Image
+                        src="/asset/unpublish_icon.svg"
+                        alt="Unpublished"
+                        width={18}
+                        height={18}
+                        className="cursor-pointer"
+                      />
+                      </button>
+                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
+                      Publish
+                      </span>
+                    </div>
+                    )}
+                    <button onClick={() => handleEdit(groupIndex, index)}>
+                    <Image src="/asset/edit_icon.svg" alt="Edit" width={18} height={18} />
+                    </button>
+                    <button onClick={() => handleDelete(groupIndex, index)}>
+                    <Image src="/asset/delete_icon.svg" alt="Delete" width={18} height={18} />
+                    </button>
+                  </div>
+                  </div>
+                </div>
+                ))}
+
+                {/* Empty bottom border for the last item */}
+                <div className="border-t-0 rounded-b-sm h-1"></div>
+              </div>
               ))
             )}
-          </div>
+            </div>
         )}
 
 
