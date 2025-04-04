@@ -38,10 +38,10 @@ const StudentAssignments = () => {
         .then((res) => res.json())
         .then((data) => {
           // Filter to only show published assignments
-          const publishedGroups = data.map(group => ({
+          const publishedGroups = data.map((group: Group) => ({
             ...group,
-            assignments: group.assignments.filter(assignment => assignment.published)
-          })).filter(group => group.assignments.length > 0); // Only keep groups with assignments
+            assignments: group.assignments.filter((assignment: Assignment) => assignment.published)
+          })).filter((group: Group) => group.assignments.length > 0); // Only keep groups with assignments
           
           setGroups(publishedGroups);
           setLoading(false);
@@ -144,54 +144,66 @@ const StudentAssignments = () => {
           <h1 className="text-lg font-medium mb-4">Assignments</h1>
 
           {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="w-8 h-8 border-4 border-t-[#AAFF45] border-[#d1e3bb] rounded-full animate-spin"></div>
-            </div>
+          <div className="fixed inset-0 flex items-center justify-center bg-white">
+          <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
+        </div>
           ) : groups.length === 0 ? (
             <p className="text-gray-500 py-4">No assignments available for this course yet.</p>
           ) : (
-            <div className="space-y-6">
-              {groups.map((group) => (
-                <div key={group.id} className="border border-gray-300 rounded-md overflow-hidden">
-                  <div className="bg-[#B9FF66] p-3 font-medium">{group.name}</div>
-                  
-                  {group.assignments.length === 0 ? (
-                    <p className="p-4 text-gray-500">No assignments in this group yet.</p>
-                  ) : (
-                    <div className="divide-y divide-gray-200">
-                      {group.assignments.map((assignment) => (
-                        <div 
-                          key={assignment.id} 
-                          className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                          onClick={() => handleNavigateToAssignment(assignment.id)}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-medium text-lg">{assignment.title}</h3>
-                              <div className="text-sm text-gray-600 mt-1">
-                                Due: {formatDate(assignment.dueDate)} at {formatTime(assignment.dueDate)}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                Points: {assignment.points}
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {getStatusBadge(assignment.submissionStatus)}
-                              <Image 
-                                src="/asset/arrowdown_icon.svg" 
-                                alt="View assignment" 
-                                width={16} 
-                                height={16} 
-                                className="transform rotate-270"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+            <div className="w-full mt-4">
+              {groups.length === 0 ? (
+              <p>No assignment groups yet.</p>
+              ) : (
+              groups.map((group) => (
+                <div key={group.id} className="mb-6 text-sm">
+                <div className="bg-[#AAFF45] border border-gray-400 p-2 rounded-t-sm">
+                  <span>{group.name}</span>
                 </div>
-              ))}
+
+                {/* Assignments */}
+                {(group.assignments || []).map((assignment) => (
+                  <div
+                  key={assignment.id}
+                  className="border border-gray-400 border-t-0 rounded-sm"
+                  >
+                  <div className="flex justify-between items-center p-2">
+                    <div>
+                    <p
+                      className="text-sm font-semibold text-gray-800 hover:underline cursor-pointer"
+                      onClick={() => handleNavigateToAssignment(assignment.id)}
+                    >
+                      {assignment.title}
+                    </p>
+                    <div className="text-xs text-gray-600">
+                      <b>Due</b>:{" "}
+                      {assignment.dueDate
+                      ? new Date(assignment.dueDate).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "2-digit",
+                        year: "numeric",
+                        })
+                      : ""}{" "}
+                      at{" "}
+                      {assignment.dueDate
+                      ? (() => {
+                        const dt = new Date(assignment.dueDate);
+                        const hh = dt.getHours().toString().padStart(2, "0");
+                        const mm = dt.getMinutes().toString().padStart(2, "0");
+                        const ampm = parseInt(hh, 10) >= 12 ? "PM" : "AM";
+                        const formattedHours = (parseInt(hh, 10) % 12 || 12).toString();
+                        return `${formattedHours}:${mm} ${ampm}`;
+                        })()
+                      : ""}{" "}
+                      - {assignment.points} pts
+                    </div>
+                    </div>
+                    {getStatusBadge(assignment.submissionStatus)}
+                  </div>
+                  </div>
+                ))}
+                </div>
+              ))
+              )}
             </div>
           )}
         </div>
@@ -201,4 +213,3 @@ const StudentAssignments = () => {
 };
 
 export default StudentAssignments;
-

@@ -412,7 +412,7 @@ const ProfessorAssignments = () => {
                   <div className="flex justify-between items-center p-2">
                   <div>
                     <p
-                    className="text-sm font-semibold text-gray-700 hover:underline cursor-pointer"
+                    className="text-sm font-semibold text-gray-800 hover:underline cursor-pointer"
                     onClick={() => handleNavigate(assignment.id)}
                     >
                     {assignment.title}
