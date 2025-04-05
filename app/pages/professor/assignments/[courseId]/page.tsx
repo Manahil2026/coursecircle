@@ -438,15 +438,15 @@ const ProfessorAssignments = () => {
                     {" "} - {assignment.points} pts
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
                     {assignment.published ? (
-                    <div className="relative group">
+                    <div className="relative group flex items-center">
                       <button onClick={() => handleUnpublishAssignment(groupIndex, index)}>
                       <Image
                         src="/asset/publish_icon.svg"
                         alt="Published"
-                        width={18}
-                        height={18}
+                        width={19}
+                        height={19}
                         className="cursor-pointer"
                       />
                       </button>
@@ -455,7 +455,7 @@ const ProfessorAssignments = () => {
                       </span>
                     </div>
                     ) : (
-                    <div className="relative group">
+                    <div className="relative group flex items-center">
                       <button onClick={() => handlePublishAssignment(groupIndex, index)}>
                       <Image
                         src="/asset/unpublish_icon.svg"
