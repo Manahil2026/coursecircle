@@ -9,7 +9,7 @@ interface Params {
 }
 
 export async function GET(req: NextRequest, { params }: Params) {
-    const { courseId } = params;
+    const { courseId } = await params;
 
     const groups = await prisma.assignmentGroup.findMany({
         where: { courseId },
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 
 export async function POST(req: NextRequest, { params }: Params) {
     try {
-        const { courseId } = params;
+        const { courseId } = await params;
         const body = await req.text(); // Read the raw request body
         console.log("Raw request body:", body); // Debugging log
 

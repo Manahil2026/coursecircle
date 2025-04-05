@@ -15,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { courseId, assignmentId } = params;
+    const { courseId, assignmentId } = await params;
 
     // First, verify the student is enrolled in the course
     const student = await prisma.user.findUnique({

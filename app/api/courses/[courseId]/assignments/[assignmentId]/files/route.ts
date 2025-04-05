@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request, { params }: { params: { courseId: string, assignmentId: string } }) {
   try {
-    const { assignmentId } = params;
+    const { assignmentId } = await params;
 
     // Fetch all files related to the assignment
     const files = await prisma.assignmentFile.findMany({

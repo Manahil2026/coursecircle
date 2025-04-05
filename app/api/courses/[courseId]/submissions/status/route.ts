@@ -1,5 +1,4 @@
 // This route gets all published assignemnts for a selected course and displays their submission status
-
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuth } from "@clerk/nextjs/server";
@@ -16,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { courseId } = params;
+    const { courseId } = await params;
 
     // Check if user is enrolled in the course as a student
     const student = await prisma.user.findUnique({
