@@ -40,6 +40,10 @@ model User {
 
   // Added relation for submissions
   submissions Submission[]
+
+  // relation for attendance
+  studentAttendances   Attendance[] @relation("StudentAttendance")
+  professorAttendances Attendance[] @relation("ProfessorAttendance")
 }
 
 model Course {
@@ -68,7 +72,8 @@ model Course {
   modules Module[] // One course can have many modules
 
   assignmentGroups AssignmentGroup[] //one to many relation btw Course and AssignmentGroup
-
+  
+  attendances Attendance[] //relation for attendance
   
   @@index([professorId])
   @@map("courses")
@@ -133,12 +138,12 @@ model Assignment {
 
   files   AssignmentFile[] @relation("AssignmentFiles")
 
-  // Add the submission type and method fields
   submissionType       SubmissionType      @default(NO_SUBMISSIONS)
-  onlineSubmissionMethod OnlineSubmissionMethod? // Only relevant if submissionType is ONLINE
+  onlineSubmissionMethod OnlineSubmissionMethod?
 
-  // Add relation to submissions
   submissions Submission[]
+
+  isAttendanceAssignment Boolean @default(false) // Flag to identify attendance assignment
 
   @@index([courseId])
   @@map("assignments")
@@ -225,4 +230,22 @@ model Submission {
   @@index([studentId])
   @@map("submissions")
   @@unique([studentId, assignmentId])
+}
+
+model Attendance {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  status      String   // e.g., "PRESENT", "ABSENT", "UNMARKED"
+  
+  student     User     @relation("StudentAttendance", fields: [studentId], references: [id], onDelete: Cascade)
+  studentId   String
+  
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId    String
+
+  professor   User     @relation("ProfessorAttendance", fields: [professorId], references: [id], onDelete: Cascade)
+  professorId String
+
+  @@index([studentId, courseId, date])
+  @@map("attendances")
 }
