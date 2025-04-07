@@ -247,5 +247,6 @@ model Attendance {
   professorId String
 
   @@index([studentId, courseId, date])
+  @@unique([studentId, courseId, date])
   @@map("attendances")
 }
