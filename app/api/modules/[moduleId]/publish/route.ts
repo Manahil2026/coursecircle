@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(req: NextRequest, { params }: { params: { moduleId: string } }) {
   try {
-    const { moduleId } = params;
+    const { moduleId } = await params;
 
     // Validate moduleId
     if (!moduleId || typeof moduleId !== "string") {

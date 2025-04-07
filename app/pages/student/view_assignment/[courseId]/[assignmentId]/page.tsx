@@ -462,7 +462,7 @@ const ViewAssignment = () => {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {submission.grade !== null 
                                 ? `${submission.grade}/${assignment.points}` 
-                                : assignmentGrade?.pointsEarned !== null 
+                                : assignmentGrade && assignmentGrade.pointsEarned !== null 
                                   ? `${assignmentGrade.pointsEarned}/${assignmentGrade.totalPoints}` 
                                   : "Not graded yet"
                               }

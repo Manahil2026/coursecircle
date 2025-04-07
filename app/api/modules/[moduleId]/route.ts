@@ -12,7 +12,7 @@ type FileItem = {
 // GET - Fetch a single module
 export async function GET(req: Request, { params }: { params: { moduleId: string } }) {
   try {
-    const { moduleId } = params;
+    const { moduleId } = await params;
 
     if (!moduleId) {
       return NextResponse.json({ error: "Module ID is required" }, { status: 400 });
@@ -37,7 +37,7 @@ export async function GET(req: Request, { params }: { params: { moduleId: string
 // PUT - Update an existing module
 export async function PUT(req: Request, { params }: { params: { moduleId: string } }) {
   try {
-    const { moduleId } = params;
+    const { moduleId } = await params;
     const data = await req.json();
 
     // First, update the module title and sections
@@ -82,7 +82,7 @@ export async function PUT(req: Request, { params }: { params: { moduleId: string
 // DELETE - Remove a module
 export async function DELETE(req: Request, { params }: { params: { moduleId: string } }) {
   try {
-    const { moduleId } = params;
+    const { moduleId } = await params;
 
     // Check if the module exists
     const module = await prisma.module.findUnique({
