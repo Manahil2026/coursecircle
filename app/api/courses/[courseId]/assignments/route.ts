@@ -54,23 +54,36 @@ export async function POST(req: NextRequest, { params }: Params) {
         }
 
         const { title, points, dueDate, dueTime, assignmentId, groupId } = JSON.parse(body);
-        
-        if (!title || !points || !dueDate || !dueTime) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+
+        // Validate mandatory fields
+        if (!title || !points) {
+            return NextResponse.json({ error: "Missing required fields: title and points are mandatory" }, { status: 400 });
         }
 
-        const dueDateTime = new Date(`${dueDate}T${dueTime}`);
+        // Handle optional dueDate and dueTime
+        const dueDateTime = dueDate && dueTime ? new Date(`${dueDate}T${dueTime}`) : null;
 
         if (assignmentId) {
             const updatedAssignment = await prisma.assignment.update({
                 where: { id: assignmentId },
-                data: { title, points: Number(points), dueDate: dueDateTime, groupId },
+                data: {
+                    title,
+                    points: Number(points),
+                    dueDate: dueDateTime, // Can be null
+                    groupId,
+                },
             });
             return NextResponse.json(updatedAssignment);
         }
 
         const newAssignment = await prisma.assignment.create({
-            data: { title, points: Number(points), dueDate: dueDateTime, courseId, groupId },
+            data: {
+                title,
+                points: Number(points),
+                dueDate: dueDateTime, // Can be null
+                courseId,
+                groupId,
+            },
         });
 
         return NextResponse.json(newAssignment);
