@@ -336,31 +336,30 @@ const ViewAssignment = () => {
           </div>
         ) : (
           <>
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-2xl font-bold">{assignment.title}</h1>
-              <button 
+            <div className="flex justify-between items-center">
+              <h1 className="text-lg font-medium">{assignment.title}</h1>
+                <button 
                 onClick={() => router.back()}
-                className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
-              >
-                Back to Assignments
-              </button>
+                className="px-4 py-2 mb-4 hover:bg-gray-300 flex items-center gap-2 rounded"
+                >
+                <img src="/asset/back_icon.svg" alt="Back" className="size-6" />
+                </button>
             </div>
 
-            <div className="bg-white shadow-md rounded-md overflow-hidden mb-8">
-              <div className="p-6">
-                <div className="mb-4 flex justify-between">
+            <div className="bg-white rounded overflow-hidden">
+              <div>
+                <div className="flex gap-2 border-gray-800 border-t border-b p-1">
                   <div>
-                    <span className="text-gray-600">Due: </span>
-                    <span className="font-medium">{formatDueDate(assignment.dueDate)}</span>
+                    <span className="text-black">Due: </span>
+                    <span className="font-medium text-sm">{formatDueDate(assignment.dueDate)}</span>
                   </div>
                   <div>
-                    <span className="text-gray-600">Points: </span>
+                    <span className="text-black">Points: </span>
                     <span className="font-medium">{assignment.points}</span>
                   </div>
                 </div>
 
-                <div className="border-t border-gray-200 pt-4">
-                  <h2 className="text-lg font-medium mb-2">Instructions</h2>
+                <div className="text-base pt-4">
                   {assignment.description ? (
                     <div dangerouslySetInnerHTML={{ __html: assignment.description }} />
                   ) : (
@@ -368,43 +367,28 @@ const ViewAssignment = () => {
                   )}
                 </div>
               </div>
+                {assignmentFiles.length > 0 && (
+                <div className="">
+                <ul className="">
+                  {assignmentFiles.map((file) => (
+                  <li key={file.id}>
+                    <a 
+                    href={file.fileUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-blue-600 hover:underline"
+                    >
+                    {file.fileName}
+                    </a>
+                  </li>
+                  ))}
+                </ul>
+                </div>
+              )}
             </div>
 
             {/* Assignment Files Section - show if there are files */}
-            {assignmentFiles.length > 0 && (
-              <div className="bg-white shadow-md rounded-md overflow-hidden mb-8">
-                <div className="bg-[#B9FF66] p-4 font-medium">
-                  Assignment Files
-                </div>
-                <div className="p-6">
-                  {filesLoading ? (
-                    <div className="flex justify-center">
-                      <div className="w-6 h-6 border-2 border-t-[#AAFF45] border-[#d1e3bb] rounded-full animate-spin"></div>
-                    </div>
-                  ) : (
-                    <ul className="divide-y divide-gray-200">
-                      {assignmentFiles.map((file) => (
-                        <li key={file.id} className="py-3 flex items-center hover:bg-gray-50 cursor-pointer" onClick={() => viewFile(file)}>
-                          <img 
-                            src={getFileIcon(file.fileName)}
-                            alt="File" 
-                            className="w-5 h-5 mr-3"
-                          />
-                          <span className="flex-1">{file.fileName}</span>
-                          <button 
-                            className="px-3 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200"
-                          >
-                            View
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            )}
 
-            {/* Previous Submissions Section - only shown if there are any */}
             {submissions.length > 0 && (
               <div className="bg-white shadow-md rounded-md overflow-hidden mb-8">
                 <div className="bg-[#B9FF66] p-4 font-medium">
@@ -556,12 +540,9 @@ const ViewAssignment = () => {
                 </div>
               </div>
             ) : (
-              <div className="bg-white shadow-md rounded-md overflow-hidden">
-                <div className="bg-[#B9FF66] p-4 font-medium">
-                  Submission Information
-                </div>
-                <div className="p-6">
-                  <p className="text-gray-700">
+              <div className="overflow-hidden">
+                <div className="">
+                  <p className="">
                     This assignment does not require a submission. It may be for informational purposes only.
                   </p>
                 </div>

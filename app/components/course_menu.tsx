@@ -28,7 +28,7 @@ const CourseMenu: React.FC<CourseMenuProps> = ({ courseId }) => {
             key={item.path}
             onClick={() => router.push(item.path)}
             className={`px-4 py-1 text-left text-black text-sm hover:underline ${
-              pathname === item.path ? "underline" : ""
+              pathname === item.path ? "underline font-semibold" : ""
             }`}
           >
             {item.name}
