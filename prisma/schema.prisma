@@ -103,6 +103,7 @@ model AssignmentGroup {
   course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId    String
   assignments Assignment[] @relation("GroupAssignments")
+  weight      Float        @default(0) // field for group weight
 
   @@index([courseId])
   @@map("assignment_groups")
