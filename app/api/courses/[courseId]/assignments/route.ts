@@ -9,14 +9,38 @@ interface Params {
 }
 
 export async function GET(req: NextRequest, { params }: Params) {
-    const { courseId } = await params;
+    const { courseId } = params;
 
-    const groups = await prisma.assignmentGroup.findMany({
-        where: { courseId },
-        include: { assignments: true },
-    });
+    try {
+        // Fetch assignment groups and their assignments
+        const groups = await prisma.assignmentGroup.findMany({
+            where: { courseId },
+            include: { assignments: true },
+        });
 
-    return NextResponse.json(groups);
+        // Fetch attendance assignments (not part of any group)
+        const attendanceAssignments = await prisma.assignment.findMany({
+            where: {
+                courseId,
+                isAttendanceAssignment: true, // Only fetch attendance assignments
+            },
+        });
+
+        // Add attendance assignments as a separate group
+        const attendanceGroup = {
+            id: "attendance", // Unique ID for the attendance group
+            name: "Attendance",
+            assignments: attendanceAssignments,
+        };
+
+        // Combine assignment groups with the attendance group
+        const allGroups = [...groups, attendanceGroup];
+
+        return NextResponse.json(allGroups);
+    } catch (error) {
+        console.error("Error fetching assignments:", error);
+        return NextResponse.json({ error: "Failed to fetch assignments." }, { status: 500 });
+    }
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
@@ -30,23 +54,36 @@ export async function POST(req: NextRequest, { params }: Params) {
         }
 
         const { title, points, dueDate, dueTime, assignmentId, groupId } = JSON.parse(body);
-        
-        if (!title || !points || !dueDate || !dueTime) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+
+        // Validate mandatory fields
+        if (!title || !points) {
+            return NextResponse.json({ error: "Missing required fields: title and points are mandatory" }, { status: 400 });
         }
 
-        const dueDateTime = new Date(`${dueDate}T${dueTime}`);
+        // Handle optional dueDate and dueTime
+        const dueDateTime = dueDate && dueTime ? new Date(`${dueDate}T${dueTime}`) : null;
 
         if (assignmentId) {
             const updatedAssignment = await prisma.assignment.update({
                 where: { id: assignmentId },
-                data: { title, points: Number(points), dueDate: dueDateTime, groupId },
+                data: {
+                    title,
+                    points: Number(points),
+                    dueDate: dueDateTime, // Can be null
+                    groupId,
+                },
             });
             return NextResponse.json(updatedAssignment);
         }
 
         const newAssignment = await prisma.assignment.create({
-            data: { title, points: Number(points), dueDate: dueDateTime, courseId, groupId },
+            data: {
+                title,
+                points: Number(points),
+                dueDate: dueDateTime, // Can be null
+                courseId,
+                groupId,
+            },
         });
 
         return NextResponse.json(newAssignment);

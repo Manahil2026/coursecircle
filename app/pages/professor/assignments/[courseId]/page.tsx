@@ -125,44 +125,49 @@ const ProfessorAssignments = () => {
     }
   };
 
-  const handleSave = async () => { // Save the assignment on the professor's end
+  const handleSave = async () => {
     if (!newAssignment.title.trim()) {
-      alert("Please provide a title.");
+      alert("Title is mandatory.");
       return;
     }
-
+  
+    if (!newAssignment.points.trim()) {
+      alert("Points are mandatory.");
+      return;
+    }
+  
     const groupId = selectedGroupIndex !== null ? groups[selectedGroupIndex].id : null;
     const assignmentId =
       editGroupIndex !== null && editIndex !== null
         ? groups[editGroupIndex].assignments[editIndex].id
         : null;
-
+  
     const payload = {
       title: newAssignment.title,
       points: newAssignment.points,
-      dueDate: newAssignment.dueDate,
-      dueTime: newAssignment.dueTime,
+      dueDate: newAssignment.dueDate || "", // Optional
+      dueTime: newAssignment.dueTime || "", // Optional
       groupId,
       assignmentId,
     };
-
+  
     try {
       const res = await fetch(`/api/courses/${courseId}/assignments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
+  
       if (!res.ok) {
         const errorData = await res.json();
         console.error("Error response:", errorData);
         alert(`Failed to create assignment: ${errorData.error || "Unknown error"}`);
         return;
       }
-
+  
       const updatedAssignment = await res.json();
       console.log("Created assignment:", updatedAssignment);
-
+  
       setGroups((prev) => {
         const updatedGroups = prev.map((group) => {
           if (group.id === groupId) {
@@ -175,8 +180,8 @@ const ProfessorAssignments = () => {
           }
           return group;
         });
-
-        // If the assignment is ungrouped, handle it separately
+  
+// If the assignment is ungrouped, handle it separately
         if (!groupId) {
           return [
             ...updatedGroups,
@@ -187,16 +192,17 @@ const ProfessorAssignments = () => {
             },
           ];
         }
-
+  
         return updatedGroups;
       });
-
+  
       setShowModal(false);
     } catch (error) {
       console.error("Error creating assignment:", error);
       alert("An error occurred while creating the assignment.");
     }
   };
+  
 
   const handleDeleteGroup = async (groupIndex: number) => { // delete group
     const groupId = groups[groupIndex].id;
@@ -418,24 +424,24 @@ const ProfessorAssignments = () => {
                     {assignment.title}
                     </p>
                     <div className="text-xs text-gray-600">
-                    <b>Due</b>:{" "}
-                    {assignment.dueDate
-                      ? new Date(assignment.dueDate).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "2-digit",
-                        year: "numeric",
-                      })
-                      : ""}
-                    {" "}at{" "}
-                    {assignment.dueDate
-                      ? (() => {
-                        const dt = new Date(assignment.dueDate);
-                        const hh = dt.getHours().toString().padStart(2, "0");
-                        const mm = dt.getMinutes().toString().padStart(2, "0");
-                        return convertTo12HourFormat(`${hh}:${mm}`);
-                      })()
-                      : ""}
-                    {" "} - {assignment.points} pts
+                      <b>Due</b>:{" "}
+                      {assignment.dueDate
+                        ? new Date(assignment.dueDate).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "2-digit",
+                            year: "numeric",
+                          })
+                        : "N/A"}{" "}
+                      at{" "}
+                      {assignment.dueDate
+                        ? (() => {
+                            const dt = new Date(assignment.dueDate);
+                            const hh = dt.getHours().toString().padStart(2, "0");
+                            const mm = dt.getMinutes().toString().padStart(2, "0");
+                            return convertTo12HourFormat(`${hh}:${mm}`);
+                          })()
+                        : "N/A"}{" "}
+                      - {assignment.points} pts
                     </div>
                   </div>
                   <div className="flex gap-2 items-center">

@@ -20,6 +20,11 @@ const CourseMenu: React.FC<CourseMenuProps> = ({ courseId }) => {
     { name: "People", path: role === "prof" ? `/pages/professor/people/${courseId}` : `/pages/student/people/${courseId}` },
   ];
 
+  // Add Attendance tab only for professors
+  if (role === "prof") {
+    menuItems.push({ name: "Attendance", path: `/pages/professor/attendance/${courseId}` });
+  }
+
   return (
     <div className="w-32 bg-white shadow-lg border border-[#aeaeae85] h-screen fixed left-16 top-0 pt-3">
       <nav className="flex flex-col">
