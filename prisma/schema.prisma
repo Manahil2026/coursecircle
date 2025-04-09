@@ -44,6 +44,10 @@ model User {
   // relation for attendance
   studentAttendances   Attendance[] @relation("StudentAttendance")
   professorAttendances Attendance[] @relation("ProfessorAttendance")
+  
+  // Messaging relationships
+  sentMessages           Message[]
+  participatedConversations ConversationParticipant[]
 }
 
 model Course {
@@ -74,6 +78,9 @@ model Course {
   assignmentGroups AssignmentGroup[] //one to many relation btw Course and AssignmentGroup
   
   attendances Attendance[] //relation for attendance
+  
+  // Messaging relationships
+  conversations Conversation[]
   
   @@index([professorId])
   @@map("courses")
@@ -250,4 +257,67 @@ model Attendance {
   @@index([studentId, courseId, date])
   @@unique([studentId, courseId, date])
   @@map("attendances")
+}
+
+// Messaging models
+
+enum MessageStatus {
+  DRAFT
+  SENT
+  READ
+  DELETED
+}
+
+model Conversation {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  name        String?   // Optional name for group conversations
+  isGroup     Boolean   @default(false)
+  
+  // If this conversation is for a course (e.g., class-wide messaging)
+  courseId    String?
+  course      Course?   @relation(fields: [courseId], references: [id])
+  
+  messages    Message[]
+  participants ConversationParticipant[]
+  
+  @@index([courseId])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id              String    @id @default(cuid())
+  userId          String
+  conversationId  String
+  joinedAt        DateTime  @default(now())
+  isAdmin         Boolean   @default(false) // For group conversations
+  
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, conversationId])
+  @@index([conversationId])
+  @@index([userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id              String        @id @default(cuid())
+  content         String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  senderId        String
+  conversationId  String
+  status          MessageStatus @default(SENT)
+  
+  // For draft messages (unsent)
+  isDraft         Boolean       @default(false)
+  
+  sender          User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  conversation    Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  @@index([senderId])
+  @@index([conversationId])
+  @@map("messages")
 }
