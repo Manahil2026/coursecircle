@@ -336,19 +336,24 @@ const ViewAssignment = () => {
           </div>
         ) : (
           <>
-            <div className="flex justify-between items-center">
-              <h1 className="text-lg font-medium">{assignment.title}</h1>
+            <div className="flex justify-between items-center p-1">
+              <h1 className="text-xl font-medium">{assignment.title}</h1>
                 <button 
                 onClick={() => router.back()}
-                className="px-4 py-2 mb-4 hover:bg-gray-300 flex items-center gap-2 rounded"
+                className="flex items-center gap-2 rounded transition duration-200 group"
                 >
-                <img src="/asset/back_icon.svg" alt="Back" className="size-6" />
+                <img 
+                  src="/asset/back_icon.svg" 
+                  alt="Back" 
+                  className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1" 
+                />
+                <span className="text-sm font-medium">Prev</span>
                 </button>
             </div>
 
             <div className="bg-white rounded overflow-hidden">
               <div>
-                <div className="flex gap-2 border-gray-800 border-t border-b p-1">
+                <div className="flex gap-2 border-gray-800 border-t border-b p-2">
                   <div>
                     <span className="text-black">Due: </span>
                     <span className="font-medium text-sm">{formatDueDate(assignment.dueDate)}</span>
@@ -359,7 +364,7 @@ const ViewAssignment = () => {
                   </div>
                 </div>
 
-                <div className="text-base pt-4">
+                <div className="text-base pt-1">
                   {assignment.description ? (
                     <div dangerouslySetInnerHTML={{ __html: assignment.description }} />
                   ) : (
@@ -390,86 +395,66 @@ const ViewAssignment = () => {
             {/* Assignment Files Section - show if there are files */}
 
             {submissions.length > 0 && (
-              <div className="bg-white shadow-md rounded-md overflow-hidden mb-8">
-                <div className="bg-[#B9FF66] p-4 font-medium">
-                  Your Submissions
+              <div className="">
+                <div className="">
+                  Submissions
                 </div>
-                <div className="p-6">
+                <div className="">
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            File
-                          </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Submitted
-                          </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Grade
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                    <div className="space-y-4">
                         {submissions.map((submission) => (
-                          <tr key={submission.id}>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <a 
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  viewFile({
-                                    id: submission.id,
-                                    fileName: submission.fileName,
-                                    fileUrl: submission.fileUrl
-                                  });
-                                }}
-                                className="text-blue-600 hover:underline cursor-pointer"
-                              >
-                                {submission.fileName}
-                              </a>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {formatSubmissionDate(submission.createdAt)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                submission.status === 'GRADED' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-yellow-100 text-yellow-800'
-                              }`}>
-                                {submission.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {submission.grade !== null 
-                                ? `${submission.grade}/${assignment.points}` 
-                                : assignmentGrade && assignmentGrade.pointsEarned !== null 
-                                  ? `${assignmentGrade.pointsEarned}/${assignmentGrade.totalPoints}` 
-                                  : "Not graded yet"
-                              }
-                              {assignmentGrade?.isLate && (
-                                <div className="text-xs text-yellow-600 mt-1">
-                                  Submitted Late
-                                </div>
-                              )}
-                              {(submission.feedback || assignmentGrade?.feedback) && (
-                                <div className="mt-1">
-                                  <button
-                                    className="text-blue-600 text-xs hover:underline"
-                                    onClick={() => alert(submission.feedback || assignmentGrade?.feedback || "No detailed feedback available")}
-                                  >
-                                    View Feedback
-                                  </button>
-                                </div>
-                              )}
-                            </td>
-                          </tr>
+                        <div key={submission.id} className=" flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <a 
+                          onClick={(e) => {
+                          e.preventDefault();
+                          viewFile({
+                          id: submission.id,
+                          fileName: submission.fileName,
+                          fileUrl: submission.fileUrl
+                          });
+                          }}
+                          className="text-blue-600 hover:underline cursor-pointer"
+                          >
+                          {submission.fileName}
+                          </a>
+                          <div className="text-sm text-gray-500">
+                          {formatSubmissionDate(submission.createdAt)}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          submission.status === 'GRADED' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                          {submission.status}
+                          </span>
+                          <div className="text-sm text-gray-500">
+                          {submission.grade !== null 
+                          ? `${submission.grade}/${assignment.points}` 
+                          : assignmentGrade && assignmentGrade.pointsEarned !== null 
+                          ? `${assignmentGrade.pointsEarned}/${assignmentGrade.totalPoints}` 
+                          : "Not graded yet"
+                          }
+                          {assignmentGrade?.isLate && (
+                          <div className="text-xs text-yellow-600">
+                          Submitted Late
+                          </div>
+                          )}
+                          </div>
+                          {(submission.feedback || assignmentGrade?.feedback) && (
+                          <button
+                            className="text-blue-600 text-xs hover:underline"
+                            onClick={() => alert(submission.feedback || assignmentGrade?.feedback || "No detailed feedback available")}
+                          >
+                            View Feedback
+                          </button>
+                          )}
+                        </div>
+                        </div>
                         ))}
-                      </tbody>
-                    </table>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -477,11 +462,9 @@ const ViewAssignment = () => {
 
             {/* Submission Section - Only show if submissions are allowed */}
             {submissionsAllowed ? (
-              <div className="bg-white shadow-md rounded-md overflow-hidden">
-                <div className="bg-[#B9FF66] p-4 font-medium">
-                  {submissions.length > 0 ? "Submit Another Attempt" : "Submit Assignment"}
-                </div>
-                <div className="p-6">
+              <div className="overflow-hidden">
+
+                <div className="">
                   {submitSuccess ? (
                     <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
                       Assignment submitted successfully!
@@ -509,10 +492,27 @@ const ViewAssignment = () => {
                       )}
                       
                       {isTextSubmission && (
-                        <div className="mb-6">
-                          <h3 className="text-lg font-medium mb-4">Text Submission</h3>
+                        <div className="mb-4 mt-2">
                           <form onSubmit={handleTextSubmit}>
                             <div className="mb-4">
+                              <div className="flex justify-end">
+                              <button
+                                type="submit"
+                                className={`px-4 py-2 rounded mb-4 ${
+                                submitting 
+                                  ? "bg-gray-400 cursor-not-allowed" 
+                                  : "bg-[#AAFF45] hover:bg-[#B9FF66]"
+                                }`}
+                                disabled={submitting}
+                              >
+                                {submitting 
+                                  ? "Submitting..." 
+                                  : submissions.length > 0 
+                                  ? "Submit Another One" 
+                                  : "Submit"}
+                              </button>
+                              </div>
+                          
                               <ReactQuillEditor 
                                 value={textSubmission}
                                 onChange={setTextSubmission}
@@ -520,17 +520,6 @@ const ViewAssignment = () => {
                               />
                             </div>
                             <div>
-                              <button
-                                type="submit"
-                                className={`px-4 py-2 rounded-md ${
-                                  submitting 
-                                    ? "bg-gray-400 cursor-not-allowed" 
-                                    : "bg-[#AAFF45] hover:bg-[#B9FF66]"
-                                }`}
-                                disabled={submitting}
-                              >
-                                {submitting ? "Submitting..." : "Submit Assignment"}
-                              </button>
                             </div>
                           </form>
                         </div>
