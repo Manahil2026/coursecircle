@@ -8,6 +8,7 @@ const mocha = new Mocha({
 
 
 mocha.addFile(path.join(__dirname, 'testcases', 'loginpage_tests.ts'));
+mocha.addFile(path.join(__dirname, 'testcases', 'professordashboard_tests.ts'));
 
 
 mocha.run((failures) => {
