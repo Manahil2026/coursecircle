@@ -18,6 +18,7 @@ interface Group {
   id: string;
   name: string;
   assignments: Assignment[];
+  weight: number;
 }
 
 const ProfessorAssignments = () => {
@@ -31,6 +32,8 @@ const ProfessorAssignments = () => {
   const [newGroupName, setNewGroupName] = useState("");
   const [selectedGroupIndex, setSelectedGroupIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showWeightModal, setShowWeightModal] = useState(false);
+  const [groupWeights, setGroupWeights] = useState<{ id: string; name: string; weight: number }[]>([]);
 
   const courseId = params?.courseId as string; // Extract courseId from URL
 
@@ -50,6 +53,9 @@ const ProfessorAssignments = () => {
     }
   }, [courseId]);
 
+  useEffect(() => {
+    setGroupWeights(groups.map((g) => ({ id: g.id, name: g.name, weight: g.weight || 0 })));
+  }, [groups]);
 
   const [newAssignment, setNewAssignment] = useState<Assignment>({
     id: "",
@@ -189,6 +195,7 @@ const ProfessorAssignments = () => {
               id: "ungrouped",
               name: "Ungrouped",
               assignments: [updatedAssignment], // Only one instance should be added
+              weight: 0,
             },
           ];
         }
@@ -348,6 +355,37 @@ const ProfessorAssignments = () => {
     }
   };
 
+  const handleWeightChange = (groupId: string, newWeight: number) => {
+    setGroupWeights((prev) =>
+      prev.map((g) => (g.id === groupId ? { ...g, weight: newWeight } : g))
+    );
+  };
+  
+  const handleSaveWeights = async () => {
+    try {
+      const payload = groupWeights.map(({ id, weight }) => ({ groupId: id, weight })); // Exclude 'name'
+      console.log("Weights payload:", payload); // Debug log
+  
+      const res = await fetch(`/api/courses/${courseId}/groups/weights`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weights: payload }),
+      });
+  
+      if (!res.ok) {
+        const errorData = await res.json();
+        alert(`Failed to save weights: ${errorData.error || "Unknown error"}`);
+        return;
+      }
+  
+      alert("Weights saved successfully!");
+      setShowWeightModal(false);
+    } catch (error) {
+      console.error("Error saving weights:", error);
+      alert("An error occurred while saving weights.");
+    }
+  };
+
   return (
     <div className="flex">
       <Sidebar_dashboard />
@@ -380,7 +418,12 @@ const ProfessorAssignments = () => {
             >
               Create Assignment
             </button>
-
+            <button
+              onClick={() => setShowWeightModal(true)}
+              className="p-2 mt-2 bg-[#AAFF45] text-black text-sm rounded hover:bg-[#B9FF66]"
+            >
+              ⋮
+            </button>
           </div>
         </div>
 
@@ -589,6 +632,42 @@ const ProfessorAssignments = () => {
                   className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                 >
                   {editGroupIndex !== null ? "Save" : "Add"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showWeightModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+            <div className="bg-white p-6 rounded shadow-lg w-96">
+              <h2 className="text-xl font-bold mb-4">Set Group Weights</h2>
+              {groupWeights.map((group) => (
+                <div key={group.id} className="mb-2">
+                  <label className="block text-sm font-medium">{group.name}</label>
+                  <input
+                    type="number"
+                    value={group.weight}
+                    onChange={(e) => handleWeightChange(group.id, Number(e.target.value))}
+                    className="w-full border p-2 rounded"
+                  />
+                </div>
+              ))}
+              <p className="text-right font-bold">
+                Total Weight: {groupWeights.reduce((sum, g) => sum + g.weight, 0)}%
+              </p>
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  onClick={() => setShowWeightModal(false)}
+                  className="bg-gray-300 px-4 py-2 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveWeights}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  Save
                 </button>
               </div>
             </div>
