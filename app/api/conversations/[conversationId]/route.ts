@@ -1,4 +1,5 @@
 // app/api/conversations/[conversationId]/route.ts
+// route handler for operations for specific conversations
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuth } from "@clerk/nextjs/server";
