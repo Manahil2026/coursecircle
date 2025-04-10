@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import Image from "next/image";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { useUser } from "@clerk/nextjs";
 
 interface Message {
   id: number;
@@ -34,13 +35,20 @@ interface Module {
   }[];
 }
 
+interface Course {
+  id: string;
+  name: string;
+  code: string;
+}
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [courseId, setCourseId] = useState<string | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
-  const [courseInput, setCourseInput] = useState("");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const { user } = useUser();
   const [fetchingModules, setFetchingModules] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatHistory = useRef<{ role: string; parts: { text: string }[] }[]>([]);
@@ -48,6 +56,25 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await fetch(
+          user?.publicMetadata?.role === "prof"
+            ? "/api/courses/professor"
+            : "/api/courses/student"
+        );
+        if (!response.ok) throw new Error("Failed to fetch courses");
+        const data = await response.json();
+        setCourses(data);
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+      }
+    };
+
+    if (user) fetchCourses();
+  }, [user]);
 
   const fetchModules = async (id: string) => {
     setFetchingModules(true);
@@ -68,14 +95,10 @@ export default function ChatPage() {
     }
   };
 
-  const handleCourseIdSubmit = async () => {
-    const trimmed = courseInput.trim();
-    if (!trimmed) return;
-
-    const data = await fetchModules(trimmed);
+  const handleCourseSelection = async (id: string) => {
+    const data = await fetchModules(id);
     if (data && data.length > 0) {
       const moduleData = JSON.stringify(data, null, 2);
-
 
       // ============================
       // === Prompt engineering for the AI ===
@@ -104,7 +127,7 @@ Always assume the user may be confused or unsure.
         ],
       });
     } else {
-      alert("No modules found for this course ID. Please check the ID.");
+      alert("No modules found for this course. Please try another course.");
     }
   };
 
@@ -207,21 +230,23 @@ Always assume the user may be confused or unsure.
             <div className="flex-1 flex items-center justify-center p-6">
               <div className="w-full max-w-md bg-white border p-6 rounded-lg shadow">
                 <h2 className="text-xl font-semibold mb-4">
-                  Enter Your Course ID
+                  Select Your Course
                 </h2>
-                <input
-                  type="text"
-                  value={courseInput}
-                  onChange={(e) => setCourseInput(e.target.value)}
-                  placeholder="e.g. CSIT-355"
-                  className="w-full p-2 border border-black rounded-md mb-4"
-                />
-                <button
-                  onClick={handleCourseIdSubmit}
-                  className="w-full bg-[#AAFF45] text-black py-2 rounded-md hover:bg-[#90e13d]"
-                >
-                  Submit
-                </button>
+                {courses.length === 0 ? (
+                  <p className="text-gray-500">No courses available.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {courses.map((course) => (
+                      <li
+                        key={course.id}
+                        className="p-2 border rounded-md cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleCourseSelection(course.id)}
+                      >
+                        {course.code} - {course.name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           ) : (
