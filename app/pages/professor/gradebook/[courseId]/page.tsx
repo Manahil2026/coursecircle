@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import CourseMenu from "@/app/components/course_menu";
-import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
+import SidebarDashboard from "@/app/components/sidebar_dashboard";
 import GradeTable from "@/app/components/grade_table";
 import { useEffect, useState } from "react";
 
@@ -10,7 +10,7 @@ interface Assignment {
   id: number;
   dueDate: string;
   name: string;
-  score: number|null;
+  score: number | null;
   points: number;
   graded: boolean;
 }
@@ -19,157 +19,200 @@ interface Student {
   id: number;
   name: string;
   assignments: Assignment[];
-  attendance: number;
+  average: number | string;
+}
+
+interface GradeChange {
+  studentId: number;
+  assignmentId: number;
+  newScore: number | null;
+  graded: boolean;
 }
 
 export default function GradeTracker() {
-  const {courseId} = useParams();
+  const { courseId } = useParams();
 
+  // State for the table’s current view
   const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
+  // A snapshot we can revert to on “Cancel”
+  const [originalStudentsSnapshot, setOriginalStudentsSnapshot] = useState<Student[]>([]);
+  // All assignments (for header columns)
+  const [allAssignments, setAllAssignments] = useState<Assignment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (!courseId) return; // Wait until courseId is available
+  // Track only the edits the user has made
+  const [pendingChanges, setPendingChanges] = useState<GradeChange[]>([]);
+
 
     const fetchGradebookData = async () => {
+      setIsLoading(true);
       try {
         const response = await fetch(`/api/gradebook?courseId=${courseId}`);
         const data = await response.json();
 
-        const allAssignments = data.assignments; // Ensure this is populated
-        if (!allAssignments) {
-          console.error("allAssignments is undefined");
-          return;
-        }
+        const fetchedAssignments = data.assignments || [];
 
-        const formattedStudents = data.students.map((student: any) => {
-          const assignments = allAssignments.map((assignment: any) => {
-            const submission = student.submissions.find(
-              (sub: any) => sub.assignment.title === assignment.title
+        const loadedStudents: Student[] = data.gradebook.map(
+          (gradebookEntry: any) => {
+            const studentRecord = data.students.find(
+              (record: any) => record.id === gradebookEntry.studentId
+            );
+
+            const studentAssignments: Assignment[] = fetchedAssignments.map(
+              (assignmentData: any) => {
+                const submissionRecord = studentRecord.submissions.find(
+                  (submission: any) =>
+                    submission.assignment.groupId === assignmentData.groupId &&
+                    submission.assignment.id === assignmentData.id
+                );
+                return {
+                  id: assignmentData.id,
+                  name: assignmentData.title,
+                  dueDate: assignmentData.dueDate,
+                  score: submissionRecord?.grade ?? null,
+                  points: assignmentData.points,
+                  graded: submissionRecord?.grade != null,
+                };
+              }
             );
 
             return {
-              id: assignment.id,
-              name: assignment.title,
-              dueDate: assignment.dueDate,
-              score: submission?.grade ?? null,
-              points: assignment.points,
-              graded: submission?.grade !== null,
+              id: gradebookEntry.studentId,
+              name: gradebookEntry.name,
+              assignments: studentAssignments,
+              average: gradebookEntry.weightedGrade,
             };
-          }) || [];
+          }
+        );
 
-          return {
-            id: student.id,
-            name: `${student.firstName} ${student.lastName}`,
-            assignments,
-            attendance: 100, // Replace with actual attendance data if available
-          };
-        });
-
-        setStudents(formattedStudents);
+        setStudents(loadedStudents);
+        setOriginalStudentsSnapshot(loadedStudents);
+        setAllAssignments(fetchedAssignments);
       } catch (error) {
         console.error("Error fetching gradebook data:", error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
+    
+  useEffect(() => {
+      if (!courseId) return;
 
     fetchGradebookData();
-  }, [courseId]); // Re-run the effect when courseId changes
+  }, [courseId]);
 
-  const handleScoreChange = async (
+  // Called by GradeTable whenever a cell is edited or toggled
+  const handleCellEdit = (
     studentId: number,
-    assignmentIndex: number,
+    assignmentId: number,
     newScore: number | null,
     graded: boolean
   ) => {
-    // Update the frontend state
-    setStudents((prevStudents) =>
-      prevStudents.map((student) => {
-        if (student.id === studentId) {
-          const updatedAssignments = student.assignments.map((assignment, index) => {
-            if (index === assignmentIndex) {
-              return { ...assignment, score: newScore, graded };
-            }
-            return assignment;
-          });
-          return { ...student, assignments: updatedAssignments };
-        }
-        return student;
+    setStudents((previousStudents) =>
+      previousStudents.map((student) => {
+        if (student.id !== studentId) return student; // Match by student.id
+        const updatedAssignments = student.assignments.map((assignment) =>
+          assignment.id === assignmentId // Match by assignment.id
+            ? { ...assignment, score: graded ? newScore : null, graded }
+            : assignment
+        );
+        return { ...student, assignments: updatedAssignments };
       })
     );
 
-    // Send the updated grade and graded state to the backend
+    // Record or overwrite this single-cell change
+    const studentUniqueId = studentId; // Use the passed studentId directly
+    const assignmentUniqueId = assignmentId; // Use the passed assignmentId directly
+    setPendingChanges((currentChanges) => {
+      // Remove any old entry for this same cell
+      const filteredChanges = currentChanges.filter(
+        (change) =>
+          !(
+            change.studentId === studentUniqueId &&
+            change.assignmentId === assignmentUniqueId
+          )
+      );
+      return [
+        ...filteredChanges,
+        { studentId: studentUniqueId, assignmentId: assignmentUniqueId, newScore, graded },
+      ];
+    });
+  };
+
+  // Send all pendingChanges to the API in one go
+  const saveAllChanges = async () => {
+    if (pendingChanges.length === 0) return;
     try {
-      const assignmentId = students
-        .find((student) => student.id === studentId)
-        ?.assignments[assignmentIndex]?.id;
-
-      const response = await fetch("/api/gradebook", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          studentId,
-          assignmentId,
-          newGrade: graded ? newScore : null, // Send null if ungraded
-          graded,
-        }),
-      });
-
-      if (!response.ok) {
-        console.error("Failed to update grade in the database");
-      }
+      await Promise.all(
+        pendingChanges.map((pendingChange) =>
+          fetch("/api/gradebook", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              studentId: pendingChange.studentId,
+              assignmentId: pendingChange.assignmentId,
+              newGrade: pendingChange.graded
+                ? pendingChange.newScore
+                : null,
+              graded: pendingChange.graded,
+            }),
+          })
+        )
+      );
+      // On success, reset our “original” snapshot & clear the queue
+      setOriginalStudentsSnapshot(students);
+      setPendingChanges([]);
+      alert("All changes saved successfully!");
+      // On success, refetch the updated data
+      await fetchGradebookData();
     } catch (error) {
-      console.error("Error updating grade:", error);
+      console.error("Failed to save changes:", error);
+      alert("Error saving changes. Please try again.");
     }
   };
 
-  const updateScore = (
-    studentIndex: number,
-    assignmentIndex: number,
-    newScore: number | null,
-    graded: boolean = true
-  ) => {
-    setStudents((prevStudents) =>
-      prevStudents.map((student, sIndex) => {
-        if (sIndex === studentIndex) {
-          const updatedAssignments = student.assignments.map((assignment, aIndex) => {
-            if (aIndex === assignmentIndex) {
-              return {
-                ...assignment,
-                score: graded ? newScore : null, // Set score to null if ungraded
-                graded, // Update the graded status
-              };
-            }
-            return assignment;
-          });
-          return { ...student, assignments: updatedAssignments };
-        }
-        return student;
-      })
-    );
+  // Revert back to the snapshot
+  const cancelAllChanges = () => {
+    setStudents(originalStudentsSnapshot);
+    setPendingChanges([]);
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
+  if (isLoading) {
+    return <div>Loading gradebook…</div>;
   }
 
   return (
     <>
-      <Sidebar_dashboard />
-      <CourseMenu courseId={courseId as string} /> {/* Pass courseId to CourseMenu */}
+      <SidebarDashboard />
+      <CourseMenu courseId={courseId as string} />
+
       <div className="p-6 max-w-4xl mx-auto">
         <h1 className="text-base font-medium mb-4 text-center text-black">
           Gradebook
         </h1>
+
         <GradeTable
           students={students}
-          updateScore={(studentIndex, assignmentIndex, newScore, graded) =>
-            handleScoreChange(students[studentIndex].id, assignmentIndex, newScore, graded)
-          }
+          assignments={allAssignments}
+          updateScore={handleCellEdit}
         />
+
+        <div className="mt-4 flex space-x-2">
+          <button
+            onClick={saveAllChanges}
+            disabled={pendingChanges.length === 0}
+            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+          >
+            Save Changes
+          </button>
+          <button
+            onClick={cancelAllChanges}
+            disabled={pendingChanges.length === 0}
+            className="px-4 py-2 bg-gray-400 text-white rounded disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </>
   );
