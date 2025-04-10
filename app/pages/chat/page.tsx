@@ -67,6 +67,10 @@ export default function ChatPage() {
   const [currentFlashcardIndex, setCurrentFlashcardIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [generatingFlashcards, setGeneratingFlashcards] = useState(false);
+  
+  // Custom flashcard input states
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customText, setCustomText] = useState("");
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -223,8 +227,12 @@ Always assume the user may be confused or unsure.
     setMessages((prev) => [...prev, aiResponseMessage]);
   };
 
-  const generateFlashcards = async () => {
-    if (!modules.length) return;
+  const generateFlashcards = async (source: 'modules' | 'custom' = 'modules') => {
+    if (source === 'modules' && !modules.length) return;
+    if (source === 'custom' && !customText.trim()) {
+      alert('Please enter some text to generate flashcards from.');
+      return;
+    }
     
     setGeneratingFlashcards(true);
     
@@ -239,23 +247,33 @@ Always assume the user may be confused or unsure.
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
       
-      // Create a detailed flashcard generation prompt with all module content
-      let flashcardPrompt = `Generate 10 study flashcards based on the following course modules. Each flashcard should have a clear question and answer format and cover important concepts, definitions, or facts. Format the output as a JSON array with "question" and "answer" properties for each card.
+      // Create flashcard generation prompt based on source
+      let flashcardPrompt = '';
+      
+      if (source === 'modules') {
+        flashcardPrompt = `Generate 10 study flashcards based on the following course modules. Each flashcard should have a clear question and answer format and cover important concepts, definitions, or facts. Format the output as a JSON array with "question" and "answer" properties for each card.
 
 Module details:\n`;
 
-      modules.forEach(module => {
-        flashcardPrompt += `\nMODULE: ${module.title}\n`;
-        
-        if (module.sections && module.sections.length > 0) {
-          flashcardPrompt += "SECTIONS:\n";
-          module.sections.forEach(section => {
-            flashcardPrompt += `- ${section.title}: ${section.content}\n`;
-          });
-        }
-      });
+        modules.forEach(module => {
+          flashcardPrompt += `\nMODULE: ${module.title}\n`;
+          
+          if (module.sections && module.sections.length > 0) {
+            flashcardPrompt += "SECTIONS:\n";
+            module.sections.forEach(section => {
+              flashcardPrompt += `- ${section.title}: ${section.content}\n`;
+            });
+          }
+        });
+      } else {
+        flashcardPrompt = `Generate 10 study flashcards based on the following text. Each flashcard should have a clear question and answer format and cover important concepts, definitions, or facts from the text. Format the output as a JSON array with "question" and "answer" properties for each card.
+
+Study Text:
+${customText}
+`;
+      }
       
-      flashcardPrompt += `\nGenerate 10 flashcards that cover the most important concepts from these modules. Return the flashcards in this format only:
+      flashcardPrompt += `\nGenerate 10 flashcards that cover the most important concepts. Return the flashcards in this format only:
 [
   {
     "question": "Question 1?",
@@ -282,8 +300,8 @@ Module details:\n`;
           id: Date.now() + index,
           question: card.question,
           answer: card.answer,
-          moduleId: modules[0].id, // Associate with first module or distribute as needed
-          moduleName: modules[0].title
+          moduleId: source === 'modules' ? modules[0].id : 'custom',
+          moduleName: source === 'modules' ? modules[0].title : 'Custom Content'
         }));
         
         setFlashcards(newFlashcards);
@@ -291,10 +309,14 @@ Module details:\n`;
         setCurrentFlashcardIndex(0);
         setShowAnswer(false);
         
+        if (source === 'custom') {
+          setShowCustomInput(false);
+        }
+        
         // Add a notification message
         const notificationMessage: Message = {
           id: Date.now(),
-          content: `✅ Generated ${newFlashcards.length} flashcards! You can now view them in the flashcard viewer.`,
+          content: `✅ Generated ${newFlashcards.length} flashcards from ${source === 'modules' ? 'module content' : 'your custom text'}! You can now view them in the flashcard viewer.`,
           sender: "ai",
           timestamp: new Date().toLocaleTimeString([], {
             hour: "2-digit",
@@ -354,6 +376,10 @@ Module details:\n`;
   const toggleFlashcardView = () => {
     setShowFlashcards(prev => !prev);
   };
+  
+  const toggleCustomInput = () => {
+    setShowCustomInput(prev => !prev);
+  };
 
   return (
     <div className="flex">
@@ -376,10 +402,10 @@ Module details:\n`;
                 </span>
               )}
             </div>
-            {courseId && (
-              <div className="flex items-center">
+            <div className="flex items-center">
+              {courseId && (
                 <button
-                  onClick={generateFlashcards}
+                  onClick={() => generateFlashcards('modules')}
                   disabled={generatingFlashcards || !modules.length}
                   className={`mr-2 px-3 py-1 rounded-lg text-sm transition-colors flex items-center ${
                     generatingFlashcards || !modules.length
@@ -394,26 +420,35 @@ Module details:\n`;
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
-                      Generate Flashcards
+                      Generate From Modules
                     </>
                   )}
                 </button>
-                {flashcards.length > 0 && (
-                  <button
-                    onClick={toggleFlashcardView}
-                    className="px-3 py-1 rounded-lg text-sm bg-indigo-500 text-white hover:bg-indigo-600 transition-colors flex items-center"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    {showFlashcards ? "Hide Flashcards" : "View Flashcards"}
-                  </button>
-                )}
-              </div>
-            )}
+              )}
+              <button
+                onClick={toggleCustomInput}
+                className="mr-2 px-3 py-1 rounded-lg text-sm transition-colors flex items-center bg-purple-500 text-white hover:bg-purple-600"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                {showCustomInput ? "Cancel Custom Input" : "Custom Flashcards"}
+              </button>
+              {flashcards.length > 0 && (
+                <button
+                  onClick={toggleFlashcardView}
+                  className="px-3 py-1 rounded-lg text-sm bg-indigo-500 text-white hover:bg-indigo-600 transition-colors flex items-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  {showFlashcards ? "Hide Flashcards" : "View Flashcards"}
+                </button>
+              )}
+            </div>
           </div>
 
-          {!courseId ? (
+          {!courseId && !showCustomInput ? (
             <div className="flex-1 flex items-center justify-center p-6">
               <div className="w-full max-w-md bg-white border p-6 rounded-lg shadow">
                 <h2 className="text-xl font-semibold mb-4">
@@ -434,6 +469,36 @@ Module details:\n`;
                     ))}
                   </ul>
                 )}
+              </div>
+            </div>
+          ) : showCustomInput ? (
+            <div className="flex-1 flex items-center justify-center p-6">
+              <div className="w-full max-w-2xl bg-white border p-6 rounded-lg shadow">
+                <h2 className="text-xl font-semibold mb-4">
+                  Generate Flashcards from Custom Text
+                </h2>
+                <p className="text-gray-600 mb-4">
+                  Paste your notes, text, or any content you want to create flashcards from.
+                </p>
+                <textarea
+                  value={customText}
+                  onChange={(e) => setCustomText(e.target.value)}
+                  placeholder="Paste your text here..."
+                  className="w-full h-64 p-3 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-[#AAFF45]"
+                />
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => generateFlashcards('custom')}
+                    disabled={generatingFlashcards || !customText.trim()}
+                    className={`px-4 py-2 rounded-lg transition-colors ${
+                      generatingFlashcards || !customText.trim()
+                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                        : "bg-[#AAFF45] text-black hover:bg-[#8FE03D]"
+                    }`}
+                  >
+                    {generatingFlashcards ? "Generating..." : "Generate Flashcards"}
+                  </button>
+                </div>
               </div>
             </div>
           ) : showFlashcards && flashcards.length > 0 ? (
