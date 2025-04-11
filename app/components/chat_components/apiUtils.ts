@@ -31,3 +31,33 @@ export const fetchModules = async (
     setFetchingModules(false);
   }
 };
+
+export const fetchAssignments = async (
+  courseId: string,
+  setAssignments: (assignments: any[]) => void,
+  setFetchingAssignments: (isFetching: boolean) => void
+) => {
+  setFetchingAssignments(true);
+  try {
+    const response = await fetch(`/api/courses/${courseId}/assignments`);
+    if (!response.ok) throw new Error(`Error fetching assignments: ${response.statusText}`);
+    
+    const data = await response.json();
+    
+    // The API returns assignment groups, so we need to extract assignments
+    const assignmentsFromGroups = data.flatMap((group: any) => 
+      group.assignments.map((assignment: any) => ({
+        ...assignment,
+        groupName: group.name
+      }))
+    );
+    
+    setAssignments(assignmentsFromGroups);
+    return assignmentsFromGroups;
+  } catch (error) {
+    console.error("Error fetching assignments:", error);
+    return null;
+  } finally {
+    setFetchingAssignments(false);
+  }
+};

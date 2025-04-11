@@ -9,9 +9,9 @@ import CourseSelector from "@/app/components/chat_components/CourseSelector";
 import CustomTextInput from "@/app/components/chat_components/CustomTextInput";
 import FlashcardViewer from "@/app/components/chat_components/FlashcardViewer";
 import ChatMessageList from "@/app/components/chat_components/ChatMessageList";
-import { generateAssistantPrompt } from "@/app/components/chat_components/assistantPrompt"; // Import the utility function
-import { generateFlashcardPrompt } from "@/app/components/chat_components/flashcardPrompt"; // Import the new utility function
-import { fetchCourses, fetchModules } from "@/app/components/chat_components/apiUtils"; // Import the new utility functions
+import { generateAssistantPrompt } from "@/app/components/chat_components/assistantPrompt"; 
+import { generateFlashcardPrompt } from "@/app/components/chat_components/flashcardPrompt"; 
+import { fetchCourses, fetchModules, fetchAssignments } from "@/app/components/chat_components/apiUtils";
 
 interface Message {
   id: number;
@@ -50,6 +50,16 @@ interface Module {
   }[];
 }
 
+interface Assignment {
+  id: string;
+  title: string;
+  points: number;
+  dueDate: string | null;
+  published: boolean;
+  groupName: string;
+  courseId: string;
+}
+
 interface Course {
   id: string;
   name: string;
@@ -62,9 +72,11 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [courseId, setCourseId] = useState<string | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const { user } = useUser();
   const [fetchingModules, setFetchingModules] = useState(false);
+  const [fetchingAssignments, setFetchingAssignments] = useState(false);
   const chatHistory = useRef<{ role: string; parts: { text: string }[] }[]>([]);
 
   // Flashcard states
@@ -84,20 +96,40 @@ export default function ChatPage() {
   }, [user]);
 
   const handleCourseSelection = async (id: string) => {
-    const data = await fetchModules(id, setModules, setCourseId, setFetchingModules);
-    if (data && data.length > 0) {
-      const moduleData = JSON.stringify(data, null, 2);
+    // Fetch modules
+    const modulesData = await fetchModules(id, setModules, setCourseId, setFetchingModules);
+    
+    // Fetch assignments for the same course
+    const assignmentsData = await fetchAssignments(id, setAssignments, setFetchingAssignments);
+    
+    if ((modulesData && modulesData.length > 0) || (assignmentsData && assignmentsData.length > 0)) {
+      const moduleData = JSON.stringify(modulesData || [], null, 2);
+      const assignmentData = JSON.stringify(assignmentsData || [], null, 2);
 
+      // Initialize the chat history with both module and assignment data
       chatHistory.current.push({
         role: "user",
         parts: [
           {
-            text: generateAssistantPrompt(moduleData), // Use the utility function
+            text: generateAssistantPrompt(moduleData, assignmentData),
           },
         ],
       });
+      
+      // Add an initial welcome message
+      const welcomeMessage: Message = {
+        id: Date.now(),
+        content: `Welcome! I have access to your course modules and assignments. You can ask me questions about either of them. For example, "What are the upcoming assignments?" or "Tell me about Module 2."`,
+        sender: "ai",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+      
+      setMessages([welcomeMessage]);
     } else {
-      alert("No modules found for this course. Please try another course.");
+      alert("No course content found. Please try another course.");
     }
   };
 
@@ -310,6 +342,11 @@ export default function ChatPage() {
                   Course ID: {courseId}
                 </span>
               )}
+              {fetchingAssignments && (
+                <span className="ml-2 text-sm text-gray-600">
+                  Loading assignments...
+                </span>
+              )}
             </div>
             <div className="flex items-center">
               {courseId && (
@@ -350,7 +387,7 @@ export default function ChatPage() {
             <CourseSelector
               courses={courses}
               onSelectCourse={handleCourseSelection}
-              isLoading={fetchingModules}
+              isLoading={fetchingModules || fetchingAssignments}
             />
           ) : showCustomInput ? (
             <CustomTextInput
@@ -372,7 +409,7 @@ export default function ChatPage() {
               setInputMessage={setInputMessage}
               handleSendMessage={handleSendMessage}
               isLoading={isLoading}
-              isFetchingModules={fetchingModules}
+              isFetchingModules={fetchingModules || fetchingAssignments}
             />
           )}
         </div>
