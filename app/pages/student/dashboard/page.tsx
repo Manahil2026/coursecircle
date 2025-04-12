@@ -64,30 +64,34 @@ export default function StudentDashboard() {
               <div className="relative">
                 <h1 className="font-bold text-xl mb-4">Courses</h1>
                 <div 
-                  className="max-h-[410px] overflow-y-auto scrollbar-hide space-y-4 pr-2"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                  <style jsx>{`
-                    .scrollbar-hide::-webkit-scrollbar {
-                      display: none;
-                    }
-                  `}</style>
-                  {courses.length === 0 ? (
-                    <p>No courses enrolled.</p>
-                  ) : (
-                    courses.map((course) => (
-                      <CourseCard
-                        key={course.id}
-                        courseId={course.id}
-                        courseName={course.name}
-                        assignmentsDue={Math.floor(Math.random() * 5)} // Replace with actual count
-                        notifications={Math.floor(Math.random() * 5)} // Replace with actual count
-                        schedule="MWF 10:00 AM" // Replace with real data
-                        upcomingClassDate="March 4, 2025" // Replace with real data
-                      />
-                    ))
-                  )}
-                </div>
+  className="max-h-[410px] overflow-y-auto scrollbar-hide pr-2"
+  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+>
+  <style jsx>{`
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+  `}</style>
+  <div className="space-y-6 px-1 relative z-0"> {/* Add space between cards and room to scale */}
+    {courses.length === 0 ? (
+      <p>No courses assigned.</p>
+    ) : (
+      courses.map((course) => (
+        <div key={course.id} className="relative z-10"> {/* Local wrapper to preserve hover scaling */}
+          <CourseCard
+            courseId={course.id}
+            courseName={course.name}
+            assignmentsDue={Math.floor(Math.random() * 5)}
+            notifications={Math.floor(Math.random() * 5)}
+            schedule="MWF 10:00 AM"
+            upcomingClassDate="March 4, 2025"
+          />
+        </div>
+      ))
+    )}
+  </div>
+</div>
+
                 {courses.length > 2 && (
                   <div className="absolute bottom-0 left-[280px] transform -translate-x-1/2 animate-bounce mt-2 opacity-50">
                       <Image
