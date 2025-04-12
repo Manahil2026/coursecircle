@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import CourseCard from "@/app/components/course_card";
 import CalendarWidget from "@/app/components/CalendarWidget";
+import TodoList from "@/app/components/TodoList";
 import Image from "next/image";
 
 interface Course {
@@ -22,7 +23,7 @@ export default function StudentDashboard() {
     if (isLoaded) {
       const fetchCourses = async () => {
         try {
-          const response = await fetch("/api/courses/student"); 
+          const response = await fetch("/api/courses/student");
           if (response.ok) {
             const data = await response.json();
             setCourses(data);
@@ -63,42 +64,46 @@ export default function StudentDashboard() {
               </h1>
               <div className="relative">
                 <h1 className="font-bold text-xl mb-4">Courses</h1>
-                <div 
-  className="max-h-[410px] overflow-y-auto scrollbar-hide pr-2"
-  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
->
-  <style jsx>{`
-    .scrollbar-hide::-webkit-scrollbar {
-      display: none;
-    }
-  `}</style>
-  <div className="space-y-6 px-1 relative z-0"> {/* Add space between cards and room to scale */}
-    {courses.length === 0 ? (
-      <p>No courses assigned.</p>
-    ) : (
-      courses.map((course) => (
-        <div key={course.id} className="relative z-10"> {/* Local wrapper to preserve hover scaling */}
-          <CourseCard
-            courseId={course.id}
-            courseName={course.name}
-            assignmentsDue={Math.floor(Math.random() * 5)}
-            notifications={Math.floor(Math.random() * 5)}
-            schedule="MWF 10:00 AM"
-            upcomingClassDate="March 4, 2025"
-          />
-        </div>
-      ))
-    )}
-  </div>
-</div>
+                <div
+                  className="max-h-[410px] overflow-y-auto scrollbar-hide pr-2"
+                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                >
+                  <style jsx>{`
+                    .scrollbar-hide::-webkit-scrollbar {
+                      display: none;
+                    }
+                  `}</style>
+                  <div className="space-y-6 px-1 relative z-0">
+                    {" "}
+                    {/* Add space between cards and room to scale */}
+                    {courses.length === 0 ? (
+                      <p>No courses assigned.</p>
+                    ) : (
+                      courses.map((course) => (
+                        <div key={course.id} className="relative z-10">
+                          {" "}
+                          {/* Local wrapper to preserve hover scaling */}
+                          <CourseCard
+                            courseId={course.id}
+                            courseName={course.name}
+                            assignmentsDue={Math.floor(Math.random() * 5)}
+                            notifications={Math.floor(Math.random() * 5)}
+                            schedule="MWF 10:00 AM"
+                            upcomingClassDate="March 4, 2025"
+                          />
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
 
                 {courses.length > 2 && (
-                  <div className="absolute bottom-0 left-[280px] transform -translate-x-1/2 animate-bounce mt-2 opacity-50">
-                      <Image
+                  <div className="absolute bottom-0 left-[280px] opacity-45">
+                    <Image
                       src="/asset/arrowdown_icon.svg"
                       alt="Add icon"
-                      width={30}
-                      height={30}
+                      width={37}
+                      height={37}
                       priority
                     />
                   </div>
@@ -113,32 +118,7 @@ export default function StudentDashboard() {
 
               {/* To-do List */}
               <div>
-                <div className="flex justify-between">
-                  <h2 className="text-base font-semibold mb-2">To-do List</h2>
-                  <button>
-                    <Image
-                      src="/asset/add_icon.svg"
-                      alt="Add icon"
-                      width={27}
-                      height={27}
-                      priority
-                    />
-                  </button>
-                </div>
-
-                <div className="bg-white p-2 rounded-lg">
-                  <ul className="space-y-2">
-                    <li className="bg-black text-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
-                      03 | Study for SE (Due 11:55)
-                    </li>
-                    <li className="bg-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
-                      04 | Drink Water (Due 11:55)
-                    </li>
-                    <li className="bg-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
-                      06 | Touch Grass (Due 11:55)
-                    </li>
-                  </ul>
-                </div>
+                <TodoList />
               </div>
 
               {/* Announcements */}

@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import CourseCard from "@/app/components/course_card";
 import CalendarWidget from "@/app/components/CalendarWidget";
+import TodoList from "@/app/components/TodoList";
 import Image from "next/image";
 
 interface Course {
@@ -95,7 +96,7 @@ export default function ProfessorDashboard() {
                 </div>
 
                 {courses.length > 2 && (
-                  <div className="absolute bottom-0 left-[280px] transform -translate-x-1/2 animate-bounce mt-2 opacity-50">
+                  <div className="absolute bottom-0 left-[280px] opacity-45">
                     <Image
                       src="/asset/arrowdown_icon.svg"
                       alt="Add icon"
@@ -115,32 +116,7 @@ export default function ProfessorDashboard() {
 
               {/* To-do List */}
               <div>
-                <div className="flex justify-between">
-                  <h2 className="text-base font-semibold mb-2">To-do List</h2>
-                  <button>
-                    <Image
-                      src="/asset/add_icon.svg"
-                      alt="Add icon"
-                      width={27}
-                      height={27}
-                      priority
-                    />
-                  </button>
-                </div>
-
-                <div className="bg-white p-2 rounded-lg">
-                  <ul className="space-y-2">
-                    <li className="bg-black text-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
-                      03 | Grade Assignments (Due 11:55)
-                    </li>
-                    <li className="bg-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
-                      04 | Prepare Lecture Slides (Due 11:55)
-                    </li>
-                    <li className="bg-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
-                      06 | Schedule Office Hours (Due 11:55)
-                    </li>
-                  </ul>
-                </div>
+                <TodoList />
               </div>
 
               {/* Announcements */}
