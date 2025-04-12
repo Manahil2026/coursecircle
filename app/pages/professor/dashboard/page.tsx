@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import CourseCard from "@/app/components/course_card";
+import CalendarWidget from "@/app/components/CalendarWidget";
 import Image from "next/image";
 
 interface Course {
@@ -29,6 +30,7 @@ export default function ProfessorDashboard() {
 
     fetchCourses();
   }, []);
+
   const { isLoaded, user } = useUser();
 
   if (!isLoaded) {
@@ -40,10 +42,6 @@ export default function ProfessorDashboard() {
       </div>
     );
   }
-
-  // Helper function to get current month and year
-  const currentMonth = new Date().toLocaleString("default", { month: "long" });
-  const currentYear = new Date().getFullYear();
 
   return (
     <>
@@ -64,10 +62,10 @@ export default function ProfessorDashboard() {
                       key={course.id}
                       courseId={course.id}
                       courseName={course.name}
-                      assignmentsDue={Math.floor(Math.random() * 5)} // Replace with actual count
-                      notifications={Math.floor(Math.random() * 5)} // Replace with actual count
-                      schedule="MWF 10:00 AM" // Replace with real data
-                      upcomingClassDate="March 4, 2025" // Replace with real data
+                      assignmentsDue={Math.floor(Math.random() * 5)} // Placeholder
+                      notifications={Math.floor(Math.random() * 5)} // Placeholder
+                      schedule="MWF 10:00 AM" // Placeholder
+                      upcomingClassDate="March 4, 2025" // Placeholder
                     />
                   ))
                 ) : (
@@ -78,24 +76,8 @@ export default function ProfessorDashboard() {
 
             {/* Right Section - Calendar, To-do List, and Announcements */}
             <div className="col-span-1 space-y-4">
-              <div className="rounded-lg shadow">
-                <h2 className="text-base font-semibold mb-4">{`${currentMonth} ${currentYear}`}</h2>
-                <div className="grid grid-cols-7 text-center font-medium bg-[#AAFF45] rounded-lg">
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-                    (day) => (
-                      <div key={day} className="font-medium">
-                        {day}
-                      </div>
-                    )
-                  )}
-                  {/* Dynamically render days for the current month */}
-                  {[...Array(7)].map((_, index) => (
-                    <div key={index} className="font-medium">
-                      {index + 2}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {/* Calendar Component */}
+              <CalendarWidget />
 
               {/* To-do List */}
               <div>
@@ -141,4 +123,3 @@ export default function ProfessorDashboard() {
     </>
   );
 }
-
