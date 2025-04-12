@@ -55,30 +55,17 @@ const Coursepage: React.FC = () => {
   };
 
   return (
-    <div className="flex">
+    <div className="flex bg-gradient-to-t from-[#AAFF45]/15 to-white">
       <Sidebar_dashboard />
       <CourseMenu courseId={courseId} />
       <main className="min-h-screen flex-1 p-6 pl-52">
         <h2 className="text-base font-semibold mb-4">Welcome to Your Course</h2>
         
-        {/* Course Overview Section */} 
-        <div className="border border-gray-400 flex flex-col text-sm mb-6 rounded-sm">
-          <div className="border-b border-gray-400 p-2 font-medium bg-[#AAFF45] rounded-md]">Course Overview</div>
-          <div className="border-b last:border-none border-gray-400 p-2 hover:bg-gray-50 cursor-pointer rounded-sm">
-            Get Started
-          </div>
-          <div className="border-b last:border-none border-gray-400 p-2 hover:bg-gray-50 cursor-pointer rounded-sm">
-            Syllabus
-          </div>
-          <div className="border-b last:border-none border-gray-400 p-2 hover:bg-gray-50 cursor-pointer rounded-sm">
-            Resources
-          </div>
-        </div>
-        
+    
         {/* Modules Section */}
         {isLoading ? (
           <div className="flex justify-center mt-6">
-            <div className="w-8 h-8 border-4 border-t-[#AAFF45] border-[#d1e3bb] rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
           </div>
         ) : modules.length === 0 ? (
           <p className="mt-6">No course materials available yet.</p>

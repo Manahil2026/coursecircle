@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
@@ -54,7 +53,7 @@ export default function StudentDashboard() {
   return (
     <>
       <Sidebar_dashboard />
-      <div className="flex h-screen flex-1 pl-16">
+      <div className="flex h-screen flex-1 pl-16 bg-gradient-to-t from-[#AAFF45]/15 to-white">
         <main className="flex-1 p-6 overflow-y-auto space-y-4">
           <div className="grid grid-cols-3 gap-4">
             {/* Left Section - User Greeting and Courses */}
@@ -62,22 +61,43 @@ export default function StudentDashboard() {
               <h1 className="text-base font-semibold mb-4">
                 Hi, {user ? user.fullName || user.firstName : "Guest"}
               </h1>
-              <h1 className="font-bold text-xl">Courses</h1>
-              <div className="space-y-4">
-                {courses.length === 0 ? (
-                  <p>No courses enrolled.</p>
-                ) : (
-                  courses.map((course) => (
-                    <CourseCard
-                      key={course.id}
-                      courseId={course.id}
-                      courseName={course.name}
-                      assignmentsDue={Math.floor(Math.random() * 5)} // Replace with actual count
-                      notifications={Math.floor(Math.random() * 5)} // Replace with actual count
-                      schedule="MWF 10:00 AM" // Replace with real data
-                      upcomingClassDate="March 4, 2025" // Replace with real data
+              <div className="relative">
+                <h1 className="font-bold text-xl mb-4">Courses</h1>
+                <div 
+                  className="max-h-[410px] overflow-y-auto scrollbar-hide space-y-4 pr-2"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                  <style jsx>{`
+                    .scrollbar-hide::-webkit-scrollbar {
+                      display: none;
+                    }
+                  `}</style>
+                  {courses.length === 0 ? (
+                    <p>No courses enrolled.</p>
+                  ) : (
+                    courses.map((course) => (
+                      <CourseCard
+                        key={course.id}
+                        courseId={course.id}
+                        courseName={course.name}
+                        assignmentsDue={Math.floor(Math.random() * 5)} // Replace with actual count
+                        notifications={Math.floor(Math.random() * 5)} // Replace with actual count
+                        schedule="MWF 10:00 AM" // Replace with real data
+                        upcomingClassDate="March 4, 2025" // Replace with real data
+                      />
+                    ))
+                  )}
+                </div>
+                {courses.length > 2 && (
+                  <div className="absolute bottom-0 left-[280px] transform -translate-x-1/2 animate-bounce mt-2 opacity-50">
+                      <Image
+                      src="/asset/arrowdown_icon.svg"
+                      alt="Add icon"
+                      width={30}
+                      height={30}
+                      priority
                     />
-                  ))
+                  </div>
                 )}
               </div>
             </div>

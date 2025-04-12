@@ -14,26 +14,31 @@ interface Course {
 }
 
 export default function ProfessorDashboard() {
+  const { isLoaded, user } = useUser();
   const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await fetch("/api/courses/professor");
-        if (!response.ok) throw new Error("Failed to fetch courses");
-        const data = await response.json();
-        setCourses(data);
-      } catch (error) {
-        console.error("Error fetching courses:", error);
-      }
-    };
+    if (isLoaded) {
+      const fetchCourses = async () => {
+        setLoading(true);
+        try {
+          const response = await fetch("/api/courses/professor");
+          if (!response.ok) throw new Error("Failed to fetch courses");
+          const data = await response.json();
+          setCourses(data);
+        } catch (error) {
+          console.error("Error fetching courses:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    fetchCourses();
-  }, []);
+      fetchCourses();
+    }
+  }, [isLoaded]);
 
-  const { isLoaded, user } = useUser();
-
-  if (!isLoaded) {
+  if (!isLoaded || loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center space-y-2">
@@ -46,30 +51,51 @@ export default function ProfessorDashboard() {
   return (
     <>
       <Sidebar_dashboard />
-      <div className="flex h-screen flex-1 pl-16">
+      <div className="flex h-screen flex-1 pl-16 bg-gradient-to-t from-[#AAFF45]/15 to-white">
         <main className="flex-1 p-6 overflow-y-auto space-y-4">
           <div className="grid grid-cols-3 gap-4">
             {/* Left Section - User Greeting and Courses */}
             <div className="col-span-2">
               <h1 className="text-base font-semibold mb-4">
-                Professor {user ? user.fullName || user.firstName : "Guest"}
+                Hi, Professor {user ? user.fullName || user.firstName : "Guest"}
               </h1>
-              <h1 className="font-bold text-xl">Courses</h1>
-              <div className="space-y-4">
-                {courses.length > 0 ? (
-                  courses.map((course) => (
-                    <CourseCard
-                      key={course.id}
-                      courseId={course.id}
-                      courseName={course.name}
-                      assignmentsDue={Math.floor(Math.random() * 5)} // Placeholder
-                      notifications={Math.floor(Math.random() * 5)} // Placeholder
-                      schedule="MWF 10:00 AM" // Placeholder
-                      upcomingClassDate="March 4, 2025" // Placeholder
+              <div className="relative">
+                <h1 className="font-bold text-xl mb-4">Courses</h1>
+                <div 
+                  className="max-h-[410px] overflow-y-auto scrollbar-hide space-y-4 pr-2"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                  <style jsx>{`
+                    .scrollbar-hide::-webkit-scrollbar {
+                      display: none;
+                    }
+                  `}</style>
+                  {courses.length === 0 ? (
+                    <p>No courses assigned.</p>
+                  ) : (
+                    courses.map((course) => (
+                      <CourseCard
+                        key={course.id}
+                        courseId={course.id}
+                        courseName={course.name}
+                        assignmentsDue={Math.floor(Math.random() * 5)} // Placeholder
+                        notifications={Math.floor(Math.random() * 5)} // Placeholder
+                        schedule="MWF 10:00 AM" // Placeholder
+                        upcomingClassDate="March 4, 2025" // Placeholder
+                      />
+                    ))
+                  )}
+                </div>
+                {courses.length > 2 && (
+                  <div className="absolute bottom-0 left-[280px] transform -translate-x-1/2 animate-bounce mt-2 opacity-50">
+                    <Image
+                      src="/asset/arrowdown_icon.svg"
+                      alt="Add icon"
+                      width={30}
+                      height={30}
+                      priority
                     />
-                  ))
-                ) : (
-                  <p>No courses assigned.</p>
+                  </div>
                 )}
               </div>
             </div>
@@ -97,13 +123,13 @@ export default function ProfessorDashboard() {
                 <div className="bg-white p-2 rounded-lg">
                   <ul className="space-y-2">
                     <li className="bg-black text-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
-                      03 | Study for SE (Due 11:55)
+                      03 | Grade Assignments (Due 11:55)
                     </li>
                     <li className="bg-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
-                      04 | Drink Water (Due 11:55)
+                      04 | Prepare Lecture Slides (Due 11:55)
                     </li>
                     <li className="bg-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:scale-105">
-                      06 | Touch Grass (Due 11:55)
+                      06 | Schedule Office Hours (Due 11:55)
                     </li>
                   </ul>
                 </div>

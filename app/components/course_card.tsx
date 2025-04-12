@@ -38,7 +38,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
   };
   return (
     <div
-      className="flex items-center border-b rounded-md p-2 shadow-lg border-[#aeaeae85] w-full max-w-xl cursor-pointer transition-all duration-300 hover:transform hover:scale-105"
+      className="flex items-center border-b rounded-md p-2 shadow-lg border-[#aeaeae85] w-full max-w-xl cursor-pointer transition-all duration-300 hover:transform hover:scale-95"
       onClick={handleClick}
     >
       <div
