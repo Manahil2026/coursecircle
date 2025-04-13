@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 
 interface Message {
-  id: number;
+  id: string;
   content: string;
   sender: "user" | "ai";
   timestamp: string;
