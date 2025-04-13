@@ -43,11 +43,9 @@ const CourseCard: React.FC<CourseCardProps> = ({
     >
       <div
         style={{
-          backgroundColor: `#${(
-        (courseName.length * 1234567) % 0xffffff
-          )
-        .toString(16)
-        .padStart(6, "0")}`,
+          backgroundColor: `#${((courseName.length * 1234567) % 0xffffff)
+            .toString(16)
+            .padStart(6, "0")}`,
         }}
         className="w-24 h-24 flex items-center justify-center text-7xl font-bold rounded-md"
       >
@@ -56,13 +54,19 @@ const CourseCard: React.FC<CourseCardProps> = ({
       <div className="ml-4 flex-1">
         <h2 className="text-lg font-medium mt-2">{courseName}</h2>
         <p className="text-gray-700 text-sm">
-          You have {assignmentsDue} assignments due and {notifications} pending notifications.
-          You have an upcoming class on {upcomingClassDate}.
+          You have {assignmentsDue} assignments due and {notifications} pending
+          notifications. You have an upcoming class on {upcomingClassDate}.
         </p>
         <div className="mt-3 flex gap-1 text-sm font-medium">
-          <button className="bg-[#AAFF45] px-3 py-1 rounded-lg ">Asgmt {assignmentsDue}</button>
-          <button className="bg-[#AAFF45] px-3 py-1 rounded-lg ">Notifs {notifications}</button>
-          <button className="bg-[#AAFF45] px-3 py-1 rounded-lg ">{schedule}</button>
+          <button className="bg-[#AAFF45] px-3 py-1 rounded-lg ">
+            Asgmt {assignmentsDue}
+          </button>
+          <button className="bg-[#AAFF45] px-3 py-1 rounded-lg ">
+            Notifs {notifications}
+          </button>
+          <button className="bg-[#AAFF45] px-3 py-1 rounded-lg ">
+            {schedule}
+          </button>
         </div>
       </div>
     </div>
@@ -70,4 +74,3 @@ const CourseCard: React.FC<CourseCardProps> = ({
 };
 
 export default CourseCard;
-

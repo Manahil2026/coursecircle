@@ -12,25 +12,43 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Check if the attendance assignment already exists
-    const existingAssignment = await prisma.assignment.findFirst({
+    // Ensure the attendance assignment group exists
+    let attendanceGroup = await prisma.assignmentGroup.findFirst({
+      where: { courseId, name: "Attendance" },
+    });
+
+    if (!attendanceGroup) {
+      attendanceGroup = await prisma.assignmentGroup.create({
+        data: {
+          name: "Attendance",
+          courseId,
+          weight: 0, // Default weight
+        },
+      });
+    }
+
+    // Ensure the attendance assignment exists
+    let attendanceAssignment = await prisma.assignment.findFirst({
       where: { courseId, isAttendanceAssignment: true },
     });
 
-    if (!existingAssignment) {
-      // Create the attendance assignment
-      await prisma.assignment.create({
+    if (!attendanceAssignment) {
+      attendanceAssignment = await prisma.assignment.create({
         data: {
           title: "Attendance",
           description: "Attendance grades for the semester",
           courseId,
+          groupId: attendanceGroup.id, // Link to the Attendance group
           isAttendanceAssignment: true,
+          points: 100, // Default points
+          published: true,
         },
       });
     }
 
     return new Response(JSON.stringify({ message: "Attendance assignment initialized successfully." }), { status: 200 });
   } catch (error) {
+    console.error("Error initializing attendance assignment:", error);
     return new Response(JSON.stringify({ error: "Failed to initialize attendance assignment." }), { status: 500 });
   }
 }
@@ -57,7 +75,22 @@ export async function GET(req: Request, { params }: { params: { courseId: string
 
     const professorId = course.professorId;
 
-    // Fetch the attendance assignment (create it if it doesn't exist)
+    // Ensure the attendance assignment group exists
+    let attendanceGroup = await prisma.assignmentGroup.findFirst({
+      where: { courseId, name: "Attendance" },
+    });
+
+    if (!attendanceGroup) {
+      attendanceGroup = await prisma.assignmentGroup.create({
+        data: {
+          name: "Attendance",
+          courseId,
+          weight: 0, // Default weight
+        },
+      });
+    }
+
+    // Ensure the attendance assignment exists
     let attendanceAssignment = await prisma.assignment.findFirst({
       where: {
         courseId,
@@ -66,14 +99,14 @@ export async function GET(req: Request, { params }: { params: { courseId: string
     });
 
     if (!attendanceAssignment) {
-      // Create the attendance assignment if it doesn't exist
       attendanceAssignment = await prisma.assignment.create({
         data: {
           title: "Attendance",
           description: "Attendance grades for the semester",
           courseId,
+          groupId: attendanceGroup.id, // Link to the Attendance group
           isAttendanceAssignment: true,
-          points: 100, // Total points for attendance
+          points: 100, // Default points
           published: true,
         },
       });
@@ -153,11 +186,20 @@ export async function PUT(req: Request) {
 
     if (!attendanceAssignment) {
       // Create the attendance assignment if it doesn't exist
+      const attendanceGroup = await prisma.assignmentGroup.findFirst({
+        where: { courseId, name: "Attendance" },
+      });
+
+      if (!attendanceGroup) {
+        throw new Error("Attendance group not found");
+      }
+
       attendanceAssignment = await prisma.assignment.create({
         data: {
           title: "Attendance",
           description: "Attendance grades for the semester",
           courseId,
+          groupId: attendanceGroup.id, // Link to the Attendance group
           isAttendanceAssignment: true,
           points: 100, // Total points for attendance
           published: true,

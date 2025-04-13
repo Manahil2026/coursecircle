@@ -4,12 +4,29 @@ import { useState, useEffect, useRef } from "react";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import Image from "next/image";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { useUser } from "@clerk/nextjs";
+import CourseSelector from "@/app/components/chat_components/CourseSelector";
+import CustomTextInput from "@/app/components/chat_components/CustomTextInput";
+import FlashcardViewer from "@/app/components/chat_components/FlashcardViewer";
+import ChatMessageList from "@/app/components/chat_components/ChatMessageList";
+import { generateAssistantPrompt } from "@/app/components/chat_components/assistantPrompt";
+import { generateFlashcardPrompt } from "@/app/components/chat_components/flashcardPrompt";
+import { fetchCourses, fetchModules, fetchAssignments } from "@/app/components/chat_components/apiUtils";
+import ChatSessionList from "@/app/components/chat_components/ChatSessionList";
 
 interface Message {
-  id: number;
+  id: string;
   content: string;
   sender: "user" | "ai";
   timestamp: string;
+}
+
+interface Flashcard {
+  id: number;
+  question: string;
+  answer: string;
+  moduleId: string;
+  moduleName: string;
 }
 
 interface Module {
@@ -34,79 +51,194 @@ interface Module {
   }[];
 }
 
+interface Assignment {
+  id: string;
+  title: string;
+  points: number;
+  dueDate: string | null;
+  published: boolean;
+  groupName: string;
+  courseId: string;
+}
+
+interface Course {
+  id: string;
+  name: string;
+  code: string;
+}
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [courseId, setCourseId] = useState<string | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
-  const [courseInput, setCourseInput] = useState("");
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const { user } = useUser();
   const [fetchingModules, setFetchingModules] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [fetchingAssignments, setFetchingAssignments] = useState(false);
   const chatHistory = useRef<{ role: string; parts: { text: string }[] }[]>([]);
+  const [sessions, setSessions] = useState<{
+    id: string;
+    title?: string;
+    createdAt: string;
+  }[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+
+  // Flashcard states
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [showFlashcards, setShowFlashcards] = useState(false);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customText, setCustomText] = useState("");
+  const [generatingFlashcards, setGeneratingFlashcards] = useState(false);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const loadCourses = async () => {
+      const coursesData = await fetchCourses(user?.publicMetadata?.role as string | undefined);
+      if (coursesData) setCourses(coursesData);
+    };
 
-  const fetchModules = async (id: string) => {
-    setFetchingModules(true);
-    try {
-      const response = await fetch(`/api/modules?courseId=${id}`);
-      if (!response.ok) {
-        throw new Error(`Error fetching modules: ${response.statusText}`);
-      }
-      const data = await response.json();
-      setModules(data);
-      setCourseId(id);
-      return data;
-    } catch (error) {
-      console.error("Error fetching modules:", error);
-      return null;
-    } finally {
-      setFetchingModules(false);
+    if (user) loadCourses();
+  }, [user]);
+
+  // After selecting a course, also load existing sessions:
+  useEffect(() => {
+    if (courseId) {
+      fetch(`/api/chat/sessions?courseId=${courseId}`)
+        .then(res => res.json())
+        .then(setSessions);
     }
-  };
+  }, [courseId]);
 
-  const handleCourseIdSubmit = async () => {
-    const trimmed = courseInput.trim();
-    if (!trimmed) return;
+  const handleCourseSelection = async (id: string) => {
+    // Fetch modules
+    const modulesData = await fetchModules(id, setModules, setCourseId, setFetchingModules);
 
-    const data = await fetchModules(trimmed);
-    if (data && data.length > 0) {
-      const moduleData = JSON.stringify(data, null, 2);
+    // Fetch assignments for the same course
+    const assignmentsData = await fetchAssignments(id, setAssignments, setFetchingAssignments);
 
+    if ((modulesData && modulesData.length > 0) || (assignmentsData && assignmentsData.length > 0)) {
+      const moduleData = JSON.stringify(modulesData || [], null, 2);
+      const assignmentData = JSON.stringify(assignmentsData || [], null, 2);
 
-      // ============================
-      // === Prompt engineering for the AI ===
-      // ============================
-   
-      chatHistory.current.push({
-        role: "user",
-        parts: [
-          {
-            text: `
-You are an AI assistant helping a student navigate their course modules.
-
-Module Data:
-${moduleData}
-
-Instructions:
-- When ever asked about modules, provide the number, names, sections and files and not just the number of modules.
-- Show module count and names if user asks about modules.
-- Show sections and files with clear bullets.
-- Help summarize or explain any part on request.
-- End with helpful prompts.
-
-Always assume the user may be confused or unsure.
-          `,
-          },
-        ],
+      // 1) Create a new chat session
+      const res = await fetch("/api/chat/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId: id }),
       });
+      const newSession = await res.json();
+      setSessions(prev => [newSession, ...prev]);
+      setCurrentChatId(newSession.id);
+
+      // 2) Initialize chatHistory with your module/assignment prompt
+      const initialPrompt = generateAssistantPrompt(moduleData, assignmentData);
+      chatHistory.current = [{
+        role: "user",
+        parts: [{ text: initialPrompt }],
+      }];
+
+      // 3) Persist that prompt + welcome message into the DB
+      const welcomeText = `Welcome! I have access to your course modules and assignments. You can ask me questions about either of them. For example, "What are the upcoming assignments?" or "Tell me about Module 2."`;
+      await fetch(`/api/chat/${newSession.id}/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userMessage: "",
+          aiMessage: welcomeText,
+        }),
+      });
+
+      // 4) Seed the UI
+      setMessages([
+        { id: crypto.randomUUID(), 
+          content: welcomeText, 
+          sender: "ai", 
+          timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+      ]);
+
     } else {
-      alert("No modules found for this course ID. Please check the ID.");
+      alert("No course content found. Please try another course.");
     }
   };
+
+  async function createNewSession() {
+    if (!courseId) return;
+  
+    // 1) create session
+    const res = await fetch("/api/chat/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ courseId }),
+    });
+    const newSession = await res.json();
+  
+    setSessions(prev => [newSession, ...prev]);
+    setCurrentChatId(newSession.id);
+  
+    // 2) build initial context prompt
+    const moduleData = JSON.stringify(modules, null, 2);
+    const assignmentData = JSON.stringify(assignments, null, 2);
+    const initialPrompt = generateAssistantPrompt(moduleData, assignmentData);
+  
+    // 3) seed chatHistory for Gemini
+    chatHistory.current = [
+      { role: "user", parts: [{ text: initialPrompt }] },
+    ];
+  
+    // 4) welcome message
+    const welcomeText =
+      `Welcome! I have access to your course modules and assignments. You can ask me questions about either of them. For example, "What are the upcoming assignments?" or "Tell me about Module 2."`;
+    
+    // 5) seed UI
+    setMessages([
+      {
+        id: crypto.randomUUID(),
+        content: welcomeText,
+        sender: "ai",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      },
+    ]);
+  
+    // 6) persist both to the DB
+    await fetch(`/api/chat/${newSession.id}/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userMessage: "",
+        aiMessage: welcomeText,
+      }),
+    });
+  }
+
+  // Load a specific session's messages:
+  async function loadSession(chatId: string) {
+    setCurrentChatId(chatId);
+    const res = await fetch(`/api/chat/${chatId}/messages`);
+    const data = await res.json();
+
+    // Map DB messages to UI state:
+    const msgs = data.map((m: any) => ({
+      id: m.id,
+      content: m.content,
+      sender: m.sender,
+      timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    }));
+    setMessages(msgs);
+
+    // Rebuild chatHistory for Gemini API:
+    chatHistory.current = data.map((m: any) => ({
+      role: m.sender === "ai" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }));
+  }
 
   const generateAIResponse = async (userMessage: string) => {
     setIsLoading(true);
@@ -151,10 +283,17 @@ Always assume the user may be confused or unsure.
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputMessage.trim() || isLoading) return;
+    if (!inputMessage.trim() || isLoading || !currentChatId) return;
+
+    const session = sessions.find(s => s.id === currentChatId);
+    if (session && !session.title) {
+      // First question: set title to the user’s message (or truncated)
+      const newTitle = inputMessage.length > 50 ? inputMessage.slice(0, 47) + '...' : inputMessage;
+      await handleRenameSession(currentChatId!, newTitle);
+    }
 
     const userMessage: Message = {
-      id: Date.now(),
+      id: Date.now().toString(),
       content: inputMessage,
       sender: "user",
       timestamp: new Date().toLocaleTimeString([], {
@@ -169,8 +308,15 @@ Always assume the user may be confused or unsure.
 
     const aiResponseText = await generateAIResponse(currentMessage);
 
+    // Persist both user & AI messages:
+    await fetch(`/api/chat/${currentChatId}/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userMessage: currentMessage, aiMessage: aiResponseText }),
+    });
+
     const aiResponseMessage: Message = {
-      id: Date.now(),
+      id: Date.now().toString(),
       content: aiResponseText,
       sender: "ai",
       timestamp: new Date().toLocaleTimeString([], {
@@ -182,118 +328,238 @@ Always assume the user may be confused or unsure.
     setMessages((prev) => [...prev, aiResponseMessage]);
   };
 
+  // Rename handler
+  async function handleRenameSession(id: string, title: string) {
+    await fetch(`/api/chat/sessions/${id}`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ title }),
+    });
+    setSessions(prev => prev.map(s => s.id === id ? { ...s, title } : s));
+  }
+
+  //  Delete handler
+  async function handleDeleteSession(id: string) {
+    if (!confirm('Delete this session?')) return;
+    await fetch(`/api/chat/sessions/${id}`, { method: 'DELETE' });
+    setSessions(prev => prev.filter(s => s.id !== id));
+    if (currentChatId === id) {
+      setCurrentChatId(null);
+      setMessages([]);
+    }
+  }
+
+  const generateFlashcards = async (
+    source: "modules" | "custom" = "modules"
+  ) => {
+    if (source === "modules" && !modules.length) return;
+    if (source === "custom" && !customText.trim()) {
+      alert("Please enter some text to generate flashcards from.");
+      return;
+    }
+
+    setGeneratingFlashcards(true);
+
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+      if (!apiKey) {
+        console.error("API key is not defined");
+        setGeneratingFlashcards(false);
+        return;
+      }
+
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+      const flashcardPrompt = generateFlashcardPrompt(source, modules, customText);
+
+      const result = await model.generateContent(flashcardPrompt);
+      const response = result.response.text();
+
+      try {
+        // Extract JSON from the response (in case the AI includes explanatory text)
+        const jsonMatch = response.match(/\[\s*\{.*\}\s*\]/s);
+        const jsonString = jsonMatch ? jsonMatch[0] : response;
+
+        const flashcardsData = JSON.parse(jsonString);
+
+        // Map the generated flashcards to our format
+        const newFlashcards = flashcardsData.map(
+          (card: any, index: number) => ({
+            id: Date.now() + index,
+            question: card.question,
+            answer: card.answer,
+            moduleId: source === "modules" ? modules[0].id : "custom",
+            moduleName:
+              source === "modules" ? modules[0].title : "Custom Content",
+          })
+        );
+
+        setFlashcards(newFlashcards);
+        setShowFlashcards(true);
+
+        if (source === "custom") {
+          setShowCustomInput(false);
+        }
+
+        // Add a notification message
+        const notificationMessage: Message = {
+          id: Date.now().toString(),
+          content: `✅ Generated ${newFlashcards.length} flashcards from ${source === "modules" ? "module content" : "your custom text"
+            }! You can now view them in the flashcard viewer.`,
+          sender: "ai",
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+
+        setMessages((prev) => [...prev, notificationMessage]);
+      } catch (parseError) {
+        console.error("Error parsing flashcard data:", parseError);
+
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          content:
+            "Sorry, I had trouble generating flashcards. Please try again.",
+          sender: "ai",
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+
+        setMessages((prev) => [...prev, errorMessage]);
+      }
+    } catch (error) {
+      console.error("Error generating flashcards:", error);
+
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        content:
+          "Sorry, I encountered an error generating flashcards. Please try again.",
+        sender: "ai",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setGeneratingFlashcards(false);
+    }
+  };
+
+  const handleCustomTextChange = (text: string) => {
+    setCustomText(text);
+  };
+
+  const toggleFlashcardView = () => {
+    setShowFlashcards((prev) => !prev);
+  };
+
+  const toggleCustomInput = () => {
+    setShowCustomInput((prev) => !prev);
+  };
+
   return (
     <div className="flex">
       <Sidebar_dashboard />
-      <div className="flex-1 min-h-screen text-black pl-16">
-        <div className="h-screen flex flex-col">
-          <div className="flex items-center p-3 pl-4 bg-gradient-to-r from-[#AAFF45] to-white">
-            <Image
-              src="/asset/chat.svg"
-              alt="Chat icon"
-              width={20}
-              height={20}
-              className="text-black mr-2"
-            />
-            <h1 className="text-lg font-bold">AI Assistant (Gemini)</h1>
-            {courseId && (
-              <span className="ml-4 text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                Course ID: {courseId}
-              </span>
-            )}
-          </div>
-
-          {!courseId ? (
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="w-full max-w-md bg-white border p-6 rounded-lg shadow">
-                <h2 className="text-xl font-semibold mb-4">
-                  Enter Your Course ID
-                </h2>
-                <input
-                  type="text"
-                  value={courseInput}
-                  onChange={(e) => setCourseInput(e.target.value)}
-                  placeholder="e.g. CSIT-355"
-                  className="w-full p-2 border border-black rounded-md mb-4"
+      <div className="flex min-h-screen bg-gradient-to-t from-[#AAFF45]/15 to-white flex-1 pl-20 px-6">
+        <ChatSessionList
+          sessions={sessions}
+          onSelect={loadSession}
+          onNew={createNewSession}
+          onRename={handleRenameSession}
+          onDelete={handleDeleteSession}
+        />
+        <div className="flex-1 min-h-screen text-black pl-16">
+          <div className="h-screen flex flex-col">
+            <div className="flex items-center p-3 pl-4 bg-gradient-to-r from-[#AAFF45] to-white justify-between">
+              <div className="flex items-center">
+                <Image
+                  src="/asset/chat.svg"
+                  alt="Chat icon"
+                  width={20}
+                  height={20}
+                  className="text-black mr-2"
                 />
+                <h1 className="text-lg font-bold">AI Assistant (Gemini)</h1>
+                {courseId && (
+                  <span className="ml-4 text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                    Course ID: {courseId}
+                  </span>
+                )}
+                {fetchingAssignments && (
+                  <span className="ml-2 text-sm text-gray-600">
+                    Loading assignments...
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center">
+                {courseId && (
+                  <button
+                    onClick={() => generateFlashcards("modules")}
+                    disabled={generatingFlashcards || !modules.length}
+                    className={`mr-2 px-3 py-1 rounded-lg text-sm transition-colors flex items-center ${generatingFlashcards || !modules.length
+                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                        : "bg-blue-500 text-white hover:bg-blue-600"
+                      }`}
+                  >
+                    {generatingFlashcards ? (
+                      "Generating..."
+                    ) : (
+                      <>Generate From Modules</>
+                    )}
+                  </button>
+                )}
                 <button
-                  onClick={handleCourseIdSubmit}
-                  className="w-full bg-[#AAFF45] text-black py-2 rounded-md hover:bg-[#90e13d]"
+                  onClick={toggleCustomInput}
+                  className="mr-2 px-3 py-1 rounded-lg text-sm transition-colors flex items-center bg-purple-500 text-white hover:bg-purple-600"
                 >
-                  Submit
+                  {showCustomInput ? "Cancel Custom Input" : "Custom Flashcards"}
                 </button>
+                {flashcards.length > 0 && (
+                  <button
+                    onClick={toggleFlashcardView}
+                    className="px-3 py-1 rounded-lg text-sm bg-indigo-500 text-white hover:bg-indigo-600 transition-colors flex items-center"
+                  >
+                    {showFlashcards ? "Hide Flashcards" : "View Flashcards"}
+                  </button>
+                )}
               </div>
             </div>
-          ) : (
-            <>
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${
-                      message.sender === "user"
-                        ? "justify-end"
-                        : "justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`max-w-[70%] rounded-lg p-3 ${
-                        message.sender === "user"
-                          ? "bg-[#AAFF45] text-black"
-                          : "bg-gray-100 text-black"
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap">
-                        {message.content}
-                      </p>
-                      <span className="text-xs opacity-70 mt-1 block">
-                        {message.timestamp}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                {messages.length === 0 && (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    <p className="text-base">
-                      Start a conversation with the AI assistant
-                    </p>
-                  </div>
-                )}
-                {fetchingModules && (
-                  <div className="flex justify-center py-2">
-                    <p className="text-sm text-gray-500">
-                      Fetching module data...
-                    </p>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
 
-              <form onSubmit={handleSendMessage} className="p-4 border-t">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="flex-1 p-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#AAFF45]"
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="submit"
-                    className={`px-4 py-2 rounded-lg transition-colors ${
-                      isLoading
-                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                        : "bg-[#AAFF45] text-black hover:bg-[#8FE03D]"
-                    }`}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Sending..." : "Send"}
-                  </button>
-                </div>
-              </form>
-            </>
-          )}
+            {!courseId && !showCustomInput ? (
+              <CourseSelector
+                courses={courses}
+                onSelectCourse={handleCourseSelection}
+                isLoading={fetchingModules || fetchingAssignments}
+              />
+            ) : showCustomInput ? (
+              <CustomTextInput
+                customText={customText}
+                onTextChange={handleCustomTextChange}
+                onGenerate={() => generateFlashcards("custom")}
+                onCancel={toggleCustomInput}
+                isGenerating={generatingFlashcards}
+              />
+            ) : showFlashcards && flashcards.length > 0 ? (
+              <FlashcardViewer
+                flashcards={flashcards}
+                onClose={toggleFlashcardView}
+              />
+            ) : (
+              <ChatMessageList
+                messages={messages}
+                inputMessage={inputMessage}
+                setInputMessage={setInputMessage}
+                handleSendMessage={handleSendMessage}
+                isLoading={isLoading}
+                isFetchingModules={fetchingModules || fetchingAssignments}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

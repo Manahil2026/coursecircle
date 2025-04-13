@@ -1,113 +1,107 @@
+import { useEffect, useState } from "react";
+
 interface Assignment {
   id: number;
-  dueDate: string;
   name: string;
-  score: number|null;
+  score: number | null;
   points: number;
   graded: boolean;
+  previousScore?: number | null;
 }
 
 interface Student {
+  id: number;
   name: string;
   assignments: Assignment[];
-  attendance: number;
+  average: number | string;
 }
 
-const GradeTable = ({
-  students,
-  updateScore,
-}: {
+interface GradeTableProps {
   students: Student[];
+  assignments: Assignment[];
   updateScore: (
-    studentIndex: number,
-    assignmentIndex: number,
-    newScore: number|null,
+    studentId: number,
+    assignmentId: number,
+    newScore: number | null,
     graded: boolean
   ) => void;
-}) => {
-  const calculateGrade = (assignments: Assignment[]): string => {
-    // Filter out ungraded assignments
-    const gradedAssignments = assignments.filter(
-      (assignment) => assignment.graded && assignment.score !== null
-    );
+}
 
-    // If no assignments are graded, return "N/A"
-    if (gradedAssignments.length === 0) {
-      return "N/A";
-    }
-
-    // Calculate the total score and total possible points
-    const totalScore = gradedAssignments.reduce((acc, assignment) => acc + (assignment.score ?? 0), 0);
-    const totalPoints = gradedAssignments.reduce((acc, assignment) => acc + assignment.points, 0);
-
-    // Calculate the percentage
-    const percentage = (totalScore / totalPoints) * 100;
-
-    return `${percentage.toFixed(2)}%`; // Format to 2 decimal places
-  };
-
+const GradeTable: React.FC<GradeTableProps> = ({ students, assignments, updateScore }) => {
   return (
     <table className="w-full table-auto border-collapse text-sm">
       <thead>
         <tr className="bg-gray-200 text-left">
           <th className="px-4 py-2">Student Name</th>
-          <th className="px-4 py-2">Attendance (%)</th>
-          {/* Dynamically render assignment headers */}
-          {students[0]?.assignments.map((assignment, index) => (
-            <th key={index} className="px-4 py-2">{assignment.name}</th>
+          {assignments.map((assignment) => (
+            <th key={assignment.id} className="px-4 py-2">
+              {(assignment as any).name ?? (assignment as any).title ?? "Untitled"}
+            </th>
           ))}
-          <th className="px-4 py-2">Average Grade</th>
+          <th className="px-4 py-2">Average</th>
         </tr>
       </thead>
       <tbody>
-        {students.map((student, studentIndex) => (
-          <tr key={studentIndex} className="border-b border-gray-400">
+        {students.map((student) => (
+          <tr key={student.id} className="border-b border-gray-400">
             <td className="px-4 py-2">{student.name}</td>
-            <td className="px-4 py-2">{student.attendance}%</td>
-            {student.assignments.map((assignment, assignmentIndex) => (
-              <td key={assignmentIndex} className="px-4 py-2">
-                <div className="flex flex-col items-center">
-                  {/* Input field for the grade */}
-                  <input
-                    type="number"
-                    value={assignment.graded ? assignment.score ?? "" : ""}
-                    onChange={(e) =>
-                      updateScore(
-                        studentIndex,
-                        assignmentIndex,
-                        assignment.graded ? Number(e.target.value) : null,
-                        assignment.graded
-                      )
-                    }
-                    disabled={!assignment.graded} // Disable input if "N/A" is selected
-                    className={`w-14 border-[0.1px] ${
-                      assignment.graded ? "bg-[#AAFF45]" : "bg-gray-200"
+            {student.assignments.map((assignment) => (
+              <td key={assignment.id} className="px-4 py-2">
+                <input
+                  type="number"
+                  value={
+                    assignment.graded && assignment.score !== null
+                      ? Number(assignment.score.toFixed(2)) // Round to 2 decimal places
+                      : ""
+                  }
+                  onChange={(e) =>
+                    updateScore(
+                      student.id,
+                      assignment.id,
+                      assignment.graded ? Number(e.target.value) : null,
+                      assignment.graded
+                    )
+                  }
+                  disabled={!assignment.graded} // Disable input if "N/A" is selected
+                  className={`w-14 border-[0.1px] ${assignment.graded ? "bg-[#AAFF45]" : "bg-gray-200"
                     } border-black rounded-md px-2 py-1 text-center appearance-none outline-none focus:outline-none`}
-                  />
-
-                  {/* Toggle for marking as "N/A" */}
-                  <label className="flex items-center mt-1 text-xs text-gray-500">
-                    <input
-                      type="checkbox"
-                      checked={!assignment.graded}
-                      onChange={() =>
+                />
+                {/* Toggle for marking as "N/A" */}
+                <label className="flex items-center mt-1 text-xs text-gray-500">
+                  <input
+                    type="checkbox"
+                    checked={!assignment.graded}
+                    onChange={() => {
+                      if (assignment.graded) {
+                        // Disabling: Store the current score in `previousScore`
                         updateScore(
-                          studentIndex,
-                          assignmentIndex,
-                          null, // Set score to null when toggling to "N/A"
-                          !assignment.graded
-                        )
+                          student.id,
+                          assignment.id,
+                          null, // Set the score to null when disabling
+                          false // Disable grading
+                        );
+                      } else {
+                        // Enabling: Restore the score from `previousScore`
+                        updateScore(
+                          student.id,
+                          assignment.id,
+                          assignment.previousScore ?? 0, // Restore the previous score or default to 0
+                          true // Re-enable grading
+                        );
                       }
-                      className="mr-1"
-                    />
-                    N/A
-                  </label>
+                    }}
+                  />
+                  Disable
+                </label>
 
-                  <span className="text-xs text-gray-500 mt-1">Out of {assignment.points}</span>
-                </div>
+                <span className="text-xs text-gray-500 mt-1">Out of {assignment.points}</span>
               </td>
             ))}
-            <td className="px-4 py-2">{calculateGrade(student.assignments)}</td>
+            <td className="px-4 py-2">
+              {typeof student.average === "number"
+                ? `${student.average.toFixed(2)}%`
+                : "N/A"}
+            </td>
           </tr>
         ))}
       </tbody>

@@ -1,4 +1,5 @@
 // app/api/conversations/route.ts
+// route handler for getting all conversations for specific user and creating new conversations
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuth } from "@clerk/nextjs/server";
