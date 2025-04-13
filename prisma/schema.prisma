@@ -48,6 +48,12 @@ model User {
   // Messaging relationships
   sentMessages           Message[]
   participatedConversations ConversationParticipant[]
+
+  // Chatbot relationship
+  chats Chat[]
+
+  //Flashcard relation
+  flashcards Flashcard[]
 }
 
 model Course {
@@ -81,6 +87,12 @@ model Course {
   
   // Messaging relationships
   conversations Conversation[]
+
+  // Chatbot relationship
+  chats Chat[]
+
+  //Flashcard relation
+  flashcards Flashcard[]
   
   @@index([professorId])
   @@map("courses")
@@ -181,6 +193,9 @@ model Module {
 
   sections ModuleSection[]
   files    ModuleFile[]
+
+  //Flashcard relation
+  flashcards Flashcard[]
 
   @@index([courseId])
   @@map("modules")
@@ -320,4 +335,50 @@ model Message {
   @@index([senderId])
   @@index([conversationId])
   @@map("messages")
+}
+
+model Chat {
+  id          String        @id @default(cuid())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String?       // Optional session title
+  messages    ChatMessage[]
+
+  @@index([userId])
+  @@index([courseId])
+  @@map("chats")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  content   String
+  sender    String   // "user" or "ai"
+  createdAt DateTime @default(now())
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@map("chat_messages")
+}
+
+model Flashcard {
+  id          String   @id @default(cuid())
+  question    String
+  answer      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String   // Link to the user who owns the flashcard
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String   // Link to the course
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  moduleId    String?  // Optional link to a module
+  module      Module?  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([courseId])
+  @@map("flashcards")
 }
