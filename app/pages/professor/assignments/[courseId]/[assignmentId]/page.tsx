@@ -287,46 +287,91 @@ const AssignmentDetails = () => {
     );
   }
   return (
-    <div className="flex">
+    <div className="flex min-h-screen bg-gradient-to-t from-[#AAFF45]/15 to-white">
       <Sidebar_dashboard />
       <CourseMenu courseId={courseId} />
 
-      <div className="flex-1 pl-52 px-6 py-6">
-        <div className="bg-white rounded shadow-md p-6">
-          <h1 className="text-2xl font-bold mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {assignment.title}
+      <div className="flex-1 pl-52 px-4 py-4">
+        <div className="bg-white p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-medium text-gray-800">{assignment.title}</h1>
               {isPublished ? (
                 <div className="relative group">
-                  <img
-                    src="/asset/publish_icon.svg"
-                    alt="Published"
-                    className="w-6 h-6 cursor-pointer"
+                  <button
                     onClick={handleUnpublish}
-                  />
-                  <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
-                    Unpublish
+                    className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+                  >
+                    <img
+                      src="/asset/publish_icon.svg"
+                      alt="Published"
+                      className="w-5 h-5"
+                    />
+                  </button>
+                  <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-sm text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    Unpublish Assignment
                   </span>
                 </div>
               ) : (
                 <div className="relative group">
-                  <img
-                    src="/asset/unpublish_icon.svg"
-                    alt="Unpublished"
-                    className="w-6 h-6 cursor-pointer"
+                  <button
                     onClick={handlePublish}
-                  />
-                  <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
-                    Publish
+                    className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+                  >
+                    <img
+                      src="/asset/unpublish_icon.svg"
+                      alt="Unpublished"
+                      className="w-5 h-5"
+                    />
+                  </button>
+                  <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-sm text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    Publish Assignment
                   </span>
                 </div>
               )}
             </div>
 
-            {/* Submission Stats and Quick Grader Button */}
-            <div className="flex items-center gap-4">
-              {isPublished && (
-                <div className="text-sm text-gray-700">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => router.back()}
+                className="px-4 py-1.5 text-sm font-medium rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex items-center gap-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <span>Back</span>
+              </button>
+              <button
+                onClick={isEditing ? handleSaveAll : () => setIsEditing(true)}
+                className={`px-4 py-1.5 text-sm font-medium rounded-lg text-black transition-colors flex items-center gap-1 ${
+                  isEditing 
+                    ? "bg-[#B9FF66] hover:bg-[#A8FF00]" 
+                    : "bg-[#B9FF66] hover:bg-[#A8FF00]"
+                }`}
+              >
+                {isEditing ? (
+                  <>
+                    <span>Save Changes</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </>
+                ) : (
+                  <>
+                    <span>Edit Assignment</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-4 mb-2">
+            {isPublished && (
+              <div className="border border-black px-3 py-1 rounded-lg">
+                <span className="text-sm text-gray-700">
                   {totalStudents > 0 ? (
                     <span>
                       {submissionCount} student{submissionCount !== 1 && "s"} submitted out of {totalStudents}
@@ -334,200 +379,207 @@ const AssignmentDetails = () => {
                   ) : (
                     <span>Loading submission data...</span>
                   )}
-                </div>
-              )}
-              <button
-                onClick={() => router.push(`/pages/professor/assignments/${courseId}/${assignmentId}/quick-grader`)}
-                className="px-4 py-2 text-sm rounded bg-[#B9FF66] text-black hover:bg-[#A8FF00] shadow-md"
-              >
-                Quick Grader
-              </button>
-            </div>
-          </h1>
-
-          {/* Title */}
-          <div className="mb-6">
-            <label className="block font-semibold mb-2 text-gray-700">Title</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              readOnly={!isEditing}
-              className={`w-full border p-2 rounded ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"}`}
-            />
+                </span>
+              </div>
+            )}
+            <button
+              onClick={() => router.push(`/pages/professor/assignments/${courseId}/${assignmentId}/quick-grader`)}
+              className="px-4 py-1.5 text-sm font-medium rounded-lg bg-[#B9FF66] text-black hover:bg-[#A8FF00] transition-colors flex items-center gap-1"
+            >
+              <span>Quick Grader</span>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
 
-          {/* Description */}
-          <div className="mb-6">
-            <label className="block font-semibold mb-2 text-gray-700">Description</label>
-            {isEditing ? (
-              <ReactQuillEditor
-                value={description}
-                onChange={setDescription}
-                height="200px"
+          <div className="space-y-2">
+            {/* Title */}
+            <div>
+              <label className="block text-sm font-semibold mb-1 text-gray-700">Title</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                readOnly={!isEditing}
+                className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
+                  isEditing 
+                    ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]" 
+                    : "bg-white"
+                }`}
               />
-            ) : (
-              <div className="border border-gray-300 rounded p-2 bg-gray-50 w-full">
-                <div
-                  className="ql-editor"
-                  dangerouslySetInnerHTML={{ __html: description }}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {/* Points */}
+              <div>
+                <label className="block text-sm font-semibold mb-1 text-gray-700">Points</label>
+                <input
+                  type="number"
+                  value={points}
+                  onChange={(e) => setPoints(e.target.value)}
+                  readOnly={!isEditing}
+                  className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
+                    isEditing 
+                      ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]" 
+                      : "bg-white"
+                  }`}
                 />
               </div>
-            )}
-          </div>
 
-          {/* Points */}
-          <div className="mb-6">
-            <label className="block font-semibold mb-2 mt-14 text-gray-700">Points</label>
-            <input
-              type="number"
-              value={points}
-              onChange={(e) => setPoints(e.target.value)}
-              readOnly={!isEditing}
-              className={`w-full border p-2 rounded ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"}`}
-            />
-          </div>
-
-          {/* Due Date and Time */}
-          <div className="mb-6 flex flex-wrap gap-6">
-            <div className="flex-1 min-w-[150px]">
-              <label className="block font-semibold mb-2 text-gray-700">Due Date</label>
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                readOnly={!isEditing}
-                className={`border p-2 rounded w-full ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"}`}
-              />
-            </div>
-            <div className="flex-1 min-w-[150px]">
-              <label className="block font-semibold mb-2 text-gray-700">Due Time</label>
-              <input
-                type="time"
-                value={dueTime}
-                onChange={(e) => setDueTime(e.target.value)}
-                readOnly={!isEditing}
-                className={`border p-2 rounded w-full ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"}`}
-              />
-            </div>
-          </div>
-
-          {/* Submission Type Selection */}
-          <div className="mb-6">
-            <label className="block font-semibold mb-2 text-gray-700">Submission Type</label>
-            <select
-              value={submissionType}
-              onChange={(e) => setSubmissionType(e.target.value)}
-              disabled={!isEditing}
-              className={`w-full border p-2 rounded ${isEditing ? "border-gray-300 bg-white" : "bg-gray-100"}`}
-            >
-              <option value="NO_SUBMISSIONS">No Submissions</option>
-              <option value="ONLINE">Online Submission</option>
-            </select>
-          </div>
-
-          {/* Conditional Rendering of Submission Options */}
-          {submissionType === "ONLINE" && (
-            <div className="mb-6">
-              <label className="block font-semibold mb-2 text-gray-700">Submission Options</label>
-              <div className="flex gap-4">
+              {/* Due Date and Time */}
+              <div className="space-y-2">
                 <div>
+                  <label className="block text-sm font-semibold mb-1 text-gray-700">Due Date</label>
                   <input
-                    type="radio"
-                    name="submission-option"
-                    id="text_entry"
-                    value="TEXT_ENTRY"
-                    checked={selectedOnlineMethod === "TEXT_ENTRY"}
-                    onChange={(e) => setSelectedOnlineMethod(e.target.value)}
-                    disabled={!isEditing}
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    readOnly={!isEditing}
+                    className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
+                      isEditing 
+                        ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]" 
+                        : "bg-white"
+                    }`}
                   />
-                  <label htmlFor="text_entry" className="ml-2">Text Entry</label>
                 </div>
                 <div>
+                  <label className="block text-sm font-semibold mb-1 text-gray-700">Due Time</label>
                   <input
-                    type="radio"
-                    name="submission-option"
-                    id="file_upload"
-                    value="FILE_UPLOAD"
-                    checked={selectedOnlineMethod === "FILE_UPLOAD"}
-                    onChange={(e) => setSelectedOnlineMethod(e.target.value)}
-                    disabled={!isEditing}
+                    type="time"
+                    value={dueTime}
+                    onChange={(e) => setDueTime(e.target.value)}
+                    readOnly={!isEditing}
+                    className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
+                      isEditing 
+                        ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]" 
+                        : "bg-white"
+                    }`}
                   />
-                  <label htmlFor="file_upload" className="ml-2">File Upload</label>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* File Upload Component */}
-          <h2 className="text-lg font-semibold mb-2">Upload Files</h2>
-          <FileUpload
-            assignmentId={assignment.id}
-            courseId={courseId}
-            onUpload={(fileUrl, fileName) =>
-              setFiles((prev) => [
-                ...prev,
-                { id: Date.now().toString(), fileUrl, fileName },
-              ])
-            }
-          />
-
-          {/* Uploaded Files Section */}
-          <div className="bg-gray-100 shadow-md rounded p-4 mb-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-black">Uploaded Files</h2>
-              <img
-                src={showFiles ? "/asset/arrowup_icon.svg" : "/asset/arrowdown_icon.svg"}
-                alt={showFiles ? "Collapse" : "Expand"}
-                className="w-6 h-6 cursor-pointer hover:opacity-80"
-                onClick={handleShowFiles}
-              />
+            {/* Submission Type Selection */}
+            <div>
+              <label className="block text-sm font-semibold mb-1 text-gray-700">Submission Type</label>
+              <select
+                value={submissionType}
+                onChange={(e) => setSubmissionType(e.target.value)}
+                disabled={!isEditing}
+                className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
+                  isEditing 
+                    ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]" 
+                    : "bg-white"
+                }`}
+              >
+                <option value="NO_SUBMISSIONS">No Submissions</option>
+                <option value="ONLINE">Online Submission</option>
+              </select>
             </div>
-            {showFiles && (
-              <ul className="list-disc pl-5 mt-4">
-                {files.length > 0 ? (
-                  files.map((file) => (
-                    <li key={file.id} className="flex items-center gap-4">
-                      <a
-                        onClick={() => handleNavigate(file.id)}
-                        className="text-lime-600 hover:underline cursor-pointer"
-                      >
-                        {file.fileName}
-                      </a>
-                      <button
-                        onClick={() => handleDeleteFile(file.id)}
-                        className="text-red-500 hover:text-red-700"
-                        title="Delete file"
-                      >
-                        <img
-                          src="/asset/delete_icon.svg"
-                          alt="Delete"
-                          className="w-5 h-5"
-                        />
-                      </button>
-                    </li>
-                  ))
-                ) : (
-                  <li className="text-gray-600">No files uploaded yet.</li>
-                )}
-              </ul>
-            )}
-          </div>
 
-          {/* Bottom Button Row */}
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={isEditing ? handleSaveAll : () => setIsEditing(true)}
-              className={`px-4 py-2 rounded text-white ${isEditing ? "bg-[#B9FF66] hover:bg-[#A8FF00]" : "bg-gray-500 hover:bg-gray-600"}`}
-            >
-              {isEditing ? "Save" : "Edit"}
-            </button>
-            <button
-              onClick={() => router.back()}
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
-            >
-              Cancel
-            </button>
+            {/* Conditional Rendering of Submission Options */}
+            {submissionType === "ONLINE" && (
+              <div className="border border-black p-1.5 rounded-lg">
+                <label className="block text-sm font-semibold mb-1 text-gray-700">Submission Options</label>
+                <div className="flex gap-4">
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      name="submission-option"
+                      id="text_entry"
+                      value="TEXT_ENTRY"
+                      checked={selectedOnlineMethod === "TEXT_ENTRY"}
+                      onChange={(e) => setSelectedOnlineMethod(e.target.value)}
+                      disabled={!isEditing}
+                      className="w-4 h-4 text-[#B9FF66] focus:ring-[#B9FF66]"
+                    />
+                    <label htmlFor="text_entry" className="ml-2 text-sm text-gray-700">Text Entry</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      name="submission-option"
+                      id="file_upload"
+                      value="FILE_UPLOAD"
+                      checked={selectedOnlineMethod === "FILE_UPLOAD"}
+                      onChange={(e) => setSelectedOnlineMethod(e.target.value)}
+                      disabled={!isEditing}
+                      className="w-4 h-4 text-[#B9FF66] focus:ring-[#B9FF66]"
+                    />
+                    <label htmlFor="file_upload" className="ml-2 text-sm text-gray-700">File Upload</label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* File Upload Section */}
+            <div className="border border-black p-1.5 rounded-lg">
+              <h2 className="text-base font-semibold mb-1 text-gray-800">Upload Files</h2>
+              <div className="text-sm">
+                <FileUpload
+                  assignmentId={assignment.id}
+                  courseId={courseId}
+                  onUpload={(fileUrl, fileName) =>
+                    setFiles((prev) => [
+                      ...prev,
+                      { id: Date.now().toString(), fileUrl, fileName },
+                    ])
+                  }
+                />
+              </div>
+
+              {/* Uploaded Files Section */}
+              <div className="mt-2">
+                <h2 className="text-base font-semibold mb-1 text-gray-800">Uploaded Files</h2>
+                <ul className="space-y-1">
+                  {files.length > 0 ? (
+                    files.map((file) => (
+                      <li key={file.id} className="flex items-center justify-between bg-white p-2 rounded-lg border border-black">
+                        <a
+                          onClick={() => handleNavigate(file.id)}
+                          className="text-[#B9FF66] hover:text-[#A8FF00] cursor-pointer text-base"
+                        >
+                          {file.fileName}
+                        </a>
+                        <button
+                          onClick={() => handleDeleteFile(file.id)}
+                          className="p-1 rounded-full hover:bg-red-50 transition-colors"
+                          title="Delete file"
+                        >
+                          <img
+                            src="/asset/delete_icon.svg"
+                            alt="Delete"
+                            className="w-4 h-4"
+                          />
+                        </button>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-sm text-gray-500 italic">No files uploaded yet.</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-semibold mb-1 text-gray-700">Description</label>
+              {isEditing ? (
+                <ReactQuillEditor
+                  value={description}
+                  onChange={setDescription}
+                  height="150px"
+                />
+              ) : (
+                <div className="border border-black rounded-lg p-1.5 bg-white w-full">
+                  <div
+                    className="ql-editor text-base"
+                    dangerouslySetInnerHTML={{ __html: description }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

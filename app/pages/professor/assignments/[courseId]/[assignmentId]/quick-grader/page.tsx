@@ -148,12 +148,12 @@ const QuickGraderPage = () => {
             <Sidebar_dashboard />
 
             {/* Course Menu */}
-            <div className="w-1/5 border-r">
+            <div className="border-r">
                 <CourseMenu courseId={courseId} />
             </div>
 
             {/* Main Content */}
-            <div className="flex-grow flex overflow-hidden">
+            <div className="flex-grow flex overflow-hidden pl-56">
                 {/* Left side: Submission display */}
                 <div className="w-3/5 border-r p-4 flex flex-col overflow-y-auto">
                     <h2 className="text-lg font-bold mb-2">
