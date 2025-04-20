@@ -52,6 +52,7 @@ const Sidebar_dashboard: React.FC = () => {
       label: "Calendar",
       alt: "Calendar Icon",
       path: "/pages/calendar",
+      onClick: () => router.push("/pages/calendar"),
     },
     {
       icon: "/asset/folder_icon.svg",
