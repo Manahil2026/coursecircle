@@ -377,6 +377,10 @@ model Flashcard {
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   moduleId    String?  // Optional link to a module
   module      Module?  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleName  String?
+  source      String? // "module" or "custom"
+  stackName   String?  // Name of the flashcard stack
+  isSaved     Boolean  @default(false) // to track saved status
 
   @@index([userId])
   @@index([courseId])
