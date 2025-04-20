@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { UserButton } from "@clerk/nextjs";
-import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import CoursesManagement from "@/app/components/admin/courses_management";
 import UsersManagement from "@/app/components/admin/users_management";
 import DashboardSummary from "@/app/components/admin/dashboard_summary";
@@ -51,9 +50,9 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <>      
+    <div className="min-h-screen h-full w-full bg-gradient-to-t from-[#AAFF45]/15 to-white">
       {/* Admin Menu Sidebar */}
-      <aside className="fixed top-0 w-16 bg-black text-white flex flex-col items-center justify-start h-full">
+      <aside className="fixed top-0 w-16 bg-black text-white flex flex-col items-center justify-start h-screen">
         <nav className="w-full flex flex-col items-center">
           {/* User button at the top */}
           <div className="w-14 h-14 flex flex-col justify-center items-center rounded-lg mb-2 mt-1">
@@ -88,7 +87,7 @@ const AdminDashboard: React.FC = () => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex h-full bg-gray-100 flex-1 pl-20">
+      <div className="flex h-screen w-full flex-1 pl-20">
         <div className="flex-1 pl-6 pt-4">
           <h1 className="text-lg font-medium mb-4">
             Admin {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}
@@ -98,7 +97,7 @@ const AdminDashboard: React.FC = () => {
           {renderSection()}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

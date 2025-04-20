@@ -18,14 +18,14 @@ const Landing_page: React.FC = () => {
   }
 
   return (
-    <div className="text-gray-800">
+    <div className="bg-gradient-to-t from-[#AAFF45]/15 to-white">
       {/* Logo */}
       <div className="flex items-center justify-between px-6 md:px-6 py-6 gap-3">
         <Image src="/asset/logo_icon.svg" alt="CourseCircle Logo" width={40} height={40} priority />
         <div className="flex gap-3">
           {!isSignedIn ? (
             <SignInButton mode="modal">
-              <button className="px-4 py-2 text-lg border border-gray-800 rounded-md hover:bg-gray-100">
+              <button className="px-5 py-2 text-lg border border-gray-800 rounded-md hover:bg-gray-100">
                 Login
               </button>
             </SignInButton>
@@ -42,7 +42,7 @@ const Landing_page: React.FC = () => {
       </div>
 
       {/* Hero Section */}
-      <section className="flex flex-col md:flex-row items-center justify-between px-6 md:px-6 py-6 bg-white">
+      <section className="flex flex-col md:flex-row items-center justify-between px-6 md:px-6 py-6 ">
         {/* Text Content */}
         <div className="max-w-md">
           <h1 className="text-2xl md:text-3xl font-bold leading-snug mb-4">CourseCircle</h1>
