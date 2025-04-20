@@ -1,4 +1,5 @@
-import { useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   id: string;
@@ -32,29 +33,26 @@ export default function ChatMessageList({
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex-1 overflow-y-auto p-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {messages.map((message) => (
           <div
             key={message.id}
             className={`flex ${
               message.sender === "user"
-                ? "justify-end"
+                ? "justify-end pr-4"
                 : "justify-start"
             }`}
           >
             <div
-              className={`max-w-[70%] rounded-lg p-3 ${
+              className={`max-w-[70%] rounded-lg p-2 ${
                 message.sender === "user"
                   ? "bg-[#AAFF45] text-black"
                   : "bg-gray-100 text-black"
               }`}
             >
-              <p className="text-sm whitespace-pre-wrap">
-                {message.content}
-              </p>
-              <span className="text-xs opacity-70 mt-1 block">
-                {message.timestamp}
-              </span>
+              <div className="text-sm whitespace-pre-wrap prose prose-sm max-w-none prose-p:my-1 prose-headings:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0">
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              </div>
             </div>
           </div>
         ))}
@@ -66,7 +64,7 @@ export default function ChatMessageList({
           </div>
         )}
         {isFetchingModules && (
-          <div className="flex justify-center py-2">
+          <div className="flex justify-center py-1">
             <p className="text-sm text-gray-500">
               Fetching module data...
             </p>
@@ -75,29 +73,29 @@ export default function ChatMessageList({
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSendMessage} className="p-4 border-t">
-        <div className="flex items-center gap-2">
+      <div className="border-t p-2">
+        <form onSubmit={handleSendMessage} className="flex gap-1">
           <input
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Type your message..."
-            className="flex-1 p-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#AAFF45]"
+            className="flex-1 border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#AAFF45]"
             disabled={isLoading}
           />
           <button
             type="submit"
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              isLoading
+            disabled={isLoading || !inputMessage.trim()}
+            className={`px-3 py-1.5 rounded-lg ${
+              isLoading || !inputMessage.trim()
                 ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                 : "bg-[#AAFF45] text-black hover:bg-[#8FE03D]"
             }`}
-            disabled={isLoading}
           >
             {isLoading ? "Sending..." : "Send"}
           </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </>
   );
 }

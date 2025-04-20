@@ -13,9 +13,10 @@ interface Flashcard {
 interface FlashcardViewerProps {
   flashcards: Flashcard[];
   onClose: () => void;
+  onSave?: (flashcards: Flashcard[]) => void;
 }
 
-export default function FlashcardViewer({ flashcards, onClose }: FlashcardViewerProps) {
+export default function FlashcardViewer({ flashcards, onClose, onSave }: FlashcardViewerProps) {
   const [currentFlashcardIndex, setCurrentFlashcardIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -41,7 +42,6 @@ export default function FlashcardViewer({ flashcards, onClose }: FlashcardViewer
   };
 
   const updateFlashcard = async (id: string, updatedFields: { question: string; answer: string }, isSaved: boolean) => {
-
     if (!isSaved) {
       // If the flashcard is not saved, update it locally
       flashcards[currentFlashcardIndex] = { ...currentFlashcard, ...updatedFields }; // Update locally
@@ -110,16 +110,16 @@ export default function FlashcardViewer({ flashcards, onClose }: FlashcardViewer
     }
   };
 
+  const handleSave = () => {
+    if (onSave) {
+      onSave(flashcards);
+    }
+  };
+
   return (
     <div className="flex-1 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <div className="bg-white border rounded-lg shadow-lg p-6 relative">
-        <button
-            onClick={onClose}
-            className="absolute top-1 right-4 text-red-500 hover:text-gray-700"
-        >
-            ✕
-        </button> 
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Flashcards</h2>
             <div className="text-sm text-gray-600">
@@ -199,6 +199,14 @@ export default function FlashcardViewer({ flashcards, onClose }: FlashcardViewer
                 >
                   Edit
                 </button>
+                {onSave && (
+                  <button
+                    onClick={handleSave}
+                    className="px-4 py-2 rounded-lg bg-[#AAFF45] text-black hover:bg-[#8FE03D]"
+                  >
+                    Save Stack
+                  </button>
+                )}
                 <button
                   onClick={() => deleteFlashcard(currentFlashcard.id, currentFlashcard.isSaved)}
                   className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"

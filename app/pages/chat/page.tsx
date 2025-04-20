@@ -99,6 +99,8 @@ export default function ChatPage() {
   const [generatingFlashcards, setGeneratingFlashcards] = useState(false);
   const [savingFlashcards, setSavingFlashcards] = useState(false);
 
+  const [courseMembers, setCourseMembers] = useState<any[]>([]);
+
   useEffect(() => {
     const loadCourses = async () => {
       const coursesData = await fetchCourses(user?.publicMetadata?.role as string | undefined);
@@ -108,12 +110,19 @@ export default function ChatPage() {
     if (user) loadCourses();
   }, [user]);
 
-  // After selecting a course, also load existing sessions:
+  // After selecting a course, also load existing sessions and course members:
   useEffect(() => {
     if (courseId) {
+      // Load sessions
       fetch(`/api/chat/sessions?courseId=${courseId}`)
         .then(res => res.json())
         .then(setSessions);
+
+      // Load course members
+      fetch(`/api/people?courseId=${courseId}`)
+        .then(res => res.json())
+        .then(setCourseMembers)
+        .catch(error => console.error("Error fetching course members:", error));
     }
   }, [courseId]);
 
@@ -123,17 +132,21 @@ export default function ChatPage() {
   };
 
   const handleCourseSelection = async (id: string) => {
-    // Fetch modules
-    const modulesData = await fetchModules(id, setModules, setCourseId, setFetchingModules);
+    setCourseId(id);
+    setFetchingModules(true);
+    setFetchingAssignments(true);
 
-    // Fetch assignments for the same course
-    const assignmentsData = await fetchAssignments(id, setAssignments, setFetchingAssignments);
+    try {
+      // Fetch modules and assignments in parallel
+      const [modulesData, assignmentsData] = await Promise.all([
+        fetchModules(id, setModules, setCourseId, setFetchingModules),
+        fetchAssignments(id, setAssignments, setFetchingAssignments)
+      ]);
 
-    if ((modulesData && modulesData.length > 0) || (assignmentsData && assignmentsData.length > 0)) {
-      const moduleData = JSON.stringify(modulesData || [], null, 2);
-      const assignmentData = JSON.stringify(assignmentsData || [], null, 2);
+      setModules(modulesData || []);
+      setAssignments(assignmentsData || []);
 
-      // 1) Create a new chat session
+      // Create a new chat session regardless of modules/assignments
       const res = await fetch("/api/chat/sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -143,15 +156,19 @@ export default function ChatPage() {
       setSessions(prev => [newSession, ...prev]);
       setCurrentChatId(newSession.id);
 
-      // 2) Initialize chatHistory with your module/assignment prompt
-      const initialPrompt = generateAssistantPrompt(moduleData, assignmentData);
+      // Initialize chatHistory with available data
+      const moduleData = JSON.stringify(modulesData || [], null, 2);
+      const assignmentData = JSON.stringify(assignmentsData || [], null, 2);
+      const userRole = user?.publicMetadata?.role === "prof" ? "professor" : "student";
+      const courseMembersData = JSON.stringify(courseMembers, null, 2);
+      const initialPrompt = generateAssistantPrompt(moduleData, assignmentData, userRole, courseMembersData);
       chatHistory.current = [{
         role: "user",
         parts: [{ text: initialPrompt }],
       }];
 
-      // 3) Persist that prompt + welcome message into the DB
-      const welcomeText = `Welcome! I have access to your course modules and assignments. You can ask me questions about either of them. For example, "What are the upcoming assignments?" or "Tell me about Module 2."`;
+      // Welcome message
+      const welcomeText = `Welcome! I'm your AI assistant for ${getCourseName()}. I can help you with course-related questions.`;
       await fetch(`/api/chat/${newSession.id}/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -161,19 +178,24 @@ export default function ChatPage() {
         }),
       });
 
-      // 4) Seed the UI
       setMessages([
-        { id: crypto.randomUUID(), 
+        { 
+          id: crypto.randomUUID(), 
           content: welcomeText, 
           sender: "ai", 
           timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        }
       ]);
 
-    } else {
-      alert("No course content found. Please try another course.");
+    } catch (error) {
+      console.error("Error initializing chat:", error);
+      alert("Error initializing chat. Please try again.");
+    } finally {
+      setFetchingModules(false);
+      setFetchingAssignments(false);
     }
   };
 
@@ -194,7 +216,9 @@ export default function ChatPage() {
     // 2) build initial context prompt
     const moduleData = JSON.stringify(modules, null, 2);
     const assignmentData = JSON.stringify(assignments, null, 2);
-    const initialPrompt = generateAssistantPrompt(moduleData, assignmentData);
+    const userRole = user?.publicMetadata?.role === "prof" ? "professor" : "student";
+    const courseMembersData = JSON.stringify(courseMembers, null, 2);
+    const initialPrompt = generateAssistantPrompt(moduleData, assignmentData, userRole, courseMembersData);
   
     // 3) seed chatHistory for Gemini
     chatHistory.current = [
@@ -202,8 +226,7 @@ export default function ChatPage() {
     ];
   
     // 4) welcome message
-    const welcomeText =
-      `Welcome! I have access to your course modules and assignments. You can ask me questions about either of them. For example, "What are the upcoming assignments?" or "Tell me about Module 2."`;
+    const welcomeText = `Welcome! I'm your AI assistant for ${getCourseName()}. I can help you with course-related questions.`;
     
     // 5) seed UI
     setMessages([
@@ -235,7 +258,7 @@ export default function ChatPage() {
     const res = await fetch(`/api/chat/${chatId}/messages`);
     const data = await res.json();
 
-    // Map DB messages to UI state:
+    // Map DB messages to UI state
     const msgs = data.map((m: any) => ({
       id: m.id,
       content: m.content,
@@ -244,11 +267,26 @@ export default function ChatPage() {
     }));
     setMessages(msgs);
 
-    // Rebuild chatHistory for Gemini API:
-    chatHistory.current = data.map((m: any) => ({
-      role: m.sender === "ai" ? "model" : "user",
-      parts: [{ text: m.content }],
-    }));
+    // Rebuild chatHistory for Gemini API and ensure it includes the initial context
+    const userRole = user?.publicMetadata?.role === "prof" ? "professor" : "student";
+    const courseMembersData = JSON.stringify(courseMembers, null, 2);
+    chatHistory.current = [
+      {
+        role: "user",
+        parts: [{ 
+          text: generateAssistantPrompt(
+            JSON.stringify(modules, null, 2),
+            JSON.stringify(assignments, null, 2),
+            userRole,
+            courseMembersData
+          )
+        }],
+      },
+      ...data.map((m: any) => ({
+        role: m.sender === "ai" ? "model" : "user",
+        parts: [{ text: m.content }],
+      }))
+    ];
   }
 
   const generateAIResponse = async (userMessage: string) => {
@@ -298,7 +336,7 @@ export default function ChatPage() {
 
     const session = sessions.find(s => s.id === currentChatId);
     if (session && !session.title) {
-      // First question: set title to the user’s message (or truncated)
+      // First question: set title to the user's message (or truncated)
       const newTitle = inputMessage.length > 50 ? inputMessage.slice(0, 47) + '...' : inputMessage;
       await handleRenameSession(currentChatId!, newTitle);
     }
@@ -525,122 +563,127 @@ export default function ChatPage() {
   return (
     <div className="flex">
       <Sidebar_dashboard />
-      <div className="flex min-h-screen bg-gradient-to-t from-[#AAFF45]/15 to-white flex-1 pl-20 px-6">
-        <ChatSessionList
-          sessions={sessions}
-          onSelect={loadSession}
-          onNew={createNewSession}
-          onRename={handleRenameSession}
-          onDelete={handleDeleteSession}
-        />
-        <div className="flex-1 min-h-screen text-black pl-16">
-          <div className="h-screen flex flex-col">
-            <div className="flex items-center p-3 pl-4 bg-gradient-to-r from-[#AAFF45] to-white justify-between">
-              <div className="flex items-center">
-                <Image
-                  src="/asset/chat.svg"
-                  alt="Chat icon"
-                  width={20}
-                  height={20}
-                  className="text-black mr-2"
-                />
-                <h1 className="text-lg font-bold">AI Assistant (Gemini)</h1>
-                {courseId && (
-                  <span className="ml-4 text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                    {getCourseName()}
-                  </span>
-                )}
-                {fetchingAssignments && (
-                  <span className="ml-2 text-sm text-gray-600">
-                    Loading assignments...
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center">
-                {courseId && (
-                  <button
-                    onClick={() => generateFlashcards("modules")}
-                    disabled={generatingFlashcards || !modules.length}
-                    className={`mr-2 px-3 py-1 rounded-lg text-sm transition-colors flex items-center ${generatingFlashcards || !modules.length
-                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                        : "bg-blue-500 text-white hover:bg-blue-600"
-                      }`}
-                  >
-                    {generatingFlashcards ? (
-                      "Generating..."
-                    ) : (
-                      <>Generate From Modules</>
+      <div className="flex min-h-screen bg-gradient-to-t from-[#AAFF45]/15 to-white flex-1 pl-16 px-6">
+        {courseId ? (
+          <>
+            <ChatSessionList
+              sessions={sessions}
+              onSelect={loadSession}
+              onNew={createNewSession}
+              onRename={handleRenameSession}
+              onDelete={handleDeleteSession}
+            />
+            <div className="flex-1 min-h-screen text-black relative">
+              <div className="h-screen flex flex-col">
+                <div className="flex items-center p-3 pl-4 justify-between">
+                  <div className="flex items-center">
+                    <Image
+                      src="/asset/ai_icon.svg"
+                      alt="Chat icon"
+                      width={30}
+                      height={30}
+                      className="text-black mr-2 filter brightness-0"
+                    />
+                    <h1 className="text-xs text-gray-600">AI Assistant (Gemini)</h1>
+                    {courseId && (
+                      <span className="ml-4 text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                        {getCourseName()}
+                      </span>
                     )}
-                  </button>
+                  </div>
+                </div>
+
+                {showCustomInput ? (
+                  <CustomTextInput
+                    customText={customText}
+                    onTextChange={handleCustomTextChange}
+                    onGenerate={() => generateFlashcards("custom")}
+                    onCancel={toggleCustomInput}
+                    isGenerating={generatingFlashcards}
+                  />
+                ) : showFlashcards && flashcards.length > 0 ? (
+                  <FlashcardViewer
+                    flashcards={flashcards}
+                    onClose={toggleFlashcardView}
+                    onSave={handleSaveFlashcards}
+                  />
+                ) : (
+                  <ChatMessageList
+                    messages={messages}
+                    inputMessage={inputMessage}
+                    setInputMessage={setInputMessage}
+                    handleSendMessage={handleSendMessage}
+                    isLoading={isLoading}
+                    isFetchingModules={fetchingModules || fetchingAssignments}
+                  />
                 )}
-              {courseId && (
-                <button
-                  onClick={toggleCustomInput}
-                  className="mr-2 px-3 py-1 rounded-lg text-sm transition-colors flex items-center bg-purple-500 text-white hover:bg-purple-600"
-                >
-                  {showCustomInput ? "Cancel Custom Input" : "Custom Flashcards"}
-                </button>
-              )}
-                {flashcards.length > 0 && (
-                  <button
-                    onClick={toggleFlashcardView}
-                    className="px-3 py-1 rounded-lg text-sm bg-indigo-500 text-white hover:bg-indigo-600 transition-colors flex items-center"
-                  >
-                    {showFlashcards ? "Hide Flashcards" : "View Flashcards"}
-                  </button>
-                )}
-                {flashcards.length > 0 && (
-                  <button
-                    onClick={handleSaveFlashcards}
-                    disabled={savingFlashcards}
-                    className="px-3 py-1 rounded-lg text-sm bg-green-600 text-white hover:bg-green-700 transition-colors flex items-center ml-2"
-                  >
-                    {savingFlashcards ? "Saving..." : "Save Flashcards"}
-                  </button>
-                )}
-              {courseId && (
-                <button
-                  onClick={() => router.push(`/pages/chat/flashcard_stacks?courseId=${courseId}`)}
-                  className="ml-2 px-3 py-1 rounded-lg text-sm bg-orange-500 text-white hover:bg-orange-600 transition-colors flex items-center"
-                  disabled={!courseId} // Disable the button if courseId is not set
-                >
-                  View Flashcard Stacks
-                </button>
-              )}
+
+                {/* Floating Flashcard Buttons */}
+                <div className="fixed right-4 top-4 flex flex-col gap-2">
+                  {courseId && (
+                    <button
+                      onClick={() => generateFlashcards("modules")}
+                      disabled={generatingFlashcards || !modules.length}
+                      className={`px-2 py-3 rounded text-sm transition-colors flex items-center justify-center opacity-80 hover:opacity-100 ${
+                        generatingFlashcards || !modules.length
+                          ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                          : "bg-blue-500 text-white hover:bg-blue-600"
+                      }`}
+                    >
+                      {generatingFlashcards ? "Generating..." : "Generate Flashcards From Modules"}
+                    </button>
+                  )}
+                  {courseId && (
+                    <button
+                      onClick={toggleCustomInput}
+                      className="px-2 py-3 rounded text-sm transition-colors flex items-center justify-center bg-purple-500 text-white hover:bg-purple-600 opacity-80 hover:opacity-100"
+                    >
+                      {showCustomInput ? "Cancel Custom Input" : "Custom Flashcards"}
+                    </button>
+                  )}
+                  {flashcards.length > 0 && (
+                    <button
+                      onClick={toggleFlashcardView}
+                      className="px-2 py-3 rounded text-sm bg-indigo-500 text-white hover:bg-indigo-600 transition-colors flex items-center justify-center opacity-80 hover:opacity-100"
+                    >
+                      {showFlashcards ? "Hide Flashcards" : "View Flashcards"}
+                    </button>
+                  )}
+                  {courseId && (
+                    <button
+                      onClick={() => router.push(`/pages/chat/flashcard_stacks?courseId=${courseId}`)}
+                      className="px-2 py-3 rounded text-sm bg-orange-500 text-white hover:bg-orange-600 transition-colors flex items-center justify-center opacity-80 hover:opacity-100"
+                    >
+                      View Flashcard Stacks
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-
-            {!courseId && !showCustomInput ? (
+          </>
+        ) : (
+          <div className="flex-1 min-h-screen text-black">
+            <div className="h-screen flex flex-col">
+              <div className="flex items-center p-3 pl-4 justify-between">
+                <div className="flex items-center">
+                  <Image
+                    src="/asset/ai_icon.svg"
+                    alt="Chat icon"
+                    width={30}
+                    height={30}
+                    className="text-black mr-2 filter brightness-0"
+                  />
+                  <h1 className="text-xs text-gray-600">AI Assistant (Gemini)</h1>
+                </div>
+              </div>
               <CourseSelector
                 courses={courses}
                 onSelectCourse={handleCourseSelection}
                 isLoading={fetchingModules || fetchingAssignments}
               />
-            ) : showCustomInput ? (
-              <CustomTextInput
-                customText={customText}
-                onTextChange={handleCustomTextChange}
-                onGenerate={() => generateFlashcards("custom")}
-                onCancel={toggleCustomInput}
-                isGenerating={generatingFlashcards}
-              />
-            ) : showFlashcards && flashcards.length > 0 ? (
-              <FlashcardViewer
-                flashcards={flashcards}
-                onClose={toggleFlashcardView}
-              />
-            ) : (
-              <ChatMessageList
-                messages={messages}
-                inputMessage={inputMessage}
-                setInputMessage={setInputMessage}
-                handleSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                isFetchingModules={fetchingModules || fetchingAssignments}
-              />
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
