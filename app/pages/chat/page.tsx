@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import Image from "next/image";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -22,11 +23,14 @@ interface Message {
 }
 
 interface Flashcard {
-  id: number;
+  id: string;
   question: string;
   answer: string;
   moduleId: string;
   moduleName: string;
+  source: "module" | "custom";
+  stackName: string;
+  isSaved: boolean;
 }
 
 interface Module {
@@ -69,6 +73,7 @@ interface Course {
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
+  const router = useRouter();
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [courseId, setCourseId] = useState<string | null>(null);
@@ -92,6 +97,7 @@ export default function ChatPage() {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customText, setCustomText] = useState("");
   const [generatingFlashcards, setGeneratingFlashcards] = useState(false);
+  const [savingFlashcards, setSavingFlashcards] = useState(false);
 
   useEffect(() => {
     const loadCourses = async () => {
@@ -110,6 +116,11 @@ export default function ChatPage() {
         .then(setSessions);
     }
   }, [courseId]);
+
+  const getCourseName = () => {
+    const selectedCourse = courses.find((course) => course.id === courseId);
+    return selectedCourse ? selectedCourse.name : "Unknown Course";
+  };
 
   const handleCourseSelection = async (id: string) => {
     // Fetch modules
@@ -383,16 +394,15 @@ export default function ChatPage() {
         const flashcardsData = JSON.parse(jsonString);
 
         // Map the generated flashcards to our format
-        const newFlashcards = flashcardsData.map(
-          (card: any, index: number) => ({
-            id: Date.now() + index,
-            question: card.question,
-            answer: card.answer,
-            moduleId: source === "modules" ? modules[0].id : "custom",
-            moduleName:
-              source === "modules" ? modules[0].title : "Custom Content",
-          })
-        );
+        const newFlashcards = flashcardsData.map((card: any) => ({
+          id: crypto.randomUUID(),
+          question: card.question,
+          answer: card.answer,
+          moduleId: source === "modules" ? modules[0].id : null,
+          moduleName: source === "modules" ? modules[0].title : null,
+          source: source,
+          isSaved: false,
+        }));
 
         setFlashcards(newFlashcards);
         setShowFlashcards(true);
@@ -403,14 +413,10 @@ export default function ChatPage() {
 
         // Add a notification message
         const notificationMessage: Message = {
-          id: Date.now().toString(),
-          content: `✅ Generated ${newFlashcards.length} flashcards from ${source === "modules" ? "module content" : "your custom text"
-            }! You can now view them in the flashcard viewer.`,
+          id: crypto.randomUUID(),
+          content: `✅ Generated ${newFlashcards.length} flashcards from ${source === "modules" ? "module content" : "your custom text"}!`,
           sender: "ai",
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+          timestamp: "", 
         };
 
         setMessages((prev) => [...prev, notificationMessage]);
@@ -447,6 +453,60 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setGeneratingFlashcards(false);
+    }
+  };
+
+  const saveFlashcardsToDB = async (flashcardsToSave: Flashcard[], stackName: string) => {
+    if (!courseId || !user?.id) return;
+
+    try {
+      const res = await fetch(`/api/flashcards`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId,
+          stackName,
+          flashcards: flashcardsToSave.map((card) => ({
+            ...card,
+            source: card.source || "custom",
+            isSaved: true, // Set isSaved to true when saving to the database
+          })),
+          moduleId: flashcardsToSave[0]?.moduleId,
+          moduleName: flashcardsToSave[0]?.moduleName,
+          userId: user.id,
+        }),
+      });
+
+      const responseData = await res.json();
+      if (!res.ok) {
+        throw new Error(`Failed to save flashcards: ${responseData.error || res.statusText}`);
+      }
+
+      console.log("Flashcards saved!", responseData);
+    } catch (error) {
+      console.error("Error saving flashcards:", error);
+    }
+  };
+
+  const handleSaveFlashcards = async () => {
+    if (!flashcards.length) return;
+
+    const stackName = prompt("Enter a name for this flashcard stack:");
+    if (!stackName) {
+      alert("Flashcard stack name is required.");
+      return;
+    }
+
+    setSavingFlashcards(true);
+
+    try {
+      await saveFlashcardsToDB(flashcards, stackName);
+      alert("Flashcards saved!");
+      router.push(`/pages/chat/flashcard_stacks?courseId=${courseId}`);
+    } catch (err) {
+      alert("Failed to save flashcards.");
+    } finally {
+      setSavingFlashcards(false);
     }
   };
 
@@ -487,7 +547,7 @@ export default function ChatPage() {
                 <h1 className="text-lg font-bold">AI Assistant (Gemini)</h1>
                 {courseId && (
                   <span className="ml-4 text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                    Course ID: {courseId}
+                    {getCourseName()}
                   </span>
                 )}
                 {fetchingAssignments && (
@@ -513,12 +573,14 @@ export default function ChatPage() {
                     )}
                   </button>
                 )}
+              {courseId && (
                 <button
                   onClick={toggleCustomInput}
                   className="mr-2 px-3 py-1 rounded-lg text-sm transition-colors flex items-center bg-purple-500 text-white hover:bg-purple-600"
                 >
                   {showCustomInput ? "Cancel Custom Input" : "Custom Flashcards"}
                 </button>
+              )}
                 {flashcards.length > 0 && (
                   <button
                     onClick={toggleFlashcardView}
@@ -527,6 +589,24 @@ export default function ChatPage() {
                     {showFlashcards ? "Hide Flashcards" : "View Flashcards"}
                   </button>
                 )}
+                {flashcards.length > 0 && (
+                  <button
+                    onClick={handleSaveFlashcards}
+                    disabled={savingFlashcards}
+                    className="px-3 py-1 rounded-lg text-sm bg-green-600 text-white hover:bg-green-700 transition-colors flex items-center ml-2"
+                  >
+                    {savingFlashcards ? "Saving..." : "Save Flashcards"}
+                  </button>
+                )}
+              {courseId && (
+                <button
+                  onClick={() => router.push(`/pages/chat/flashcard_stacks?courseId=${courseId}`)}
+                  className="ml-2 px-3 py-1 rounded-lg text-sm bg-orange-500 text-white hover:bg-orange-600 transition-colors flex items-center"
+                  disabled={!courseId} // Disable the button if courseId is not set
+                >
+                  View Flashcard Stacks
+                </button>
+              )}
               </div>
             </div>
 
