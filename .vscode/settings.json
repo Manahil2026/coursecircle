@@ -4,7 +4,21 @@
         "javascript": "javascript",
         "css": "css"
     },
+        "mochaExplorer.files": "testcases/**/*_tests.ts",
+        "mochaExplorer.require": [
+            "ts-node/register",
+            "tsconfig-paths/register"
+        ],
     "editor.quickSuggestions": {
         "strings": true
-    }
+    },
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./testcases",
+        "-p",
+        "*_test.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true
 }
