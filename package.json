@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "mocha --require ts-node/register 'testcases/**/*.ts'"
+    "test": "mocha"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
@@ -39,7 +39,7 @@
     "@types/chai": "^5.2.1",
     "@types/jest": "^29.5.14",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^20",
+    "@types/node": "^20.17.30",
     "@types/react": "^19.1.1",
     "@types/react-dom": "^19.1.2",
     "@types/sinon": "^17.0.4",
