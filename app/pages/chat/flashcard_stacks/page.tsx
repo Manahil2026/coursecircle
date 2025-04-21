@@ -182,6 +182,7 @@ export default function FlashcardsPage() {
               <div
                 key={stack.stackName}
                 className="border p-4 rounded-lg shadow cursor-pointer hover:bg-gray-100"
+                onClick={() => openStack(stack)}
               >
                 <h2 className="text-lg font-semibold">{stack.stackName}</h2>
                 <p className="text-sm text-gray-600">{stack.flashcards.length} flashcards</p>
@@ -189,13 +190,19 @@ export default function FlashcardsPage() {
                 {/* Edit and Delete Buttons */}
                 <div className="flex justify-between mt-2">
                   <button
-                    onClick={() => handleEditStack(stack.stackName)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditStack(stack.stackName);
+                    }}
                     className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
                   >
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteStack(stack.stackName)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteStack(stack.stackName);
+                    }}
                     className="px-2 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
                   >
                     Delete
@@ -209,7 +216,15 @@ export default function FlashcardsPage() {
         {/* Flashcard Viewer Modal */}
         {selectedStack && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl relative">
+              <button
+                onClick={closeStack}
+                className="absolute top-2 right-2 p-2 text-gray-500 hover:text-gray-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
               <FlashcardViewer
                 flashcards={selectedStack.flashcards}
                 onClose={closeStack}
