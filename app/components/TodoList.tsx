@@ -1,9 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 
 interface Task {
-  id: number;
+  id: string;
   text: string;
   due: string;
   date: string;
@@ -17,66 +17,158 @@ export default function TodoList() {
   const [showInputForm, setShowInputForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  const addTask = () => {
-    if (!newTaskText.trim()) return;
+  // Fetch existing todos on mount
+  useEffect(() => {
+    fetch("/api/todo")
+      .then((res) => res.json())
+      .then((data: Array<{
+        id: string;
+        content: string;
+        dueDate: string | null;
+        dueTime: string | null;
+      }>) => {
+        const mapped = data.map((t) => {
+          const dateDisplay = t.dueDate
+            ? new Date(t.dueDate).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })
+            : "Today";
+          return {
+            id: t.id,
+            text: t.content,
+            due: t.dueTime ? formatTime(t.dueTime) : formatTime("11:55"),
+            date: dateDisplay,
+          };
+        });
+        setTasks(mapped);
+      });
+  }, []);
 
-    let dateDisplay = "Today";
-    
-    // Format the selected date if provided
-    if (newTaskDate) {
-      const selectedDate = new Date(newTaskDate);
-      dateDisplay = selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }
-
-    if (editingTask) {
-      // Update existing task
-      setTasks(tasks.map(task => 
-        task.id === editingTask.id 
-          ? { 
-              ...task, 
-              text: newTaskText, 
-              due: newTaskDue || task.due,
-              date: newTaskDate ? dateDisplay : task.date
-            } 
-          : task
-      ));
-      setEditingTask(null);
-    } else {
-      // Add new task
-      const newTask: Task = {
-        id: Date.now(),
-        text: newTaskText,
-        due: newTaskDue || "11:55",
-        date: dateDisplay,
-      };
-      setTasks((prev) => [...prev, newTask]);
-    }
-    
+  const resetForm = () => {
     setNewTaskText("");
     setNewTaskDue("");
     setNewTaskDate("");
     setShowInputForm(false);
+    setEditingTask(null);
   };
 
-  const removeTask = (id: number, e: React.MouseEvent) => {
+  const formatTime = (time24: string) => { // To display time in 12-hour format
+    const [h, m] = time24.split(":");
+    let hour = parseInt(h, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12;
+    return `${hour}:${m} ${ampm}`;
+  };
+  
+
+  const addTask = async () => {
+    if (!newTaskText.trim()) return;
+
+    // call API
+    const payload = {
+      content: newTaskText,
+      dueDate: newTaskDate || null,
+      dueTime: newTaskDue || null,
+    };
+    const res = await fetch("/api/todo", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    const created = await res.json();
+
+    // map returned todo
+    const dateDisplay = created.dueDate
+      ? new Date(created.dueDate).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })
+      : "Today";
+    const newTask: Task = {
+      id: created.id,
+      text: created.content,
+      due: created.dueTime
+       ? formatTime(created.dueTime)
+       : formatTime("11:55"),
+      date: dateDisplay,
+    };
+
+    setTasks((prev) => [newTask, ...prev]);
+    resetForm();
+  };
+
+  const updateTask = async () => {
+    if (!editingTask) return;
+
+    const payload = {
+      id: editingTask.id,
+      content: newTaskText,
+      dueDate: newTaskDate || null,
+      dueTime: newTaskDue || null,
+    };
+    const res = await fetch("/api/todo", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+    const updated = await res.json();
+
+    const dateDisplay = updated.dueDate
+      ? new Date(updated.dueDate).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })
+      : "Today";
+
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === updated.id
+          ? {
+              id: updated.id,
+              text: updated.content,
+              due: updated.dueTime
+                ? formatTime(updated.dueTime)
+                : t.due,
+              date: dateDisplay,
+            }
+          : t
+      )
+    );
+    resetForm();
+  };
+
+  const handleSave = () => {
+    if (editingTask) return updateTask();
+    return addTask();
+  };
+
+  const removeTask = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setTasks((prev) => prev.filter((task) => task.id !== id));
+    await fetch("/api/todo", {
+      method: "DELETE",
+      body: JSON.stringify({ id }),
+    });
+    setTasks((prev) => prev.filter((t) => t.id !== id));
   };
 
   const startEdit = (task: Task) => {
     setEditingTask(task);
     setNewTaskText(task.text);
     setNewTaskDue(task.due);
+    // parse back to yyyy-MM-dd for the date input
+    const today = new Date();
+    const [mon, day] = task.date.split(" ");
+    // you might skip this fallback logic if users only pick custom dates
+    setNewTaskDate(
+      mon && day
+        ? new Date(`${mon} ${day}, ${today.getFullYear()}`)
+            .toISOString()
+            .slice(0, 10)
+        : ""
+    );
     setShowInputForm(true);
   };
 
-  const cancelEdit = () => {
-    setEditingTask(null);
-    setNewTaskText("");
-    setNewTaskDue("");
-    setNewTaskDate("");
-    setShowInputForm(false);
-  };
+  const cancelEdit = () => resetForm();
 
   return (
     <div>
@@ -118,13 +210,13 @@ export default function TodoList() {
               />
             </div>
             <div className="flex gap-2">
-              <button 
-                onClick={addTask}
+              <button
+                onClick={handleSave}
                 className="bg-black text-white px-3 py-1 rounded text-sm"
               >
-                {editingTask ? 'Update' : 'Add'}
+                {editingTask ? "Update" : "Add"}
               </button>
-              <button 
+              <button
                 onClick={cancelEdit}
                 className="bg-gray-300 px-3 py-1 rounded text-sm"
               >
@@ -149,14 +241,14 @@ export default function TodoList() {
                 }`}
               >
                 <div>
-                  <span className="font-medium">{task.date}</span> | {task.text} (Due {task.due})
+                  <span className="font-medium">{task.date}</span> |{" "}
+                  {task.text} (Due {task.due})
                 </div>
                 <button
                   onClick={(e) => removeTask(task.id, e)}
                   className="text-sm ml-4"
                 >
                   {index === 0 ? (
-                    // White delete icon for first task with black background
                     <div className="invert">
                       <Image
                         src="/asset/delete_icon.svg"
@@ -167,10 +259,9 @@ export default function TodoList() {
                       />
                     </div>
                   ) : (
-                    // Regular delete icon for other tasks
                     <Image
                       src="/asset/delete_icon.svg"
-                      alt="Delete"  
+                      alt="Delete"
                       width={20}
                       height={20}
                       priority
