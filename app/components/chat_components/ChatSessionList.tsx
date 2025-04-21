@@ -24,8 +24,8 @@ export default function ChatSessionList({ sessions, onSelect, onNew, onRename, o
                 autoFocus
               />
             ) : (
-              <button onClick={() => onSelect(s.id)} className="text-left flex-1 p-1 hover:opacity-70 transition-opacity">
-                {s.title || new Date(s.createdAt).toLocaleString()}
+              <button onClick={() => onSelect(s.id)} className="text-left flex-1 p-1 hover:opacity-70 transition-opacity text-sm">
+                {s.title ? s.title.charAt(0).toUpperCase() + s.title.slice(1) : "Empty"}
               </button>
             )}
             <div className="flex space-x-1">

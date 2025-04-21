@@ -386,3 +386,16 @@ model Flashcard {
   @@index([courseId])
   @@map("flashcards")
 }
+
+model Todo {
+  id         String   @id @default(cuid())
+  content    String
+  completed  Boolean  @default(false)
+  dueDate    DateTime? // Stores the due date
+  dueTime    String?   // Stores the time as a string like "14:00" or "2:00 PM"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  userId     String
+}
+
