@@ -72,7 +72,6 @@ interface Course {
 }
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([]);
   const router = useRouter();
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -91,6 +90,20 @@ export default function ChatPage() {
   }[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
 
+  const getCourseName = () => {
+    const selectedCourse = courses.find((course: Course) => course.id === courseId);
+    return selectedCourse ? selectedCourse.name : "Unknown Course";
+  };
+
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "1",
+      content: "Welcome! I'm your AI assistant. Please select a course to get started.",
+      sender: "ai",
+      timestamp: new Date().toISOString(),
+    },
+  ]);
+
   // Flashcard states
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [showFlashcards, setShowFlashcards] = useState(false);
@@ -104,11 +117,25 @@ export default function ChatPage() {
   useEffect(() => {
     const loadCourses = async () => {
       const coursesData = await fetchCourses(user?.publicMetadata?.role as string | undefined);
-      if (coursesData) setCourses(coursesData);
+      if (coursesData) {
+        setCourses(coursesData);
+        // Update welcome message with the course name if a course is selected
+        if (courseId) {
+          const selectedCourse = coursesData.find((course: Course) => course.id === courseId);
+          setMessages([
+            {
+              id: "1",
+              content: `Welcome! I'm your AI assistant for ${selectedCourse?.name || "Unknown Course"}. I can help you with course-related questions.`,
+              sender: "ai",
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+        }
+      }
     };
 
     if (user) loadCourses();
-  }, [user]);
+  }, [user, courseId]);
 
   // After selecting a course, also load existing sessions and course members:
   useEffect(() => {
@@ -125,11 +152,6 @@ export default function ChatPage() {
         .catch(error => console.error("Error fetching course members:", error));
     }
   }, [courseId]);
-
-  const getCourseName = () => {
-    const selectedCourse = courses.find((course) => course.id === courseId);
-    return selectedCourse ? selectedCourse.name : "Unknown Course";
-  };
 
   const handleCourseSelection = async (id: string) => {
     setCourseId(id);
@@ -167,28 +189,15 @@ export default function ChatPage() {
         parts: [{ text: initialPrompt }],
       }];
 
-      // Welcome message
-      const welcomeText = `Welcome! I'm your AI assistant for ${getCourseName()}. I can help you with course-related questions.`;
+      // Persist the initial message to the database
       await fetch(`/api/chat/${newSession.id}/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userMessage: "",
-          aiMessage: welcomeText,
+          aiMessage: `Welcome! I'm your AI assistant for ${getCourseName()}. I can help you with course-related questions.`,
         }),
       });
-
-      setMessages([
-        { 
-          id: crypto.randomUUID(), 
-          content: welcomeText, 
-          sender: "ai", 
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        }
-      ]);
 
     } catch (error) {
       console.error("Error initializing chat:", error);
