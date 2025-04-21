@@ -117,17 +117,68 @@ export default function FlashcardViewer({ flashcards, onClose, onSave }: Flashca
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4">
+    <div className="flex-1 flex items-center justify-center">
       <div className="w-full max-w-2xl">
-        <div className="bg-white border rounded-lg shadow-lg p-6 relative">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Flashcards</h2>
-            <div className="text-sm text-gray-600">
-              {currentFlashcardIndex + 1} / {flashcards.length}
-            </div>
+        <div className="bg-white border rounded-lg shadow-lg relative">
+          <div className="flex justify-end items-center p-2">
+            {!isEditing && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => {
+                    setIsEditing(true);
+                    setEditQuestion(currentFlashcard.question);
+                    setEditAnswer(currentFlashcard.answer);
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <img src="/asset/edit_icon.svg" alt="Edit" className="w-5 h-5" />
+                </button>
+                {onSave && (
+                  <button
+                    onClick={handleSave}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 text-black hover:text-gray-900 transition-colors"
+              aria-label="Close"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
           </div>
 
-          <div className="min-h-64 bg-white border rounded-lg p-6 mb-4 flex flex-col items-center justify-center text-center">
+          <div className="min-h-64 bg-gradient-to-r from-[#AAFF45] via-[#57C785] to-[#EDDD53] p-6 flex flex-col items-center justify-center text-center">
             {isEditing ? (
               <>
                 <input
@@ -142,7 +193,7 @@ export default function FlashcardViewer({ flashcards, onClose, onSave }: Flashca
                   className="w-full border px-2 py-1"
                   placeholder="Edit answer"
                 />
-                <div className="flex gap-2 mt-4">
+                <div className="flex gap-2">
                   <button
                     onClick={() =>
                       updateFlashcard(currentFlashcard.id, { question: editQuestion, answer: editAnswer }, currentFlashcard.isSaved)
@@ -160,72 +211,46 @@ export default function FlashcardViewer({ flashcards, onClose, onSave }: Flashca
                 </div>
               </>
             ) : (
-              <>
+              <div 
+                onClick={() => setShowAnswer(!showAnswer)}
+                className="cursor-pointer w-full"
+              >
                 <div className="text-xl font-medium">
                   {showAnswer ? currentFlashcard.answer : currentFlashcard.question}
                 </div>
-                <button
-                  onClick={() => setShowAnswer(!showAnswer)}
-                  className="mt-4 px-4 py-2 rounded-lg bg-[#AAFF45] text-black hover:bg-[#8FE03D] transition-colors"
-                >
-                  {showAnswer ? "Show Question" : "Show Answer"}
-                </button>
-              </>
+              </div>
             )}
           </div>
 
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-center gap-1">
             <button
               onClick={prevFlashcard}
               disabled={currentFlashcardIndex === 0}
-              className={`px-4 py-2 rounded-lg ${
+              className={`p-2 active:scale-90 transition-transform ${
                 currentFlashcardIndex === 0
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-gray-700 hover:text-gray-900"
               }`}
+              aria-label="Previous"
             >
-              Previous
+              <img src="/asset/arrowup_icon.svg" alt="Previous" className="w-8 h-8 rotate-[-90deg]" />
             </button>
 
-            {!isEditing && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setIsEditing(true);
-                    setEditQuestion(currentFlashcard.question);
-                    setEditAnswer(currentFlashcard.answer);
-                  }}
-                  className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
-                >
-                  Edit
-                </button>
-                {onSave && (
-                  <button
-                    onClick={handleSave}
-                    className="px-4 py-2 rounded-lg bg-[#AAFF45] text-black hover:bg-[#8FE03D]"
-                  >
-                    Save Stack
-                  </button>
-                )}
-                <button
-                  onClick={() => deleteFlashcard(currentFlashcard.id, currentFlashcard.isSaved)}
-                  className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
-                >
-                  Delete
-                </button>
-              </div>
-            )}
+            <div className="text-base text-gray-600 mx-1">
+              {currentFlashcardIndex + 1} / {flashcards.length}
+            </div>
 
             <button
               onClick={nextFlashcard}
               disabled={currentFlashcardIndex === flashcards.length - 1}
-              className={`px-4 py-2 rounded-lg ${
+              className={`p-2 active:scale-90 transition-transform ${
                 currentFlashcardIndex === flashcards.length - 1
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-gray-700 hover:text-gray-900"
               }`}
+              aria-label="Next"
             >
-              Next
+              <img src="/asset/arrowdown_icon.svg" alt="Next" className="w-8 h-8 rotate-[-90deg]" />
             </button>
           </div>
         </div>

@@ -589,15 +589,62 @@ export default function ChatPage() {
                     <Image
                       src="/asset/ai_icon.svg"
                       alt="Chat icon"
-                      width={30}
-                      height={30}
+                      width={35}
+                      height={35}
                       className="text-black mr-2 filter brightness-0"
                     />
                     <h1 className="text-xs text-gray-600">AI Assistant (Gemini)</h1>
+                  </div>
+                  <div className="flex gap-2">
                     {courseId && (
-                      <span className="ml-4 text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                        {getCourseName()}
-                      </span>
+                      <button
+                        onClick={() => generateFlashcards("modules")}
+                        disabled={generatingFlashcards || !modules.length}
+                        className={`px-3 py-2 rounded text-sm transition-colors flex items-center gap-2 ${
+                          generatingFlashcards || !modules.length
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                        }`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M9 4.804A6.999 6.999 0 0117 8a4.5 4.5 0 01-1.5 3.5L9 15.196V4.804zM6 8a6.999 6.999 0 018-3.196V15.196A6.999 6.999 0 016 8z" />
+                        </svg>
+                        {generatingFlashcards ? "Generating..." : "Module Flashcards"}
+                      </button>
+                    )}
+                    {courseId && (
+                      <button
+                        onClick={toggleCustomInput}
+                        className="px-3 py-2 rounded text-sm transition-colors flex items-center gap-2 bg-purple-50 text-purple-600 hover:bg-purple-100"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                        </svg>
+                        {showCustomInput ? "Cancel" : "Custom Flashcards"}
+                      </button>
+                    )}
+                    {flashcards.length > 0 && (
+                      <button
+                        onClick={toggleFlashcardView}
+                        className="px-3 py-2 rounded text-sm flex items-center gap-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        </svg>
+                        {showFlashcards ? "Hide" : "View Flashcards"}
+                      </button>
+                    )}
+                    {courseId && (
+                      <button
+                        onClick={() => router.push(`/pages/chat/flashcard_stacks?courseId=${courseId}`)}
+                        className="px-3 py-2 rounded text-sm flex items-center gap-2 bg-orange-50 text-orange-600 hover:bg-orange-100"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M9 4.804A6.999 6.999 0 0117 8a4.5 4.5 0 01-1.5 3.5L9 15.196V4.804zM6 8a6.999 6.999 0 018-3.196V15.196A6.999 6.999 0 016 8z" />
+                        </svg>
+                        View Stacks
+                      </button>
                     )}
                   </div>
                 </div>
@@ -626,47 +673,6 @@ export default function ChatPage() {
                     isFetchingModules={fetchingModules || fetchingAssignments}
                   />
                 )}
-
-                {/* Floating Flashcard Buttons */}
-                <div className="fixed right-4 top-4 flex flex-col gap-2">
-                  {courseId && (
-                    <button
-                      onClick={() => generateFlashcards("modules")}
-                      disabled={generatingFlashcards || !modules.length}
-                      className={`px-2 py-3 rounded text-sm transition-colors flex items-center justify-center opacity-80 hover:opacity-100 ${
-                        generatingFlashcards || !modules.length
-                          ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                          : "bg-blue-500 text-white hover:bg-blue-600"
-                      }`}
-                    >
-                      {generatingFlashcards ? "Generating..." : "Generate Flashcards From Modules"}
-                    </button>
-                  )}
-                  {courseId && (
-                    <button
-                      onClick={toggleCustomInput}
-                      className="px-2 py-3 rounded text-sm transition-colors flex items-center justify-center bg-purple-500 text-white hover:bg-purple-600 opacity-80 hover:opacity-100"
-                    >
-                      {showCustomInput ? "Cancel Custom Input" : "Custom Flashcards"}
-                    </button>
-                  )}
-                  {flashcards.length > 0 && (
-                    <button
-                      onClick={toggleFlashcardView}
-                      className="px-2 py-3 rounded text-sm bg-indigo-500 text-white hover:bg-indigo-600 transition-colors flex items-center justify-center opacity-80 hover:opacity-100"
-                    >
-                      {showFlashcards ? "Hide Flashcards" : "View Flashcards"}
-                    </button>
-                  )}
-                  {courseId && (
-                    <button
-                      onClick={() => router.push(`/pages/chat/flashcard_stacks?courseId=${courseId}`)}
-                      className="px-2 py-3 rounded text-sm bg-orange-500 text-white hover:bg-orange-600 transition-colors flex items-center justify-center opacity-80 hover:opacity-100"
-                    >
-                      View Flashcard Stacks
-                    </button>
-                  )}
-                </div>
               </div>
             </div>
           </>

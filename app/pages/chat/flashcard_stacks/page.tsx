@@ -194,18 +194,18 @@ export default function FlashcardsPage() {
                       e.stopPropagation();
                       handleEditStack(stack.stackName);
                     }}
-                    className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:scale-110"
                   >
-                    Edit
+                    <img src="/asset/edit_icon.svg" alt="Edit" className="w-5 h-5 hover:opacity-80" />
                   </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteStack(stack.stackName);
                     }}
-                    className="px-2 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:scale-110"
                   >
-                    Delete
+                    <img src="/asset/delete_icon.svg" alt="Delete" className="w-5 h-5 hover:opacity-80" />
                   </button>
                 </div>
               </div>
@@ -216,15 +216,7 @@ export default function FlashcardsPage() {
         {/* Flashcard Viewer Modal */}
         {selectedStack && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl relative">
-              <button
-                onClick={closeStack}
-                className="absolute top-2 right-2 p-2 text-gray-500 hover:text-gray-700"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+            <div className=" p-6 w-full">
               <FlashcardViewer
                 flashcards={selectedStack.flashcards}
                 onClose={closeStack}

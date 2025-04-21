@@ -13,8 +13,8 @@ interface Course {
   export default function CourseSelector({ courses, onSelectCourse, isLoading }: CourseSelectorProps) {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-md bg-white border p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">
+        <div className="w-full max-w-md bg-white border p-4 rounded">
+          <h2 className="text-base font-semibold mb-4">
             Select Your Course
           </h2>
           {courses.length === 0 ? (

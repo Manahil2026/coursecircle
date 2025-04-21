@@ -33,7 +33,7 @@ export default function ChatMessageList({
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto p-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex-1 overflow-y-auto p-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] max-h-[calc(100vh-8rem)]">
         {messages.map((message) => (
           <div
             key={message.id}
