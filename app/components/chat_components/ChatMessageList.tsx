@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import Image from "next/image";
 
 interface Message {
   id: string;
@@ -44,10 +45,10 @@ export default function ChatMessageList({
             }`}
           >
             <div
-              className={`max-w-[70%] rounded-lg p-2 ${
+              className={`max-w-[70%] rounded-lg p-2 px-5 ${
                 message.sender === "user"
-                  ? "bg-[#AAFF45] text-black"
-                  : "bg-gray-100 text-black"
+                  ? "bg-green-100 text-black"
+                  : "border-b border-gray-300 text-black"
               }`}
             >
               <div className="text-sm whitespace-pre-wrap prose prose-sm max-w-none prose-p:my-1 prose-headings:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0">
@@ -73,26 +74,36 @@ export default function ChatMessageList({
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t p-2">
+      <div className="p-2">
         <form onSubmit={handleSendMessage} className="flex gap-1">
           <input
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Type your message..."
-            className="flex-1 border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#AAFF45]"
+            className="flex-1 border rounded px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-black"
             disabled={isLoading}
           />
           <button
             type="submit"
             disabled={isLoading || !inputMessage.trim()}
-            className={`px-3 py-1.5 rounded-lg ${
+            className={`px-3 py-1.5 rounded-lg flex items-center justify-center ${
               isLoading || !inputMessage.trim()
                 ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                 : "bg-[#AAFF45] text-black hover:bg-[#8FE03D]"
             }`}
           >
-            {isLoading ? "Sending..." : "Send"}
+            {isLoading ? (
+              "Sending..."
+            ) : (
+              <Image
+                src="/asset/send.svg"
+                alt="Send"
+                width={20}
+                height={20}
+                className="w-5 h-5"
+              />
+            )}
           </button>
         </form>
       </div>

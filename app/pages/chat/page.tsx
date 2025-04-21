@@ -593,7 +593,6 @@ export default function ChatPage() {
                       height={35}
                       className="text-black mr-2 filter brightness-0"
                     />
-                    <h1 className="text-xs text-gray-600">AI Assistant (Gemini)</h1>
                   </div>
                   <div className="flex gap-2">
                     {courseId && (
@@ -602,8 +601,8 @@ export default function ChatPage() {
                         disabled={generatingFlashcards || !modules.length}
                         className={`px-3 py-2 rounded text-sm transition-colors flex items-center gap-2 ${
                           generatingFlashcards || !modules.length
-                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                            : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                            ? "border-gray-100 border text-gray-400 cursor-not-allowed"
+                            : "border-black border text-black hover:bg-[#abff4569]"
                         }`}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -615,7 +614,7 @@ export default function ChatPage() {
                     {courseId && (
                       <button
                         onClick={toggleCustomInput}
-                        className="px-3 py-2 rounded text-sm transition-colors flex items-center gap-2 bg-purple-50 text-purple-600 hover:bg-purple-100"
+                        className="px-3 py-2 rounded text-sm transition-colors flex items-center gap-2 border-black border text-black hover:bg-[#abff4569]"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                           <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
@@ -626,7 +625,7 @@ export default function ChatPage() {
                     {flashcards.length > 0 && (
                       <button
                         onClick={toggleFlashcardView}
-                        className="px-3 py-2 rounded text-sm flex items-center gap-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                        className="px-3 py-2 rounded text-sm flex items-center gap-2 border-black border text-black hover:bg-[#abff4569]"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                           <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -638,11 +637,15 @@ export default function ChatPage() {
                     {courseId && (
                       <button
                         onClick={() => router.push(`/pages/chat/flashcard_stacks?courseId=${courseId}`)}
-                        className="px-3 py-2 rounded text-sm flex items-center gap-2 bg-orange-50 text-orange-600 hover:bg-orange-100"
+                        className="px-3 py-2 rounded text-sm flex items-center gap-2 border-black border text-black hover:bg-[#abff4569]"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M9 4.804A6.999 6.999 0 0117 8a4.5 4.5 0 01-1.5 3.5L9 15.196V4.804zM6 8a6.999 6.999 0 018-3.196V15.196A6.999 6.999 0 016 8z" />
-                        </svg>
+                        <Image
+                          src="/asset/layers.svg"
+                          alt="Layers icon"
+                          width={16}
+                          height={16}
+                          className="h-4 w-4"
+                        />
                         View Stacks
                       </button>
                     )}
@@ -688,7 +691,6 @@ export default function ChatPage() {
                     height={30}
                     className="text-black mr-2 filter brightness-0"
                   />
-                  <h1 className="text-xs text-gray-600">AI Assistant (Gemini)</h1>
                 </div>
               </div>
               <CourseSelector

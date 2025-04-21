@@ -22,11 +22,23 @@ export default function FlashcardViewer({ flashcards, onClose, onSave }: Flashca
   const [isEditing, setIsEditing] = useState(false);
   const [editQuestion, setEditQuestion] = useState("");
   const [editAnswer, setEditAnswer] = useState("");
+  const [shuffledFlashcards, setShuffledFlashcards] = useState<Flashcard[]>(flashcards);
 
-  const currentFlashcard = flashcards[currentFlashcardIndex];
+  const currentFlashcard = shuffledFlashcards[currentFlashcardIndex];
+
+  const shuffleFlashcards = () => {
+    const newShuffled = [...shuffledFlashcards];
+    for (let i = newShuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newShuffled[i], newShuffled[j]] = [newShuffled[j], newShuffled[i]];
+    }
+    setShuffledFlashcards(newShuffled);
+    setCurrentFlashcardIndex(0);
+    setShowAnswer(false);
+  };
 
   const nextFlashcard = () => {
-    if (currentFlashcardIndex < flashcards.length - 1) {
+    if (currentFlashcardIndex < shuffledFlashcards.length - 1) {
       setCurrentFlashcardIndex((prev) => prev + 1);
       setShowAnswer(false);
       setIsEditing(false);
@@ -44,7 +56,7 @@ export default function FlashcardViewer({ flashcards, onClose, onSave }: Flashca
   const updateFlashcard = async (id: string, updatedFields: { question: string; answer: string }, isSaved: boolean) => {
     if (!isSaved) {
       // If the flashcard is not saved, update it locally
-      flashcards[currentFlashcardIndex] = { ...currentFlashcard, ...updatedFields }; // Update locally
+      shuffledFlashcards[currentFlashcardIndex] = { ...currentFlashcard, ...updatedFields }; // Update locally
       setIsEditing(false);
       return;
     }
@@ -64,7 +76,7 @@ export default function FlashcardViewer({ flashcards, onClose, onSave }: Flashca
         return;
       }
 
-      flashcards[currentFlashcardIndex] = { ...currentFlashcard, ...updatedFields }; // Update locally
+      shuffledFlashcards[currentFlashcardIndex] = { ...currentFlashcard, ...updatedFields }; // Update locally
       setIsEditing(false);
     } catch (error) {
       console.error("Error updating flashcard:", error);
@@ -77,15 +89,13 @@ export default function FlashcardViewer({ flashcards, onClose, onSave }: Flashca
     const confirmDelete = window.confirm("Are you sure you want to delete this flashcard?");
     if (!confirmDelete) return;
 
-    console.log("Deleting flashcard with ID:", id, "Saved:", isSaved); // Debugging
-
     if (!isSaved) {
       // If the flashcard is not saved, delete it locally
-      flashcards.splice(currentFlashcardIndex, 1); // Remove locally
-      if (currentFlashcardIndex >= flashcards.length) {
-        setCurrentFlashcardIndex((prev) => Math.max(prev - 1, 0)); // Adjust index if necessary
+      const newFlashcards = shuffledFlashcards.filter(card => card.id !== id);
+      setShuffledFlashcards(newFlashcards);
+      if (currentFlashcardIndex >= newFlashcards.length) {
+        setCurrentFlashcardIndex((prev) => Math.max(prev - 1, 0));
       }
-      alert("Flashcard deleted successfully!"); // Success alert
       return;
     }
 
@@ -99,11 +109,11 @@ export default function FlashcardViewer({ flashcards, onClose, onSave }: Flashca
         return;
       }
 
-      flashcards.splice(currentFlashcardIndex, 1); // Remove locally
-      if (currentFlashcardIndex >= flashcards.length) {
-        setCurrentFlashcardIndex((prev) => Math.max(prev - 1, 0)); // Adjust index if necessary
+      const newFlashcards = shuffledFlashcards.filter(card => card.id !== id);
+      setShuffledFlashcards(newFlashcards);
+      if (currentFlashcardIndex >= newFlashcards.length) {
+        setCurrentFlashcardIndex((prev) => Math.max(prev - 1, 0));
       }
-      alert("Flashcard deleted successfully!"); // Success alert
     } catch (error) {
       console.error("Error deleting flashcard:", error);
       alert("An error occurred while deleting the flashcard.");
@@ -112,7 +122,7 @@ export default function FlashcardViewer({ flashcards, onClose, onSave }: Flashca
 
   const handleSave = () => {
     if (onSave) {
-      onSave(flashcards);
+      onSave(shuffledFlashcards);
     }
   };
 
@@ -120,23 +130,49 @@ export default function FlashcardViewer({ flashcards, onClose, onSave }: Flashca
     <div className="flex-1 flex items-center justify-center">
       <div className="w-full max-w-2xl">
         <div className="bg-white border rounded-lg shadow-lg relative">
-          <div className="flex justify-end items-center p-2">
+          <div className="flex justify-end items-center p-1">
             {!isEditing && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0">
+                <button
+                  onClick={shuffleFlashcards}
+                  className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Shuffle flashcards"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+                    />
+                  </svg>
+                </button>
                 <button
                   onClick={() => {
                     setIsEditing(true);
                     setEditQuestion(currentFlashcard.question);
                     setEditAnswer(currentFlashcard.answer);
                   }}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   <img src="/asset/edit_icon.svg" alt="Edit" className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => deleteFlashcard(currentFlashcard.id, currentFlashcard.isSaved)}
+                  className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <img src="/asset/delete_icon.svg" alt="Delete" className="w-5 h-5" />
                 </button>
                 {onSave && (
                   <button
                     onClick={handleSave}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -158,7 +194,7 @@ export default function FlashcardViewer({ flashcards, onClose, onSave }: Flashca
             )}
             <button
               onClick={onClose}
-              className="p-2 text-black hover:text-gray-900 transition-colors"
+              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
               aria-label="Close"
             >
               <svg
@@ -228,7 +264,7 @@ export default function FlashcardViewer({ flashcards, onClose, onSave }: Flashca
               disabled={currentFlashcardIndex === 0}
               className={`p-2 active:scale-90 transition-transform ${
                 currentFlashcardIndex === 0
-                  ? "text-gray-400 cursor-not-allowed"
+                  ? "text-gray-400 cursor-not-allowed opacity-50"
                   : "text-gray-700 hover:text-gray-900"
               }`}
               aria-label="Previous"
@@ -237,15 +273,15 @@ export default function FlashcardViewer({ flashcards, onClose, onSave }: Flashca
             </button>
 
             <div className="text-base text-gray-600 mx-1">
-              {currentFlashcardIndex + 1} / {flashcards.length}
+              {currentFlashcardIndex + 1} / {shuffledFlashcards.length}
             </div>
 
             <button
               onClick={nextFlashcard}
-              disabled={currentFlashcardIndex === flashcards.length - 1}
+              disabled={currentFlashcardIndex === shuffledFlashcards.length - 1}
               className={`p-2 active:scale-90 transition-transform ${
-                currentFlashcardIndex === flashcards.length - 1
-                  ? "text-gray-400 cursor-not-allowed"
+                currentFlashcardIndex === shuffledFlashcards.length - 1
+                  ? "text-gray-400 cursor-not-allowed opacity-50"
                   : "text-gray-700 hover:text-gray-900"
               }`}
               aria-label="Next"
