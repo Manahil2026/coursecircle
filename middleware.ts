@@ -9,6 +9,7 @@ const isStudentRoute = createRouteMatcher(['/pages/student(.*)'])
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)){
     await auth.protect()
+    const userRole = (await auth()).sessionClaims?.metadata?.role;
 
     if (isAdminRoute(req) && (await auth()).sessionClaims?.metadata?.role !== 'uni_admin') {
       const url = new URL('/', req.url)

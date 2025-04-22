@@ -23,7 +23,10 @@ export default function StudentDashboard() {
     if (isLoaded) {
       const fetchCourses = async () => {
         try {
-          const response = await fetch("/api/courses/student");
+          const response = await fetch("/api/courses/student", {
+            method: "GET",
+            credentials: "include",
+          });
           if (response.ok) {
             const data = await response.json();
             setCourses(data);
