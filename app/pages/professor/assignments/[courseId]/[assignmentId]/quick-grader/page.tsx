@@ -4,11 +4,13 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import CourseMenu from "@/app/components/course_menu";
+import ReactQuillEditor from "@/app/components/text_editor";
 
 interface Submission {
     id: string;
     fileName: string;
     fileUrl: string;
+    text?: string;
     createdAt: string;  // submission date/time
     grade?: number;
     feedback?: string;
@@ -125,11 +127,11 @@ const QuickGraderPage = () => {
 
     // If loading or error
     if (isLoading) {
-        return(
+        return (
             <div className="flex items-center justify-center h-screen">
-        <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
-      </div>
-        ); 
+                <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
+            </div>
+        );
     }
     if (error) {
         return <div className="p-4 text-red-500">Error: {error}</div>;
@@ -164,15 +166,26 @@ const QuickGraderPage = () => {
                         Submitted on: {new Date(currentSubmission.createdAt).toLocaleString()}
                     </p>
 
-                    {/* If it's a PDF, you can embed it. Otherwise, show a link or do a file preview. */}
-                    {currentSubmission.fileUrl.toLowerCase().endsWith(".pdf") ? (
-                        <iframe
-                            src={currentSubmission.fileUrl}
-                            className="mt-4 flex-1"
-                            style={{ width: "100%", height: "100%", border: "none" }}
-                        />
-                    ) : (
-                        <div className="mt-4">
+                    <div className="mt-4 flex-1">
+                        {/**
+      * 1️⃣ If there's HTML/text from the editor, show it read‑only 
+      * 2️⃣ Else if it's a PDF, embed 
+      * 3️⃣ Else fall back to a link
+      */}
+                        {currentSubmission.text ? (
+                            <ReactQuillEditor
+                                value={currentSubmission.text}
+                                readOnly
+                                height="100%"
+                            // toolbarOptions={[]}   ← toolbar disabled via readOnly
+                            />
+                        ) : currentSubmission.fileUrl?.toLowerCase().endsWith(".pdf") ? (
+                            <iframe
+                                src={currentSubmission.fileUrl}
+                                className="flex-1"
+                                style={{ width: "100%", height: "100%", border: "none" }}
+                            />
+                        ) : (
                             <a
                                 href={currentSubmission.fileUrl}
                                 target="_blank"
@@ -181,8 +194,8 @@ const QuickGraderPage = () => {
                             >
                                 Open submission file
                             </a>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
 
                 {/* Right side: Grading panel */}

@@ -57,45 +57,49 @@ export async function POST(
 
     // Now safely read the formData for the first time
     const formData = await req.formData();
-    const file = formData.get("file") as File;
+  const text = formData.get("text") as string | null;
+  const file = formData.get("file") as File | null;
 
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    }
+  if (!file && !text) {
+    return NextResponse.json({ error: "No submission provided" }, { status: 400 });
+  }
 
-    // Create uploads directory if it doesn't exist
-    try {
-      await fs.mkdir(uploadDir, { recursive: true });
-    } catch (err) {
-      console.error("Error creating upload directory", err);
-    }
+  let fileName: string | undefined;
+  let fileUrl: string | undefined;
 
-    // Generate a unique file name
+  if (file) {
+    // 1. ensure uploadDir exists
+    await fs.mkdir(uploadDir, { recursive: true });
+
+    // 2. generate a unique file name
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const fileExt = file.name.split(".").pop();
-    const fileName = `submission-${uniqueSuffix}.${fileExt}`;
-    const filePath = path.join(uploadDir, fileName);
-    const fileUrl = `/uploads/${fileName}`;
+    const ext = file.name.split(".").pop();
+    const generatedName = `submission-${uniqueSuffix}.${ext}`;
+    const destPath = path.join(uploadDir, generatedName);
 
-    // Write the file to disk
+    // 3. write it
     const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(filePath, buffer);
+    await fs.writeFile(destPath, buffer);
 
-    // Create the submission record
-    const submission = await prisma.submission.create({
-      data: {
-        fileName: file.name,
-        fileUrl,
-        status: "SUBMITTED", // This maps to SubmissionStatus.SUBMITTED in the enum
-        assignmentId,
-        studentId: userId,
-      }
-    });
+    // 4. set for Prisma
+    fileName = file.name;
+    fileUrl  = `/uploads/${generatedName}`;
+  }
 
-    return NextResponse.json({ 
-      success: true, 
-      submission
-    }, { status: 201 });
+  // Create the submission record
+  const submission = await prisma.submission.create({
+    data: {
+      assignmentId,
+      studentId: userId,
+      status: "SUBMITTED",
+      // only set these if they’re defined
+      ...(fileName && { fileName }),
+      ...(fileUrl  && { fileUrl  }),
+      ...(text     && { text     }),
+    },
+  });
+
+  return NextResponse.json({ success: true, submission }, { status: 201 });
   } catch (error) {
     console.error("Error creating submission:", error);
     return NextResponse.json({ error: "Failed to create submission" }, { status: 500 });
