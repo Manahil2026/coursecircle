@@ -238,6 +238,8 @@ model Submission {
   
   fileName     String?
   fileUrl      String?
+  text         String?
+
   status       SubmissionStatus @default(SUBMITTED)
   
   grade        Float?
