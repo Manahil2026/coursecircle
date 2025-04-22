@@ -191,13 +191,8 @@ const ViewAssignment = () => {
     setSubmitError("");
 
     try {
-      // Create a text file from the submission
-      const blob = new Blob([textSubmission], { type: 'text/plain' });
-      const textFile = new File([blob], "text_submission.txt", { type: 'text/plain' });
-      
-      // Create a FormData object to send the file
       const formData = new FormData();
-      formData.append("file", textFile);
+      formData.append("text", textSubmission);
       
       // Send the submission to the API
       const response = await fetch(`/api/courses/${courseId}/assignments/${assignmentId}/submissions`, {

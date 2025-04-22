@@ -10,13 +10,14 @@ import { Quill } from "react-quill-new";
 
 interface ReactQuillEditorProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void;
   height?: string;
   toolbarOptions?: any;
+  readOnly?: boolean;
 }
 
 
-const ReactQuillEditor: React.FC<ReactQuillEditorProps> = ({ value, onChange, height = "200px", toolbarOptions }) => {
+const ReactQuillEditor: React.FC<ReactQuillEditorProps> = ({ value, onChange = () => {}, height = "200px", toolbarOptions, readOnly = false, }) => {
   const defaultToolbarOptions = [
     ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
     ['blockquote', 'code-block'],
@@ -43,6 +44,7 @@ const ReactQuillEditor: React.FC<ReactQuillEditorProps> = ({ value, onChange, he
       value={value}
       onChange={onChange}
       theme="snow"
+      readOnly={readOnly}
       modules={{
         toolbar: toolbarOptions || defaultToolbarOptions
       }}
