@@ -12,7 +12,11 @@ import FlashcardViewer from "@/app/components/chat_components/FlashcardViewer";
 import ChatMessageList from "@/app/components/chat_components/ChatMessageList";
 import { generateAssistantPrompt } from "@/app/components/chat_components/assistantPrompt";
 import { generateFlashcardPrompt } from "@/app/components/chat_components/flashcardPrompt";
-import { fetchCourses, fetchModules, fetchAssignments } from "@/app/components/chat_components/apiUtils";
+import {
+  fetchCourses,
+  fetchModules,
+  fetchAssignments,
+} from "@/app/components/chat_components/apiUtils";
 import ChatSessionList from "@/app/components/chat_components/ChatSessionList";
 
 interface Message {
@@ -29,10 +33,9 @@ interface Flashcard {
   moduleId: string;
   moduleName: string;
   source: "module" | "custom";
-  stackName: string;
+  stackName?: string; // ✅ Make it optional so FlashcardViewer's type matches
   isSaved: boolean;
 }
-
 interface Module {
   id: string;
   title: string;
@@ -83,22 +86,27 @@ export default function ChatPage() {
   const [fetchingModules, setFetchingModules] = useState(false);
   const [fetchingAssignments, setFetchingAssignments] = useState(false);
   const chatHistory = useRef<{ role: string; parts: { text: string }[] }[]>([]);
-  const [sessions, setSessions] = useState<{
-    id: string;
-    title?: string;
-    createdAt: string;
-  }[]>([]);
+  const [sessions, setSessions] = useState<
+    {
+      id: string;
+      title?: string;
+      createdAt: string;
+    }[]
+  >([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
 
   const getCourseName = () => {
-    const selectedCourse = courses.find((course: Course) => course.id === courseId);
+    const selectedCourse = courses.find(
+      (course: Course) => course.id === courseId
+    );
     return selectedCourse ? selectedCourse.name : "Unknown Course";
   };
 
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      content: "Welcome! I'm your AI assistant. Please select a course to get started.",
+      content:
+        "Welcome! I'm your AI assistant. Please select a course to get started.",
       sender: "ai",
       timestamp: new Date().toISOString(),
     },
@@ -116,16 +124,22 @@ export default function ChatPage() {
 
   useEffect(() => {
     const loadCourses = async () => {
-      const coursesData = await fetchCourses(user?.publicMetadata?.role as string | undefined);
+      const coursesData = await fetchCourses(
+        user?.publicMetadata?.role as string | undefined
+      );
       if (coursesData) {
         setCourses(coursesData);
         // Update welcome message with the course name if a course is selected
         if (courseId) {
-          const selectedCourse = coursesData.find((course: Course) => course.id === courseId);
+          const selectedCourse = coursesData.find(
+            (course: Course) => course.id === courseId
+          );
           setMessages([
             {
               id: "1",
-              content: `Welcome! I'm your AI assistant for ${selectedCourse?.name || "Unknown Course"}. I can help you with course-related questions.`,
+              content: `Welcome! I'm your AI assistant for ${
+                selectedCourse?.name || "Unknown Course"
+              }. I can help you with course-related questions.`,
               sender: "ai",
               timestamp: new Date().toISOString(),
             },
@@ -142,14 +156,16 @@ export default function ChatPage() {
     if (courseId) {
       // Load sessions
       fetch(`/api/chat/sessions?courseId=${courseId}`)
-        .then(res => res.json())
+        .then((res) => res.json())
         .then(setSessions);
 
       // Load course members
       fetch(`/api/people?courseId=${courseId}`)
-        .then(res => res.json())
+        .then((res) => res.json())
         .then(setCourseMembers)
-        .catch(error => console.error("Error fetching course members:", error));
+        .catch((error) =>
+          console.error("Error fetching course members:", error)
+        );
     }
   }, [courseId]);
 
@@ -162,7 +178,7 @@ export default function ChatPage() {
       // Fetch modules and assignments in parallel
       const [modulesData, assignmentsData] = await Promise.all([
         fetchModules(id, setModules, setCourseId, setFetchingModules),
-        fetchAssignments(id, setAssignments, setFetchingAssignments)
+        fetchAssignments(id, setAssignments, setFetchingAssignments),
       ]);
 
       setModules(modulesData || []);
@@ -175,19 +191,27 @@ export default function ChatPage() {
         body: JSON.stringify({ courseId: id }),
       });
       const newSession = await res.json();
-      setSessions(prev => [newSession, ...prev]);
+      setSessions((prev) => [newSession, ...prev]);
       setCurrentChatId(newSession.id);
 
       // Initialize chatHistory with available data
       const moduleData = JSON.stringify(modulesData || [], null, 2);
       const assignmentData = JSON.stringify(assignmentsData || [], null, 2);
-      const userRole = user?.publicMetadata?.role === "prof" ? "professor" : "student";
+      const userRole =
+        user?.publicMetadata?.role === "prof" ? "professor" : "student";
       const courseMembersData = JSON.stringify(courseMembers, null, 2);
-      const initialPrompt = generateAssistantPrompt(moduleData, assignmentData, userRole, courseMembersData);
-      chatHistory.current = [{
-        role: "user",
-        parts: [{ text: initialPrompt }],
-      }];
+      const initialPrompt = generateAssistantPrompt(
+        moduleData,
+        assignmentData,
+        userRole,
+        courseMembersData
+      );
+      chatHistory.current = [
+        {
+          role: "user",
+          parts: [{ text: initialPrompt }],
+        },
+      ];
 
       // Persist the initial message to the database
       await fetch(`/api/chat/${newSession.id}/send`, {
@@ -198,7 +222,6 @@ export default function ChatPage() {
           aiMessage: `Welcome! I'm your AI assistant for ${getCourseName()}. I can help you with course-related questions.`,
         }),
       });
-
     } catch (error) {
       console.error("Error initializing chat:", error);
       alert("Error initializing chat. Please try again.");
@@ -210,7 +233,7 @@ export default function ChatPage() {
 
   async function createNewSession() {
     if (!courseId) return;
-  
+
     // 1) create session
     const res = await fetch("/api/chat/sessions", {
       method: "POST",
@@ -218,25 +241,29 @@ export default function ChatPage() {
       body: JSON.stringify({ courseId }),
     });
     const newSession = await res.json();
-  
-    setSessions(prev => [newSession, ...prev]);
+
+    setSessions((prev) => [newSession, ...prev]);
     setCurrentChatId(newSession.id);
-  
+
     // 2) build initial context prompt
     const moduleData = JSON.stringify(modules, null, 2);
     const assignmentData = JSON.stringify(assignments, null, 2);
-    const userRole = user?.publicMetadata?.role === "prof" ? "professor" : "student";
+    const userRole =
+      user?.publicMetadata?.role === "prof" ? "professor" : "student";
     const courseMembersData = JSON.stringify(courseMembers, null, 2);
-    const initialPrompt = generateAssistantPrompt(moduleData, assignmentData, userRole, courseMembersData);
-  
+    const initialPrompt = generateAssistantPrompt(
+      moduleData,
+      assignmentData,
+      userRole,
+      courseMembersData
+    );
+
     // 3) seed chatHistory for Gemini
-    chatHistory.current = [
-      { role: "user", parts: [{ text: initialPrompt }] },
-    ];
-  
+    chatHistory.current = [{ role: "user", parts: [{ text: initialPrompt }] }];
+
     // 4) welcome message
     const welcomeText = `Welcome! I'm your AI assistant for ${getCourseName()}. I can help you with course-related questions.`;
-    
+
     // 5) seed UI
     setMessages([
       {
@@ -249,7 +276,7 @@ export default function ChatPage() {
         }),
       },
     ]);
-  
+
     // 6) persist both to the DB
     await fetch(`/api/chat/${newSession.id}/send`, {
       method: "POST",
@@ -272,29 +299,35 @@ export default function ChatPage() {
       id: m.id,
       content: m.content,
       sender: m.sender,
-      timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date(m.createdAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     }));
     setMessages(msgs);
 
     // Rebuild chatHistory for Gemini API and ensure it includes the initial context
-    const userRole = user?.publicMetadata?.role === "prof" ? "professor" : "student";
+    const userRole =
+      user?.publicMetadata?.role === "prof" ? "professor" : "student";
     const courseMembersData = JSON.stringify(courseMembers, null, 2);
     chatHistory.current = [
       {
         role: "user",
-        parts: [{ 
-          text: generateAssistantPrompt(
-            JSON.stringify(modules, null, 2),
-            JSON.stringify(assignments, null, 2),
-            userRole,
-            courseMembersData
-          )
-        }],
+        parts: [
+          {
+            text: generateAssistantPrompt(
+              JSON.stringify(modules, null, 2),
+              JSON.stringify(assignments, null, 2),
+              userRole,
+              courseMembersData
+            ),
+          },
+        ],
       },
       ...data.map((m: any) => ({
         role: m.sender === "ai" ? "model" : "user",
         parts: [{ text: m.content }],
-      }))
+      })),
     ];
   }
 
@@ -343,10 +376,13 @@ export default function ChatPage() {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading || !currentChatId) return;
 
-    const session = sessions.find(s => s.id === currentChatId);
+    const session = sessions.find((s) => s.id === currentChatId);
     if (session && !session.title) {
       // First question: set title to the user's message (or truncated)
-      const newTitle = inputMessage.length > 50 ? inputMessage.slice(0, 47) + '...' : inputMessage;
+      const newTitle =
+        inputMessage.length > 50
+          ? inputMessage.slice(0, 47) + "..."
+          : inputMessage;
       await handleRenameSession(currentChatId!, newTitle);
     }
 
@@ -370,7 +406,10 @@ export default function ChatPage() {
     await fetch(`/api/chat/${currentChatId}/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userMessage: currentMessage, aiMessage: aiResponseText }),
+      body: JSON.stringify({
+        userMessage: currentMessage,
+        aiMessage: aiResponseText,
+      }),
     });
 
     const aiResponseMessage: Message = {
@@ -389,17 +428,18 @@ export default function ChatPage() {
   // Rename handler
   async function handleRenameSession(id: string, title: string) {
     await fetch(`/api/chat/sessions/${id}`, {
-      method: 'PUT', headers: {'Content-Type':'application/json'},
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title }),
     });
-    setSessions(prev => prev.map(s => s.id === id ? { ...s, title } : s));
+    setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, title } : s)));
   }
 
   //  Delete handler
   async function handleDeleteSession(id: string) {
-    if (!confirm('Delete this session?')) return;
-    await fetch(`/api/chat/sessions/${id}`, { method: 'DELETE' });
-    setSessions(prev => prev.filter(s => s.id !== id));
+    if (!confirm("Delete this session?")) return;
+    await fetch(`/api/chat/sessions/${id}`, { method: "DELETE" });
+    setSessions((prev) => prev.filter((s) => s.id !== id));
     if (currentChatId === id) {
       setCurrentChatId(null);
       setMessages([]);
@@ -428,7 +468,11 @@ export default function ChatPage() {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-      const flashcardPrompt = generateFlashcardPrompt(source, modules, customText);
+      const flashcardPrompt = generateFlashcardPrompt(
+        source,
+        modules,
+        customText
+      );
 
       const result = await model.generateContent(flashcardPrompt);
       const response = result.response.text();
@@ -461,9 +505,11 @@ export default function ChatPage() {
         // Add a notification message
         const notificationMessage: Message = {
           id: crypto.randomUUID(),
-          content: `✅ Generated ${newFlashcards.length} flashcards from ${source === "modules" ? "module content" : "your custom text"}!`,
+          content: `✅ Generated ${newFlashcards.length} flashcards from ${
+            source === "modules" ? "module content" : "your custom text"
+          }!`,
           sender: "ai",
-          timestamp: "", 
+          timestamp: "",
         };
 
         setMessages((prev) => [...prev, notificationMessage]);
@@ -503,7 +549,10 @@ export default function ChatPage() {
     }
   };
 
-  const saveFlashcardsToDB = async (flashcardsToSave: Flashcard[], stackName: string) => {
+  const saveFlashcardsToDB = async (
+    flashcardsToSave: Flashcard[],
+    stackName: string
+  ) => {
     if (!courseId || !user?.id) return;
 
     try {
@@ -526,7 +575,9 @@ export default function ChatPage() {
 
       const responseData = await res.json();
       if (!res.ok) {
-        throw new Error(`Failed to save flashcards: ${responseData.error || res.statusText}`);
+        throw new Error(
+          `Failed to save flashcards: ${responseData.error || res.statusText}`
+        );
       }
 
       console.log("Flashcards saved!", responseData);
@@ -535,8 +586,8 @@ export default function ChatPage() {
     }
   };
 
-  const handleSaveFlashcards = async () => {
-    if (!flashcards.length) return;
+  const handleSaveFlashcards = async (updatedFlashcards: Flashcard[]) => {
+    if (!updatedFlashcards.length) return;
 
     const stackName = prompt("Enter a name for this flashcard stack:");
     if (!stackName) {
@@ -547,7 +598,7 @@ export default function ChatPage() {
     setSavingFlashcards(true);
 
     try {
-      await saveFlashcardsToDB(flashcards, stackName);
+      await saveFlashcardsToDB(updatedFlashcards, stackName);
       alert("Flashcards saved!");
       router.push(`/pages/chat/flashcard_stacks?courseId=${courseId}`);
     } catch (err) {
@@ -605,10 +656,17 @@ export default function ChatPage() {
                             : "border-black border text-black hover:bg-[#abff4569]"
                         }`}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
                           <path d="M9 4.804A6.999 6.999 0 0117 8a4.5 4.5 0 01-1.5 3.5L9 15.196V4.804zM6 8a6.999 6.999 0 018-3.196V15.196A6.999 6.999 0 016 8z" />
                         </svg>
-                        {generatingFlashcards ? "Generating..." : "Module Flashcards"}
+                        {generatingFlashcards
+                          ? "Generating..."
+                          : "Module Flashcards"}
                       </button>
                     )}
                     {courseId && (
@@ -616,7 +674,12 @@ export default function ChatPage() {
                         onClick={toggleCustomInput}
                         className="px-3 py-2 rounded text-sm transition-colors flex items-center gap-2 border-black border text-black hover:bg-[#abff4569]"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
                           <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
                         </svg>
                         {showCustomInput ? "Cancel" : "Custom Flashcards"}
@@ -627,16 +690,29 @@ export default function ChatPage() {
                         onClick={toggleFlashcardView}
                         className="px-3 py-2 rounded text-sm flex items-center gap-2 border-black border text-black hover:bg-[#abff4569]"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
                           <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                          <path
+                            fillRule="evenodd"
+                            d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         {showFlashcards ? "Hide" : "View Flashcards"}
                       </button>
                     )}
                     {courseId && (
                       <button
-                        onClick={() => router.push(`/pages/chat/flashcard_stacks?courseId=${courseId}`)}
+                        onClick={() =>
+                          router.push(
+                            `/pages/chat/flashcard_stacks?courseId=${courseId}`
+                          )
+                        }
                         className="px-3 py-2 rounded text-sm flex items-center gap-2 border-black border text-black hover:bg-[#abff4569]"
                       >
                         <Image
@@ -664,7 +740,10 @@ export default function ChatPage() {
                   <FlashcardViewer
                     flashcards={flashcards}
                     onClose={toggleFlashcardView}
-                    onSave={handleSaveFlashcards}
+                    onSave={(updatedFlashcards) => {
+                      setFlashcards(updatedFlashcards); // ✅ Update local state with the updated list
+                      handleSaveFlashcards(updatedFlashcards); // 💾 Save to DB with filtered list
+                    }}
                   />
                 ) : (
                   <ChatMessageList
