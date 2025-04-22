@@ -13,11 +13,24 @@ interface Assignment {
 interface StudentGradeTableProps {
   assignments: Assignment[];
   attendance?: number;
+  weightedGrade?: {
+    finalGrade: number;
+    breakdown: {
+      groupName: string;
+      weight: number;
+      earnedPoints: number;
+      totalPoints: number;
+      groupGradePercentage: number;
+      contributionToFinal: number;
+    }[];
+  } | null;
 }
+
 
 const StudentGradeTable: React.FC<StudentGradeTableProps> = ({ 
   assignments, 
-  attendance 
+  attendance,
+  weightedGrade 
 }) => {
   // State for feedback modal
   const [showFeedback, setShowFeedback] = useState(false);
@@ -31,46 +44,38 @@ const StudentGradeTable: React.FC<StudentGradeTableProps> = ({
     setShowFeedback(true);
   };
 
-  // Calculate overall grade
-  const calculateOverallGrade = () => {
-    // Filter out assignments without grades
-    const gradedAssignments = assignments.filter(
-      assignment => assignment.grade !== null
-    );
+  // Calculate overall grade using weightedGrade if available
+const calculateOverallGrade = () => {
+  if (weightedGrade && weightedGrade.finalGrade !== undefined) {
+    return `${weightedGrade.finalGrade.toFixed(2)}%`;
+  }
 
-    if (gradedAssignments.length === 0) {
-      return "N/A";
-    }
+  // Fallback to basic average calculation
+  const gradedAssignments = assignments.filter(
+    assignment => assignment.grade !== null
+  );
 
-    // Calculate total points earned and total possible points
-    const totalPointsEarned = gradedAssignments.reduce(
-      (total, assignment) => total + (assignment.grade || 0), 
-      0
-    );
-    const totalPossiblePoints = gradedAssignments.reduce(
-      (total, assignment) => total + assignment.points, 
-      0
-    );
+  if (gradedAssignments.length === 0) {
+    return "N/A";
+  }
 
-    // Calculate percentage
-    const percentage = (totalPointsEarned / totalPossiblePoints) * 100;
-    return `${percentage.toFixed(2)}%`;
-  };
+  const totalPointsEarned = gradedAssignments.reduce(
+    (total, assignment) => total + (assignment.grade || 0), 
+    0
+  );
+  const totalPossiblePoints = gradedAssignments.reduce(
+    (total, assignment) => total + assignment.points, 
+    0
+  );
 
-  // Determine letter grade
-  const calculateLetterGrade = (percentage: string) => {
-    if (percentage === "N/A") return "N/A";
+  const percentage = (totalPointsEarned / totalPossiblePoints) * 100;
+  return `${percentage.toFixed(2)}%`;
+};
 
-    const numPercentage = parseFloat(percentage);
-    if (numPercentage >= 90) return "A";
-    if (numPercentage >= 80) return "B";
-    if (numPercentage >= 70) return "C";
-    if (numPercentage >= 60) return "D";
-    return "F";
-  };
 
-  const overallPercentage = calculateOverallGrade();
-  const letterGrade = calculateLetterGrade(overallPercentage);
+  const overallPercentage = weightedGrade 
+  ? `${weightedGrade.finalGrade.toFixed(2)}%` 
+  : calculateOverallGrade();
 
   return (
     <div className="w-full relative">
@@ -156,16 +161,24 @@ const StudentGradeTable: React.FC<StudentGradeTableProps> = ({
               {assignments.reduce((total, a) => total + a.points, 0)}
             </td>
             <td colSpan={2} className="p-2 border text-center">
-              {overallPercentage} ({letterGrade})
+              {weightedGrade 
+                ? `${weightedGrade.finalGrade.toFixed(2)}%`
+                : overallPercentage
+              }
             </td>
           </tr>
-          {attendance !== undefined && (
-            <tr className="bg-gray-50">
+
+          {/* Optional: show breakdown per group */}
+          {weightedGrade?.breakdown.map((group) => (
+            <tr key={group.groupName} className="text-sm text-gray-600">
               <td colSpan={6} className="p-2 border">
-                Attendance: {attendance}%
+                <strong>{group.groupName}</strong> — {group.earnedPoints}/{group.totalPoints} pts, 
+                Grade: {group.groupGradePercentage.toFixed(2)}%, 
+                Weight: {(group.weight * 100).toFixed(0)}%, 
+                Contributed: {group.contributionToFinal.toFixed(2)}%
               </td>
             </tr>
-          )}
+          ))}
         </tfoot>
       </table>
     </div>

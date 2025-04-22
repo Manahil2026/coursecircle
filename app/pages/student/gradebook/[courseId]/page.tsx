@@ -22,7 +22,18 @@ export default function GradeTracker() {
   const [courseName, setCourseName] = useState<string>("Your Course");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [weightedGrade, setWeightedGrade] = useState<{
+    finalGrade: number;
+    breakdown: {
+      groupName: string;
+      weight: number;
+      earnedPoints: number;
+      totalPoints: number;
+      groupGradePercentage: number;
+      contributionToFinal: number;
+    }[];
+  } | null>(null);
+  
   useEffect(() => {
     if (!courseId) return;
 
@@ -102,6 +113,17 @@ export default function GradeTracker() {
       } finally {
         setLoading(false);
       }
+
+      // Fetch weighted grade breakdown
+      try {
+        const res = await fetch(`/api/courses/${courseId}/student_gradebook`);
+        if (res.ok) {
+          const gradebookData = await res.json();
+          setWeightedGrade(gradebookData);
+        }
+      } catch (err) {
+        console.error("Error fetching weighted grade:", err);
+      }
     };
 
     fetchGradeData();
@@ -130,7 +152,11 @@ export default function GradeTracker() {
           </div>
         ) : (
           <div className="border rounded-lg p-6 bg-white shadow-md">
-            <StudentGradeTable assignments={assignments} attendance={95} />
+            <StudentGradeTable 
+              assignments={assignments} 
+              attendance={95} 
+              weightedGrade={weightedGrade}
+            />
           </div>
         )}
       </div>
