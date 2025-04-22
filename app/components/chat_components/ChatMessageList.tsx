@@ -87,9 +87,9 @@ export default function ChatMessageList({
           <button
             type="submit"
             disabled={isLoading || !inputMessage.trim()}
-            className={`px-3 py-1.5 rounded-lg flex items-center justify-center ${
+            className={`px-3 py-1.5 rounded flex items-center justify-center ${
               isLoading || !inputMessage.trim()
-                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                ? "bg-gray-100 text-gray-600 cursor-not-allowed"
                 : "bg-[#AAFF45] text-black hover:bg-[#8FE03D]"
             }`}
           >
