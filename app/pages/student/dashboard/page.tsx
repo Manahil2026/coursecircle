@@ -6,6 +6,7 @@ import CourseCard from "@/app/components/course_card";
 import CalendarWidget from "@/app/components/CalendarWidget";
 import TodoList from "@/app/components/TodoList";
 import Image from "next/image";
+import DashboardAnnouncements from "@/app/components/DashboardAnnouncements";
 
 interface Course {
   id: string;
@@ -128,7 +129,7 @@ export default function StudentDashboard() {
               <div>
                 <h2 className="text-base font-semibold mb-2">Announcement</h2>
                 <div className="bg-white p-2 rounded-lg shadow border border-black text-center">
-                  <p className="text-gray-700 text-base">No Announcement</p>
+                  <DashboardAnnouncements />
                 </div>
               </div>
             </div>

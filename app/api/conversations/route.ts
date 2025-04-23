@@ -1,5 +1,4 @@
 // app/api/conversations/route.ts
-// route handler for getting all conversations for specific user and creating new conversations
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuth } from "@clerk/nextjs/server";
@@ -90,7 +89,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { participantIds, name, isGroup, courseId } = await req.json();
+    const { participantIds, name, isGroup, courseId, isAnnouncement } = await req.json();
 
     // Validate required fields
     if (!participantIds || !Array.isArray(participantIds)) {
@@ -151,6 +150,7 @@ export async function POST(req: NextRequest) {
     const conversationData: any = {
       name: isGroup ? name : undefined,
       isGroup: isGroup || false,
+      isAnnouncement: isAnnouncement || false, // Add this line
       participants: {
         create: participantIds.map(id => ({
           userId: id,

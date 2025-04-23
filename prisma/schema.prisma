@@ -291,6 +291,7 @@ model Conversation {
   updatedAt   DateTime  @updatedAt
   name        String?   // Optional name for group conversations
   isGroup     Boolean   @default(false)
+  isAnnouncement Boolean @default(false)
   
   // If this conversation is for a course (e.g., class-wide messaging)
   courseId    String?
