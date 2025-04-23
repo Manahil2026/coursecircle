@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request, { params }: { params: { courseId: string } }) {
   try {
-    const courseId = params.courseId;
+    const { courseId } = await params;
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: { students: true } 

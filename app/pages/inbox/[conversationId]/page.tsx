@@ -289,7 +289,7 @@ export default function ConversationPage() {
                             {message.sender.firstName} {message.sender.lastName}
                           </div>
                         )}
-                        <div>{message.content}</div>
+                        <div dangerouslySetInnerHTML={{ __html: message.content }}></div>
                         <div className="text-xs text-gray-500 text-right mt-1">
                           {formatTimestamp(message.createdAt)}
                           {isCurrentUser && (

@@ -5,8 +5,6 @@ import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import NewConversationModal from "@/app/components/messaging/NewConversationModal";
-import AnnouncementModal from "@/app/components/messaging/AnnouncementModal";
 
 interface Conversation {
   id: string;
@@ -25,20 +23,10 @@ interface Conversation {
   updatedAt: string;
 }
 
-interface Course {
-  id: string;
-  name: string;
-  code: string;
-}
-
 export default function InboxPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
-  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const router = useRouter();
   const { user } = useUser();
   const isProf = user?.publicMetadata?.role === "prof";
@@ -64,23 +52,7 @@ export default function InboxPage() {
     };
 
     fetchConversations();
-
-    // Fetch courses if user is a professor
-    if (isProf) {
-      const fetchCourses = async () => {
-        try {
-          const response = await fetch("/api/courses/professor");
-          if (response.ok) {
-            const data = await response.json();
-            setCourses(data);
-          }
-        } catch (err) {
-          console.error("Error fetching professor courses:", err);
-        }
-      };
-      fetchCourses();
-    }
-  }, [isProf]);
+  }, []);
 
   const handleConversationSelect = (conversationId: string) => {
     router.push(`/pages/inbox/${conversationId}`);
@@ -111,10 +83,6 @@ export default function InboxPage() {
     ).length;
   };
 
-  const handleNewConversation = (conversationId: string) => {
-    router.push(`/pages/inbox/${conversationId}`);
-  };
-
   return (
     <>
       <Sidebar_dashboard />
@@ -126,14 +94,14 @@ export default function InboxPage() {
             </h1>
             <div className="flex gap-2">
               <button 
-                onClick={() => setShowNewMessageModal(true)}
+                onClick={() => router.push("/pages/inbox/new")}
                 className="px-4 py-2 bg-[#AAFF45] text-black rounded hover:bg-[#B9FF66] text-sm"
               >
                 New Message
               </button>
               {isProf && (
                 <button 
-                  onClick={() => setShowAnnouncementModal(true)}
+                  onClick={() => router.push("/pages/inbox/announcement")}
                   className="px-4 py-2 bg-[#AAFF45] text-black rounded hover:bg-[#B9FF66] text-sm"
                 >
                   Announcement
@@ -156,7 +124,7 @@ export default function InboxPage() {
             <div className="flex flex-col items-center justify-center h-64 text-gray-500">
               <p className="mb-4">No conversations yet</p>
               <button 
-                onClick={() => setShowNewMessageModal(true)}
+                onClick={() => router.push("/pages/inbox/new")}
                 className="px-4 py-2 bg-[#AAFF45] text-black rounded hover:bg-[#B9FF66] text-sm"
               >
                 Start a new conversation
@@ -169,9 +137,7 @@ export default function InboxPage() {
                   key={conversation.id}
                   onClick={() => handleConversationSelect(conversation.id)}
                   className={`p-4 border rounded-md shadow-sm hover:shadow-md cursor-pointer transition-all duration-200 ${
-                    selectedConversationId === conversation.id
-                      ? "border-[#AAFF45] bg-gray-50"
-                      : conversation.lastMessage?.status === "SENT"
+                    conversation.lastMessage?.status === "SENT"
                       ? "border-l-4 border-l-[#AAFF45]"
                       : ""
                   }`}
@@ -192,22 +158,6 @@ export default function InboxPage() {
                 </div>
               ))}
             </div>
-          )}
-
-          {showNewMessageModal && (
-            <NewConversationModal 
-              onClose={() => setShowNewMessageModal(false)} 
-              courses={courses}
-              onSuccess={handleNewConversation}
-            />
-          )}
-
-          {showAnnouncementModal && (
-            <AnnouncementModal 
-              onClose={() => setShowAnnouncementModal(false)}
-              courses={courses}
-              onSuccess={handleNewConversation}
-            />
           )}
         </main>
       </div>

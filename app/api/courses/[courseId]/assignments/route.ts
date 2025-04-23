@@ -9,7 +9,7 @@ interface Params {
 }
 
 export async function GET(req: NextRequest, { params }: Params) {
-  const { courseId } = params;
+  const { courseId } = await params;
 
   try {
     // Fetch assignment groups and their assignments
