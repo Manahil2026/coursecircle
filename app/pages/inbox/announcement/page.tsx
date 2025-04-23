@@ -129,6 +129,7 @@ export default function AnnouncementPage() {
           participantIds: students.map(student => student.id),
           name: `${courseInfo?.code} Announcement`,
           isGroup: true,
+          isAnnouncement: true, 
           courseId: selectedCourse
         }),
       });
@@ -246,7 +247,7 @@ export default function AnnouncementPage() {
               )}
 
               {/* Message input */}
-              <div className="mb-12"> {/* Increased from mb-4 to mb-12 */}
+              <div className="mb-12">
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
                   Announcement Message:
                 </label>
@@ -258,7 +259,7 @@ export default function AnnouncementPage() {
               </div>
 
               {/* Empty spacer div */}
-              <div className="h-20"></div> {/* Added 80px spacer */}
+              <div className="h-20"></div>
 
               {/* Error message */}
               {error && (
@@ -266,7 +267,7 @@ export default function AnnouncementPage() {
               )}
 
               {/* Action buttons */}
-              <div className="flex justify-end gap-2 mt-40"> {/* Changed from mt-10 to mt-40 */}
+              <div className="flex justify-end gap-2 mt-40">
                 <button
                   onClick={() => router.push("/pages/inbox")}
                   className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
