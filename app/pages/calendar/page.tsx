@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
+import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 interface Event {
   id: string;
@@ -9,8 +11,10 @@ interface Event {
   date: Date;
   color: string;
   description?: string;
-  startTime?: string;
-  endTime?: string;
+  start?: string;
+  end?: string;
+  isAssignment?: boolean;
+  courseId?: string;
 }
 
 const colorOptions = [
@@ -24,6 +28,15 @@ const colorOptions = [
   { name: 'Teal', value: '#14B8A6' }
 ];
 
+const formatTime = (isoString: string) => {
+  const date = new Date(isoString);
+  let hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12; // Convert 0 to 12 for 12-hour format
+  return `${hours}:${minutes} ${ampm}`;
+};
+
 const Calendar: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<Event[]>([]);
@@ -33,15 +46,127 @@ const Calendar: React.FC = () => {
   const [newEvent, setNewEvent] = useState<Partial<Event>>({
     title: '',
     description: '',
-    startTime: '09:00',
-    endTime: '10:00',
+    start: '09:00',
+    end: '10:00',
     color: '#3B82F6'
   });
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const router = useRouter();
+  const { user } = useUser();
+  const userRole = user?.publicMetadata?.role; // 'member' or 'prof'
 
   useEffect(() => {
     // Select today's date by default when the component mounts
     setSelectedDate(new Date());
   }, []);
+
+  useEffect(() => {
+    const fetchCalendarData = async () => {
+      try {
+        // Fetch calendar events
+        const eventsResponse = await fetch("/api/calendar");
+        const eventsData = await eventsResponse.json();
+
+        // Convert event dates to Date objects
+        const formattedEvents = eventsData.map((event: any) => ({
+          ...event,
+          date: new Date(event.date), // Convert date to Date object
+        }));
+
+        // Fetch assignments
+        const assignmentsResponse = await fetch("/api/calendar/assignments");
+        const assignmentsData = await assignmentsResponse.json();
+        console.log("Assignments:", assignmentsData);
+
+        // Map assignments to calendar events
+        const assignmentEvents = assignmentsData.map((assignment: any) => ({
+          id: assignment.id,
+          title: `${assignment.title} (Due)`,
+          date: new Date(assignment.dueDate), // Convert dueDate to Date object
+          color: "#F59E0B", // Assignments have a default yellow color
+          isAssignment: true,
+          courseId: assignment.courseId,
+        }));
+
+        setEvents([...formattedEvents, ...assignmentEvents]);
+      } catch (error) {
+        console.error("Error fetching calendar data:", error);
+      }
+    };
+
+    fetchCalendarData();
+  }, []);
+
+  const formatTimeForInput = (isoString: string | undefined | null) => {
+    if (!isoString) {
+      return "";
+    }
+    try {
+      const date = new Date(isoString);
+      const hours = date.getHours().toString().padStart(2, "0");
+      const minutes = date.getMinutes().toString().padStart(2, "0");
+      return `${hours}:${minutes}`;
+    } catch (error) {
+      console.error("Error formatting time for input:", error);
+      return "";
+    }
+  }; 
+
+  const handleEventClick = (event: Event) => {
+    if (event.isAssignment) {
+      if (userRole === "member") {
+        router.push(`/pages/student/view_assignment/${event.courseId}/${event.id}`);
+      } else if (userRole === "prof") {
+        router.push(`/pages/professor/assignments/${event.courseId}/${event.id}`);
+      }
+    } else {
+      setSelectedEvent(event);
+      setNewEvent({
+        title: event.title,
+        date: new Date(event.date),
+        start: event.start ? formatTimeForInput(event.start) : '09:00',
+        end: event.end ? formatTimeForInput(event.end) : '10:00',
+        description: event.description || "",
+        color: event.color || "#3B82F6",
+      });
+      setShowEventModal(true);
+    }
+  };
+
+  const handleUpdateEvent = async (updatedEvent: Event) => {
+    try {
+      const response = await fetch("/api/calendar", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedEvent),
+      });
+
+      const savedEvent = await response.json();
+
+      // Update the event in the local state
+      setEvents(events.map(event => (event.id === savedEvent.id ? { ...savedEvent, date: new Date(savedEvent.date) } : event)));
+      setShowEventModal(false);
+      setSelectedEvent(null);
+    } catch (error) {
+      console.error("Error updating event:", error);
+    }
+  };
+
+  const handleSaveEvent = () => {
+    if (selectedEvent) {
+      handleUpdateEvent({
+        ...selectedEvent,
+        title: newEvent.title!,
+        description: newEvent.description,
+        date: selectedDate!,
+        start: `${formatDateToYYYYMMDD(selectedDate!)}T${newEvent.start}`, // Combine date and start time
+        end: `${formatDateToYYYYMMDD(selectedDate!)}T${newEvent.end}`, // Combine date and end time
+        color: newEvent.color!,
+      });
+    } else {
+      handleAddEvent();
+    }
+  };
 
   const daysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -83,32 +208,84 @@ const Calendar: React.FC = () => {
            date.getFullYear() === today.getFullYear();
   };
 
-  const handleAddEvent = () => {
+  const handleAddEvent = async () => {
     if (selectedDate && newEvent.title) {
-      const event: Event = {
-        id: Date.now().toString(),
-        title: newEvent.title,
-        description: newEvent.description || '',
-        date: selectedDate,
-        color: newEvent.color || '#3B82F6',
-        startTime: newEvent.startTime,
-        endTime: newEvent.endTime
-      };
-      setEvents([...events, event]);
-      setShowEventModal(false);
-      setNewEvent({
-        title: '',
-        description: '',
-        startTime: '09:00',
-        endTime: '10:00',
-        color: '#3B82F6'
+      // Create Date objects for the new event, combining the selected date and time
+      const [startHours, startMinutes] = newEvent.start!.split(':').map(Number);
+      const newEventStart = new Date(selectedDate);
+      newEventStart.setHours(startHours, startMinutes, 0, 0);
+  
+      const [endHours, endMinutes] = newEvent.end!.split(':').map(Number);
+      const newEventEnd = new Date(selectedDate);
+      newEventEnd.setHours(endHours, endMinutes, 0, 0);
+  
+      // Check for time conflicts with existing events on the same date
+      const hasConflict = events.some(event => {
+        if (event.date.toDateString() === selectedDate.toDateString() && event.start && event.end) {
+          // Assuming your existing event.start and event.end are ISO 8601 strings
+          const existingEventStart = new Date(event.start);
+          const existingEventEnd = new Date(event.end);
+  
+          return (
+            (newEventStart >= existingEventStart && newEventStart < existingEventEnd) ||
+            (newEventEnd > existingEventStart && newEventEnd <= existingEventEnd) ||
+            (newEventStart <= existingEventStart && newEventEnd >= existingEventEnd)
+          );
+        }
+        return false;
       });
+  
+      if (hasConflict) {
+        alert("Time conflict detected! Please choose a different time for your event.");
+        return; // Stop the function if there's a conflict
+      }
+  
+      // Proceed with adding the event if no conflict
+      const eventToSave = {
+        title: newEvent.title,
+        description: newEvent.description || "",
+        date: selectedDate.toISOString(), // Save date as ISO string
+        start: newEventStart.toISOString(), // Save start time as ISO string
+        end: newEventEnd.toISOString(), // Save end time as ISO string
+        color: newEvent.color || "#3B82F6",
+      };
+  
+      try {
+        const response = await fetch("/api/calendar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(eventToSave),
+        });
+  
+        const savedEvent = await response.json();
+        setEvents([...events, { ...savedEvent, date: new Date(savedEvent.date) }]); // Convert back to Date object for display
+        setShowEventModal(false);
+        setNewEvent({
+          title: "",
+          description: "",
+          start: "09:00",
+          end: "10:00",
+          color: "#3B82F6",
+        });
+      } catch (error) {
+        console.error("Error adding event:", error);
+      }
     }
   };
 
-  const handleDeleteEvent = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this event?')) {
-      setEvents(events.filter(e => e.id !== id));
+  const handleDeleteEvent = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this event?")) {
+      try {
+        await fetch("/api/calendar", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id }),
+        });
+
+        setEvents(events.filter(event => event.id !== id));
+      } catch (error) {
+        console.error("Error deleting event:", error);
+      }
     }
   };
 
@@ -117,29 +294,24 @@ const Calendar: React.FC = () => {
     const totalDays = daysInMonth(currentDate);
     const firstDay = firstDayOfMonth(currentDate);
 
-    // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(<div key={`empty-${i}`} className="h-24 border border-gray-100 bg-gray-50/50"></div>);
     }
 
-    // Add cells for each day of the month
     for (let day = 1; day <= totalDays; day++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-      const isSelected = selectedDate?.toDateString() === date.toDateString();
-      const dayEvents = events.filter(event => 
-        event.date.toDateString() === date.toDateString()
-      );
+      const dayEvents = events.filter(event => event.date.toDateString() === date.toDateString());
 
       days.push(
         <div
           key={day}
-          className={`h-24 border border-gray-200 transition duration-200 p-1 overflow-hidden
-            ${isSelected ? 'ring-2 ring-blue-500 z-10' : ''}
-            ${isToday(date) ? 'bg-blue-50/40' : 'hover:bg-gray-50'}`}
+          className={`h-24 border border-gray-200 p-1 overflow-hidden ${
+            isToday(date) ? "bg-blue-50/40" : "hover:bg-gray-50"
+          }`}
           onClick={() => setSelectedDate(date)}
         >
-          <div className={`flex justify-between items-center mb-1 ${isToday(date) ? 'font-medium' : ''}`}>
-            <span className={`text-xs px-1.5 py-0.5 rounded-full ${isToday(date) ? 'bg-blue-500 text-white' : 'text-gray-500'}`}>
+          <div className="flex justify-between items-center mb-1">
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${isToday(date) ? "bg-blue-500 text-white" : "text-gray-500"}`}>
               {day}
             </span>
             {dayEvents.length > 0 && (
@@ -149,15 +321,12 @@ const Calendar: React.FC = () => {
             )}
           </div>
           <div className="space-y-1">
-            {dayEvents.slice(0, 3).map(event => (
+            {dayEvents.map(event => (
               <div
                 key={event.id}
-                className="text-xs p-1 rounded truncate flex items-center transition hover:opacity-90 cursor-pointer"
+                className="text-xs p-1 rounded truncate flex items-center cursor-pointer"
                 style={{ backgroundColor: `${event.color}20`, borderLeft: `3px solid ${event.color}` }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedDate(date);
-                }}
+                onClick={() => handleEventClick(event)}
               >
                 <div className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: event.color }}></div>
                 <span className="truncate font-medium" style={{ color: event.color }}>
@@ -165,11 +334,6 @@ const Calendar: React.FC = () => {
                 </span>
               </div>
             ))}
-            {dayEvents.length > 3 && (
-              <div className="text-xs text-gray-500 pl-1">
-                +{dayEvents.length - 3} more
-              </div>
-            )}
           </div>
         </div>
       );
@@ -247,8 +411,16 @@ const Calendar: React.FC = () => {
           
           <button
             onClick={() => {
-              setShowEventModal(true);
-              if (!selectedDate) setSelectedDate(new Date());
+              setShowEventModal(true); // Open the modal
+              setSelectedEvent(null); // Ensure no event is selected
+              setNewEvent({
+                title: "",
+                description: "",
+                start: "09:00",
+                end: "10:00",
+                color: "#3B82F6",
+              }); // Reset the newEvent state
+              setSelectedDate(new Date()); // Optionally reset the selected date
             }}
             className="ml-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center transition shadow-sm"
           >
@@ -284,8 +456,19 @@ const Calendar: React.FC = () => {
             </div>
             
             <div className="mb-6">
-              <button
-                onClick={() => setShowEventModal(true)}
+            <button
+                onClick={() => {
+                  setSelectedEvent(null); // clear editing mode
+                  setNewEvent({
+                    title: "",
+                    date: selectedDate ?? new Date(),
+                    start: "",
+                    end: "",
+                    description: "",
+                    color: "#3B82F6", // default color
+                  });
+                  setShowEventModal(true);
+                }}
                 className="flex items-center justify-center w-full py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 text-sm font-medium transition duration-200"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -298,37 +481,43 @@ const Calendar: React.FC = () => {
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {events
                 .filter(event => event.date.toDateString() === selectedDate.toDateString())
-                .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+                .sort((a, b) => (a.start || '').localeCompare(b.start || ''))
                 .map(event => (
                   <div
                     key={event.id}
-                    className="p-3 rounded-lg hover:bg-gray-50 transition-all duration-200 border border-gray-100"
+                    className="p-3 rounded-lg hover:bg-gray-50 transition-all duration-200 border border-gray-100 cursor-pointer"
                     style={{ borderLeft: `4px solid ${event.color}` }}
+                    onClick={() => handleEventClick(event)}
                   >
                     <div className="flex justify-between items-start">
                       <h4 className="font-medium text-gray-800 mb-1">
                         {event.title}
                       </h4>
-                      <button
-                        onClick={() => handleDeleteEvent(event.id)}
-                        className="text-gray-400 hover:text-red-500 transition-colors duration-200 p-1"
-                        aria-label="Delete event"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      {!event.isAssignment && ( // Only show delete button for user-created events
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent triggering the event click handler
+                            handleDeleteEvent(event.id);
+                          }}
+                          className="text-gray-400 hover:text-red-500 transition-colors duration-200 p-1"
+                          aria-label="Delete event"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
-                    
-                    {event.startTime && event.endTime && (
+
+                    {event.start && event.end && (
                       <div className="flex items-center text-xs text-gray-500 mb-2">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        {event.startTime} - {event.endTime}
+                        {formatTime(event.start)} - {formatTime(event.end)}
                       </div>
                     )}
-                    
+
                     {event.description && (
                       <p className="text-sm text-gray-600 mt-2 line-clamp-2">{event.description}</p>
                     )}
@@ -398,8 +587,8 @@ const Calendar: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
                   <input
                     type="time"
-                    value={newEvent.startTime}
-                    onChange={(e) => setNewEvent({ ...newEvent, startTime: e.target.value })}
+                    value={newEvent.start}
+                    onChange={(e) => setNewEvent({ ...newEvent, start: e.target.value })}
                     className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-colors duration-200"
                   />
                 </div>
@@ -407,8 +596,8 @@ const Calendar: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
                   <input
                     type="time"
-                    value={newEvent.endTime}
-                    onChange={(e) => setNewEvent({ ...newEvent, endTime: e.target.value })}
+                    value={newEvent.end}
+                    onChange={(e) => setNewEvent({ ...newEvent, end: e.target.value })}
                     className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-colors duration-200"
                   />
                 </div>
@@ -452,13 +641,13 @@ const Calendar: React.FC = () => {
                 Cancel
               </button>
               <button
-                onClick={handleAddEvent}
+                onClick={handleSaveEvent}
                 disabled={!newEvent.title}
                 className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors duration-200 ${
-                  newEvent.title ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-300 cursor-not-allowed'
+                  newEvent.title ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-300 cursor-not-allowed"
                 }`}
               >
-                Save Event
+                {selectedEvent ? "Update Event" : "Save Event"}
               </button>
             </div>
           </div>
