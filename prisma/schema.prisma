@@ -54,6 +54,9 @@ model User {
 
   //Flashcard relation
   flashcards Flashcard[]
+
+  //Calendar relation
+  calendarEvents CalendarEvent[]
 }
 
 model Course {
@@ -401,4 +404,20 @@ model Todo {
 
   userId     String
 }
+
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  date        DateTime // this stores just the date (e.g., 2025-04-24)
+  start       DateTime // full timestamp
+  end         DateTime
+  color       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+}
+
 
