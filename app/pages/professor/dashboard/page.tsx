@@ -118,14 +118,6 @@ export default function ProfessorDashboard() {
               <div>
                 <TodoList />
               </div>
-
-              {/* Announcements */}
-              <div>
-                <h2 className="text-base font-semibold mb-2">Announcement</h2>
-                <div className="bg-white p-2 rounded-lg shadow border border-black text-center">
-                  <p className="text-gray-700 text-base">No Announcement</p>
-                </div>
-              </div>
             </div>
           </div>
         </main>
