@@ -15,6 +15,8 @@ interface Event {
   end?: string;
   isAssignment?: boolean;
   courseId?: string;
+  courseName?: string;
+  dueTime?: string;
 }
 
 const colorOptions = [
@@ -76,16 +78,16 @@ const Calendar: React.FC = () => {
         // Fetch assignments
         const assignmentsResponse = await fetch("/api/calendar/assignments");
         const assignmentsData = await assignmentsResponse.json();
-        console.log("Assignments:", assignmentsData);
 
-        // Map assignments to calendar events
         const assignmentEvents = assignmentsData.map((assignment: any) => ({
           id: assignment.id,
-          title: `${assignment.title} (Due)`,
+          title: assignment.title,
           date: new Date(assignment.dueDate), // Convert dueDate to Date object
           color: "#F59E0B", // Assignments have a default yellow color
           isAssignment: true,
           courseId: assignment.courseId,
+          courseName: assignment.course?.name || "Unknown Course", // Include course name
+          dueTime: new Date(assignment.dueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), // Format due time
         }));
 
         setEvents([...formattedEvents, ...assignmentEvents]);
@@ -124,10 +126,12 @@ const Calendar: React.FC = () => {
       setNewEvent({
         title: event.title,
         date: new Date(event.date),
-        start: event.start ? formatTimeForInput(event.start) : '09:00',
-        end: event.end ? formatTimeForInput(event.end) : '10:00',
+        start: event.start ? formatTimeForInput(event.start) : "09:00",
+        end: event.end ? formatTimeForInput(event.end) : "10:00",
         description: event.description || "",
         color: event.color || "#3B82F6",
+        courseName: event.courseName || "", 
+        dueTime: event.dueTime || "", 
       });
       setShowEventModal(true);
     }
@@ -521,6 +525,16 @@ const Calendar: React.FC = () => {
                     {event.description && (
                       <p className="text-sm text-gray-600 mt-2 line-clamp-2">{event.description}</p>
                     )}
+                    {event.isAssignment && (
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-600">
+                          <strong>Course:</strong> {event.courseName}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <strong>Due Time:</strong> {event.dueTime}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ))}
                 
@@ -632,7 +646,7 @@ const Calendar: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-6 flex justify-end space-x-3">
               <button
                 onClick={() => setShowEventModal(false)}

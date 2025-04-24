@@ -11,23 +11,35 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Fetch assignments for courses the user is enrolled in
     const assignments = await prisma.assignment.findMany({
       where: {
         dueDate: {
           not: null, // Exclude assignments without a dueDate
         },
         published: true, // Exclude unpublished assignments
-        course: {
-          students: {
-            some: {
-              id: userId, // Ensure the user is enrolled in the course
+        OR: [
+          {
+            course: {
+              students: {
+                some: {
+                  id: userId, // User is a student in the course
+                },
+              },
             },
           },
-        },
+          {
+            course: {
+              professorId: userId, // User is the professor of the course
+            },
+          },
+        ],
       },
       include: {
-        course: true, // Include course details if needed
+        course: {
+          select: {
+            name: true, // Include the course name
+          },
+        },
       },
     });
 
