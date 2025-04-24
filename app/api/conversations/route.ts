@@ -1,4 +1,3 @@
-// app/api/conversations/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuth } from "@clerk/nextjs/server";
@@ -12,13 +11,23 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get query parameters for pagination and filtering
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '8');
+    const isAnnouncement = searchParams.get('isAnnouncement') === 'true';
+    
+    const skip = (page - 1) * limit;
+
+    // Fetch conversations with pagination
     const conversations = await prisma.conversation.findMany({
       where: {
         participants: {
           some: {
             userId: userId
           }
-        }
+        },
+        isAnnouncement: isAnnouncement
       },
       include: {
         participants: {
@@ -44,6 +53,35 @@ export async function GET(req: NextRequest) {
       },
       orderBy: {
         updatedAt: 'desc'
+      },
+      take: limit,
+      skip: skip
+    });
+
+    // Count total conversations for pagination
+    const totalCount = await prisma.conversation.count({
+      where: {
+        participants: {
+          some: {
+            userId: userId
+          }
+        },
+        isAnnouncement: isAnnouncement
+      }
+    });
+
+    // Count unread messages in these conversations
+    const unreadCount = await prisma.message.count({
+      where: {
+        status: "SENT",
+        isDraft: false,
+        senderId: { not: userId }, // Exclude user's own messages
+        conversation: {
+          participants: {
+            some: { userId }
+          },
+          isAnnouncement: isAnnouncement
+        }
       }
     });
 
@@ -65,13 +103,22 @@ export async function GET(req: NextRequest) {
         id: conversation.id,
         name,
         isGroup: conversation.isGroup,
+        isAnnouncement: conversation.isAnnouncement,
         participants: otherParticipants,
         lastMessage: conversation.messages[0] || null,
         updatedAt: conversation.updatedAt
       };
     });
 
-    return NextResponse.json(formattedConversations);
+    // Calculate if there are more items for pagination
+    const hasMore = totalCount > skip + limit;
+
+    return NextResponse.json({
+      conversations: formattedConversations,
+      hasMore,
+      total: totalCount,
+      unreadCount
+    });
   } catch (error) {
     console.error("Error fetching conversations:", error);
     return NextResponse.json(
@@ -150,7 +197,7 @@ export async function POST(req: NextRequest) {
     const conversationData: any = {
       name: isGroup ? name : undefined,
       isGroup: isGroup || false,
-      isAnnouncement: isAnnouncement || false, // Add this line
+      isAnnouncement: isAnnouncement || false,
       participants: {
         create: participantIds.map(id => ({
           userId: id,

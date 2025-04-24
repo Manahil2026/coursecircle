@@ -12,7 +12,7 @@ interface Params {
 // GET a specific message
 export async function GET(req: NextRequest, { params }: Params) {
   try {
-    const { messageId } = params;
+    const { messageId } = await params;
     const { userId } = getAuth(req);
     
     if (!userId) {
@@ -84,7 +84,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 // PATCH to update a message (edit a draft or mark as read)
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
-    const { messageId } = params;
+    const { messageId } = await params;
     const { userId } = getAuth(req);
     
     if (!userId) {
@@ -201,7 +201,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 // DELETE a message
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
-    const { messageId } = params;
+    const { messageId } = await params;
     const { userId } = getAuth(req);
     
     if (!userId) {

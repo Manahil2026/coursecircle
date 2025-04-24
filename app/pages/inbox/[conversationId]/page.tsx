@@ -89,6 +89,31 @@ export default function ConversationPage() {
   }, [conversationId]);
 
   useEffect(() => {
+    // Mark conversation messages as read when the conversation is opened
+    const markMessagesAsRead = async () => {
+      if (!conversationId) return;
+      
+      try {
+        await fetch(`/api/conversations/${conversationId}/mark-read`, {
+          method: 'POST',
+        });
+        
+        // This will help refresh the inbox counter if user goes back
+        if (typeof window !== 'undefined') {
+          // Dispatch a custom event that the sidebar can listen for
+          window.dispatchEvent(new CustomEvent('messages-read'));
+        }
+      } catch (err) {
+        console.error("Error marking messages as read:", err);
+      }
+    };
+
+    if (conversation) {
+      markMessagesAsRead();
+    }
+  }, [conversationId, conversation]);
+
+  useEffect(() => {
     // Scroll to bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);

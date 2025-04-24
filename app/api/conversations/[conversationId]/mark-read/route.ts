@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: { conversationId: string } }
 ) {
   try {
-    const { conversationId } = params;
+    const { conversationId } = await params;
     const { userId } = getAuth(req);
     
     if (!userId) {
