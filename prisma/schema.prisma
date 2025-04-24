@@ -189,7 +189,7 @@ model Module {
   title     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  published Boolean        @default(false)
+  published Boolean  @default(false)
 
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId String
@@ -313,6 +313,7 @@ model ConversationParticipant {
   conversationId  String
   joinedAt        DateTime  @default(now())
   isAdmin         Boolean   @default(false) // For group conversations
+  archived        Boolean   @default(false) // New field for archiving
   
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -320,6 +321,7 @@ model ConversationParticipant {
   @@unique([userId, conversationId])
   @@index([conversationId])
   @@index([userId])
+  @@index([archived]) // Add index for archived field
   @@map("conversation_participants")
 }
 
@@ -340,6 +342,7 @@ model Message {
   
   @@index([senderId])
   @@index([conversationId])
+  @@index([isDraft]) // Add index for draft messages
   @@map("messages")
 }
 
@@ -419,5 +422,3 @@ model CalendarEvent {
   userId      String?
   user        User?    @relation(fields: [userId], references: [id])
 }
-
-

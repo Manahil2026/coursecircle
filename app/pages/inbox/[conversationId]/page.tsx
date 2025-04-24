@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
@@ -49,6 +49,9 @@ interface Conversation {
 export default function ConversationPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const draftId = searchParams.get('draftId');
+  
   const { user, isLoaded } = useUser();
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -58,10 +61,14 @@ export default function ConversationPage() {
   const [sending, setSending] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const conversationId = params?.conversationId as string;
 
+  // Load conversation and messages
   useEffect(() => {
     if (!conversationId) return;
 
@@ -88,8 +95,32 @@ export default function ConversationPage() {
     fetchConversation();
   }, [conversationId]);
 
+  // Load draft message if draftId is provided
   useEffect(() => {
-    // Mark conversation messages as read when the conversation is opened
+    const loadDraft = async () => {
+      if (!draftId) return;
+      
+      try {
+        const response = await fetch(`/api/messages/drafts/${draftId}`);
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch draft");
+        }
+        
+        const draft = await response.json();
+        setNewMessage(draft.content);
+        setCurrentDraftId(draft.id);
+      } catch (err) {
+        console.error("Error fetching draft:", err);
+        setError("Failed to load draft. It may have been deleted or you don't have permission to view it.");
+      }
+    };
+    
+    loadDraft();
+  }, [draftId]);
+
+  // Mark conversation messages as read
+  useEffect(() => {
     const markMessagesAsRead = async () => {
       if (!conversationId) return;
       
@@ -100,7 +131,6 @@ export default function ConversationPage() {
         
         // This will help refresh the inbox counter if user goes back
         if (typeof window !== 'undefined') {
-          // Dispatch a custom event that the sidebar can listen for
           window.dispatchEvent(new CustomEvent('messages-read'));
         }
       } catch (err) {
@@ -113,10 +143,21 @@ export default function ConversationPage() {
     }
   }, [conversationId, conversation]);
 
+  // Scroll to bottom when messages change
   useEffect(() => {
-    // Scroll to bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Clear "Draft Saved" message after a few seconds
+  useEffect(() => {
+    if (draftSaved) {
+      const timeout = setTimeout(() => {
+        setDraftSaved(false);
+      }, 3000);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [draftSaved]);
 
   const fetchMoreMessages = async () => {
     if (!nextCursor || loadingMore) return;
@@ -139,6 +180,58 @@ export default function ConversationPage() {
     }
   };
 
+  const handleSaveDraft = async () => {
+    if (!newMessage.trim()) return;
+    
+    try {
+      setSavingDraft(true);
+      setError(null);
+      
+      if (currentDraftId) {
+        // Update existing draft
+        const response = await fetch(`/api/messages/drafts/${currentDraftId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: newMessage.trim(),
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to update draft");
+        }
+      } else {
+        // Create new draft
+        const response = await fetch('/api/messages/drafts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: newMessage.trim(),
+            conversationId,
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to save draft");
+        }
+        
+        const draft = await response.json();
+        setCurrentDraftId(draft.id);
+      }
+      
+      setDraftSaved(true);
+    } catch (err) {
+      console.error("Error saving draft:", err);
+      setError("Failed to save draft. Please try again.");
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -146,27 +239,50 @@ export default function ConversationPage() {
     
     try {
       setSending(true);
-      const response = await fetch(`/api/conversations/${conversationId}/messages`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: newMessage.trim(),
-          isDraft: false,
-        }),
-      });
       
-      if (!response.ok) {
-        throw new Error("Failed to send message");
+      // If we have a draft, send it
+      if (currentDraftId) {
+        const response = await fetch(`/api/messages/drafts/${currentDraftId}`, {
+          method: 'POST',
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to send draft");
+        }
+        
+        const sentMessage = await response.json();
+        setMessages(prev => [...prev, sentMessage]);
+        setNewMessage("");
+        setCurrentDraftId(null);
+        
+        // Remove draftId from URL
+        if (draftId) {
+          router.replace(`/pages/inbox/${conversationId}`);
+        }
+      } else {
+        // Send new message
+        const response = await fetch(`/api/conversations/${conversationId}/messages`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: newMessage.trim(),
+            isDraft: false,
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to send message");
+        }
+        
+        const sentMessage = await response.json();
+        setMessages(prev => [...prev, sentMessage]);
+        setNewMessage("");
       }
-      
-      const sentMessage = await response.json();
-      setMessages(prev => [...prev, sentMessage]);
-      setNewMessage("");
     } catch (err) {
       console.error("Error sending message:", err);
-      alert("Failed to send message. Please try again.");
+      setError("Failed to send message. Please try again.");
     } finally {
       setSending(false);
     }
@@ -270,6 +386,11 @@ export default function ConversationPage() {
                 )}
               </div>
             </div>
+            {currentDraftId && (
+              <div className="text-gray-500 text-sm bg-gray-100 px-3 py-1 rounded-full">
+                Draft Mode
+              </div>
+            )}
           </div>
 
           {/* Messages Container */}
@@ -334,22 +455,42 @@ export default function ConversationPage() {
 
           {/* Message Input */}
           <div className="border-t p-4 bg-white">
-            <form onSubmit={handleSendMessage} className="flex">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1 border rounded-l-md p-2 focus:outline-none focus:ring-1 focus:ring-[#AAFF45]"
-                disabled={sending}
-              />
-              <button
-                type="submit"
-                className="bg-[#AAFF45] text-black px-4 py-2 rounded-r-md hover:bg-[#B9FF66] disabled:opacity-50"
-                disabled={!newMessage.trim() || sending}
-              >
-                {sending ? "Sending..." : "Send"}
-              </button>
+            {draftSaved && (
+              <div className="mb-2 p-2 bg-green-100 text-green-700 rounded-md shadow-sm text-center animate-pulse">
+                Message saved to drafts!
+              </div>
+            )}
+            <form onSubmit={handleSendMessage} className="flex flex-col">
+              <div className="flex mb-2">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type a message..."
+                  className="flex-1 border rounded-l-md p-2 focus:outline-none focus:ring-1 focus:ring-[#AAFF45]"
+                  disabled={sending || savingDraft}
+                />
+                <button
+                  type="submit"
+                  className="bg-[#AAFF45] text-black px-4 py-2 rounded-r-md hover:bg-[#B9FF66] disabled:opacity-50"
+                  disabled={!newMessage.trim() || sending || savingDraft}
+                >
+                  {sending ? "Sending..." : "Send"}
+                </button>
+              </div>
+              
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleSaveDraft}
+                  disabled={!newMessage.trim() || savingDraft || sending}
+                  className={`px-3 py-1 text-sm bg-white text-black border border-[#AAFF45] rounded hover:bg-gray-100 ${
+                    !newMessage.trim() || savingDraft || sending ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  {savingDraft ? "Saving..." : currentDraftId ? "Update Draft" : "Save as Draft"}
+                </button>
+              </div>
             </form>
           </div>
         </div>

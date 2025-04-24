@@ -1,4 +1,3 @@
-// app/api/messages/drafts/[draftId]/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuth } from "@clerk/nextjs/server";

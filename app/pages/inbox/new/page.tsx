@@ -34,7 +34,10 @@ export default function NewMessagePage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [error, setError] = useState("");
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [saveNotification, setSaveNotification] = useState(false);
 
   useEffect(() => {
     // Fetch courses if the user is a professor
@@ -57,12 +60,88 @@ export default function NewMessagePage() {
     }
   }, [user?.publicMetadata?.role]);
 
+  // Clear "Draft Saved" notification after a few seconds
+  useEffect(() => {
+    if (saveNotification) {
+      const timeout = setTimeout(() => {
+        setSaveNotification(false);
+      }, 3000);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [saveNotification]);
+
   const handleSelectUser = (user: User) => {
     setSelectedUsers(prev => [...prev, user]);
   };
 
   const handleRemoveUser = (userId: string) => {
     setSelectedUsers(prev => prev.filter(user => user.id !== userId));
+  };
+
+  const handleSaveDraft = async () => {
+    if (selectedUsers.length === 0) {
+      setError("Please select at least one recipient");
+      return;
+    }
+
+    if (!message.trim()) {
+      setError("Please enter a message");
+      return;
+    }
+
+    setSavingDraft(true);
+    setError("");
+
+    try {
+      // If we already have a draft, update it
+      if (draftId) {
+        // Update existing draft
+        const response = await fetch(`/api/messages/drafts/${draftId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: message,
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to update draft");
+        }
+        
+        setSaveNotification(true);
+      } else {
+        // Create a new draft with a new conversation
+        const response = await fetch('/api/messages/new-draft', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: message,
+            participantIds: selectedUsers.map(user => user.id),
+            isGroup,
+            groupName: isGroup ? groupName : undefined,
+            courseId: selectedCourse || undefined
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to save draft");
+        }
+        
+        const data = await response.json();
+        setDraftId(data.draft.id);
+        setSaveNotification(true);
+      }
+    } catch (err) {
+      console.error("Error saving draft:", err);
+      setError("Failed to save draft. Please try again.");
+    } finally {
+      setSavingDraft(false);
+    }
   };
 
   const handleSendMessage = async () => {
@@ -80,7 +159,22 @@ export default function NewMessagePage() {
     setError("");
 
     try {
-      // First create the conversation
+      // If we have a draft, send it
+      if (draftId) {
+        const response = await fetch(`/api/messages/drafts/${draftId}`, {
+          method: 'POST',
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to send draft");
+        }
+        
+        const sentMessage = await response.json();
+        router.push(`/pages/inbox/${sentMessage.conversationId}`);
+        return;
+      }
+
+      // Otherwise create a new conversation and send message
       const conversationResponse = await fetch("/api/conversations", {
         method: "POST",
         headers: {
@@ -119,7 +213,7 @@ export default function NewMessagePage() {
       // Navigate to the new conversation
       router.push(`/pages/inbox/${conversation.id}`);
     } catch (err) {
-      console.error("Error creating conversation:", err);
+      console.error("Error sending message:", err);
       setError("Failed to send message. Please try again.");
     } finally {
       setSending(false);
@@ -142,6 +236,11 @@ export default function NewMessagePage() {
               </button>
               <h1 className="text-lg font-medium">New Message</h1>
             </div>
+            {saveNotification && (
+              <div className="bg-green-100 text-green-700 px-4 py-2 rounded-md shadow-sm animate-pulse">
+                Message saved to drafts!
+              </div>
+            )}
           </div>
 
           {/* Message Composer */}
@@ -224,7 +323,7 @@ export default function NewMessagePage() {
               )}
 
               {/* Message input */}
-              <div className="mb-8"> {/* Increased from mb-4 to mb-8 */}
+              <div className="mb-8">
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
                   Message:
                 </label>
@@ -236,7 +335,7 @@ export default function NewMessagePage() {
               </div>
 
               {/* Empty spacer div */}
-              <div className="h-10"></div> {/* Added 40px spacer */}
+              <div className="h-10"></div>
 
               {/* Error message */}
               {error && (
@@ -244,7 +343,7 @@ export default function NewMessagePage() {
               )}
 
               {/* Action buttons */}
-              <div className="flex justify-end gap-2 mt-20"> {/* Added mt-20 for spacing */}
+              <div className="flex justify-end gap-2 mt-20">
                 <button
                   onClick={() => router.push("/pages/inbox")}
                   className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
@@ -252,10 +351,19 @@ export default function NewMessagePage() {
                   Cancel
                 </button>
                 <button
+                  onClick={handleSaveDraft}
+                  disabled={savingDraft || !message.trim() || selectedUsers.length === 0}
+                  className={`px-4 py-2 bg-white text-black border border-[#AAFF45] rounded-md hover:bg-gray-100 ${
+                    savingDraft || !message.trim() || selectedUsers.length === 0 ? "opacity-70 cursor-not-allowed" : ""
+                  }`}
+                >
+                  {savingDraft ? "Saving..." : "Save Draft"}
+                </button>
+                <button
                   onClick={handleSendMessage}
-                  disabled={sending}
+                  disabled={sending || !message.trim() || selectedUsers.length === 0}
                   className={`px-4 py-2 bg-[#AAFF45] text-black rounded-md hover:bg-[#8FE03D] ${
-                    sending ? "opacity-70 cursor-not-allowed" : ""
+                    sending || !message.trim() || selectedUsers.length === 0 ? "opacity-70 cursor-not-allowed" : ""
                   }`}
                 >
                   {sending ? "Sending..." : "Send"}
