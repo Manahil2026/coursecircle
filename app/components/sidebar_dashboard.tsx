@@ -54,12 +54,7 @@ const Sidebar_dashboard: React.FC = () => {
       path: "/pages/calendar",
       onClick: () => router.push("/pages/calendar"),
     },
-    {
-      icon: "/asset/folder_icon.svg",
-      label: "Files",
-      alt: "Folder Icon",
-      path: "/pages/files",
-    },
+
     {
       icon: "/asset/ai_icon.svg",
       label: "AI Tools",
@@ -79,7 +74,7 @@ const Sidebar_dashboard: React.FC = () => {
     <aside className="fixed top-0 w-16 bg-black text-white flex flex-col items-center justify-start h-full">
       <nav className="w-full flex flex-col items-center">
         {/* Sidebar Items */}
-        <ul className="flex flex-col items-center gap-3 py-1 text-center">
+        <ul className="flex flex-col items-center gap-[17px] py-1 text-center">
           {sidebarItems.map((item, index) => {
             const active = isActive(item.path);
             return (

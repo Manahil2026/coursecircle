@@ -73,7 +73,7 @@ const DashboardAnnouncements: React.FC = () => {
 
   if (announcements.length === 0) {
     return (
-      <div className="bg-white p-2 rounded-lg shadow border border-black text-center">
+      <div className="bg-white p-2 rounded-lg text-center">
         <p className="text-gray-700 text-base">No Announcements</p>
       </div>
     );
