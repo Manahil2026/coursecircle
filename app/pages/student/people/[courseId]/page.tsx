@@ -53,7 +53,7 @@ const PeoplePage = () => {
 
                 {/* Page Content */}
                 <div className="flex-1 p-6 overflow-y-auto">
-                    <h1 className="text-2xl font-bold mb-6">People</h1>
+                    <h1 className="text-base font-medium mb-6">People</h1>
                     <PeopleTable people={people} />
                 </div>
             </div>

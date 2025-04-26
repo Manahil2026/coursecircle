@@ -22,7 +22,7 @@ const PeopleTable: React.FC<PeopleTableProps> = ({ people }) => {
   });
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-6">
+    <div className="bg-white rounded-md">
       {/* Search and Filter Controls */}
       <div className="flex items-center gap-4 mb-6 justify-between">
         {/* Search Bar */}
@@ -32,7 +32,7 @@ const PeopleTable: React.FC<PeopleTableProps> = ({ people }) => {
             placeholder="Search people"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="border border-gray-300 rounded-lg px-10 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-300 rounded-lg px-10 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-[#AAFF45]"
           />
           <span className="absolute left-3 top-2.5 text-gray-400">
             <svg

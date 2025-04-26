@@ -178,7 +178,13 @@ export default function GradeTracker() {
   };
 
   if (isLoading) {
-    return <div>Loading gradebook…</div>;
+    return (
+      <div className="h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center space-y-2">
+          <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -201,7 +207,7 @@ export default function GradeTracker() {
           <button
             onClick={saveAllChanges}
             disabled={pendingChanges.length === 0}
-            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+            className="px-4 py-2 bg-[#AAFF45] text-black rounded disabled:opacity-50"
           >
             Save Changes
           </button>
