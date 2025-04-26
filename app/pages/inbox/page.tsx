@@ -1,4 +1,3 @@
-// app/pages/inbox/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -6,6 +5,7 @@ import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+import DraftsList from "@/app/components/messaging/DraftsList";
 
 interface Message {
   id: string;
@@ -28,10 +28,20 @@ interface Conversation {
   updatedAt: string;
 }
 
+interface Draft {
+  id: string;
+  content: string;
+  conversationId: string;
+  conversationName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function InboxPage() {
   // State for conversations
   const [directConversations, setDirectConversations] = useState<Conversation[]>([]);
   const [announcements, setAnnouncements] = useState<Conversation[]>([]);
+  const [drafts, setDrafts] = useState<Draft[]>([]);
   
   // State for pagination
   const [directPage, setDirectPage] = useState(1);
@@ -41,9 +51,13 @@ export default function InboxPage() {
   
   // Other states
   const [loading, setLoading] = useState(true);
+  const [loadingDrafts, setLoadingDrafts] = useState(false);
   const [directUnreadCount, setDirectUnreadCount] = useState(0);
   const [announcementUnreadCount, setAnnouncementUnreadCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  
+  // Active tab state
+  const [activeTab, setActiveTab] = useState<"messages" | "announcements" | "drafts">("messages");
   
   const router = useRouter();
   const { user } = useUser();
@@ -97,23 +111,75 @@ export default function InboxPage() {
     }
   };
 
+  // Fetch drafts
+  const fetchDrafts = async () => {
+    try {
+      setLoadingDrafts(true);
+      const response = await fetch('/api/messages/drafts');
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch drafts");
+      }
+      
+      const data = await response.json();
+      setDrafts(data);
+    } catch (err) {
+      console.error("Error fetching drafts:", err);
+      setError("Failed to load drafts. Please try again later.");
+    } finally {
+      setLoadingDrafts(false);
+    }
+  };
+
   // Initial fetch on component mount
   useEffect(() => {
     // Fetch both types of conversations
     fetchConversations(1, false);
     fetchConversations(1, true);
+    fetchDrafts();
     
     // Set up a refresh interval to periodically check for new messages
     const intervalId = setInterval(() => {
-      fetchConversations(1, false);
-      fetchConversations(1, true);
+      if (activeTab === "messages") {
+        fetchConversations(1, false);
+      } else if (activeTab === "announcements") {
+        fetchConversations(1, true);
+      } else if (activeTab === "drafts") {
+        fetchDrafts();
+      }
     }, 60000); // Refresh every minute
     
     return () => clearInterval(intervalId);
-  }, []);
+  }, [activeTab]);
 
   const handleConversationSelect = (conversationId: string) => {
     router.push(`/pages/inbox/${conversationId}`);
+  };
+
+  const handleDraftSelect = (draftId: string, conversationId: string) => {
+    router.push(`/pages/inbox/${conversationId}?draftId=${draftId}`);
+  };
+
+  const handleDraftDelete = async (draftId: string) => {
+    if (!confirm("Are you sure you want to delete this draft?")) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/messages/drafts/${draftId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to delete draft");
+      }
+      
+      // Remove the draft from state
+      setDrafts(prev => prev.filter(draft => draft.id !== draftId));
+    } catch (err) {
+      console.error("Error deleting draft:", err);
+      setError("Failed to delete draft. Please try again later.");
+    }
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -175,7 +241,7 @@ export default function InboxPage() {
   };
 
   // Render loading state
-  if (loading && directConversations.length === 0 && announcements.length === 0) {
+  if (loading && directConversations.length === 0 && announcements.length === 0 && drafts.length === 0) {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center space-y-2">
@@ -216,85 +282,124 @@ export default function InboxPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Announcements Column */}
-            <div>
-              <h2 className="text-md font-medium mb-3 flex items-center">
-                Announcements
-                {announcementUnreadCount > 0 && (
-                  <span className="ml-2 bg-[#AAFF45] text-black text-xs rounded-full px-2 py-0.5">
-                    {announcementUnreadCount}
-                  </span>
-                )}
-              </h2>
-              <div className="space-y-2">
-                {announcements.length === 0 ? (
-                  <div className="p-4 bg-gray-50 text-gray-500 text-center rounded-md">
-                    No announcements yet.
-                  </div>
-                ) : (
-                  <>
-                    {announcements.map(renderConversationItem)}
-                    {loading && hasMoreAnnouncements && (
-                      <div className="flex justify-center p-2">
-                        <div className="w-6 h-6 border-4 border-t-[#AAFF45] border-[#d1e3bb] rounded-full animate-spin"></div>
-                      </div>
-                    )}
-                    {!loading && hasMoreAnnouncements && (
-                      <button
-                        onClick={loadMoreAnnouncements}
-                        className="w-full p-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-                      >
-                        Load More
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Direct Messages Column */}
-            <div>
-              <h2 className="text-md font-medium mb-3 flex items-center">
-                Messages
-                {directUnreadCount > 0 && (
-                  <span className="ml-2 bg-[#AAFF45] text-black text-xs rounded-full px-2 py-0.5">
-                    {directUnreadCount}
-                  </span>
-                )}
-              </h2>
-              <div className="space-y-2">
-                {directConversations.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center p-4 bg-gray-50 text-gray-500 text-center rounded-md">
-                    <p className="mb-2">No conversations yet</p>
-                    <button 
-                      onClick={() => router.push("/pages/inbox/new")}
-                      className="px-4 py-2 bg-[#AAFF45] text-black rounded hover:bg-[#B9FF66] text-sm"
-                    >
-                      Start a new conversation
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    {directConversations.map(renderConversationItem)}
-                    {loading && hasMoreDirect && (
-                      <div className="flex justify-center p-2">
-                        <div className="w-6 h-6 border-4 border-t-[#AAFF45] border-[#d1e3bb] rounded-full animate-spin"></div>
-                      </div>
-                    )}
-                    {!loading && hasMoreDirect && (
-                      <button
-                        onClick={loadMoreDirect}
-                        className="w-full p-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-                      >
-                        Load More
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
+          {/* Tabs */}
+          <div className="flex border-b mb-4">
+            <button
+              onClick={() => setActiveTab("messages")}
+              className={`px-4 py-2 text-sm font-medium ${
+                activeTab === "messages" 
+                  ? "border-b-2 border-[#AAFF45] text-black" 
+                  : "text-gray-500 hover:text-black"
+              }`}
+            >
+              Messages
+              {directUnreadCount > 0 && (
+                <span className="ml-2 bg-[#AAFF45] text-black text-xs rounded-full px-2 py-0.5">
+                  {directUnreadCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("announcements")}
+              className={`px-4 py-2 text-sm font-medium ${
+                activeTab === "announcements" 
+                  ? "border-b-2 border-[#AAFF45] text-black" 
+                  : "text-gray-500 hover:text-black"
+              }`}
+            >
+              Announcements
+              {announcementUnreadCount > 0 && (
+                <span className="ml-2 bg-[#AAFF45] text-black text-xs rounded-full px-2 py-0.5">
+                  {announcementUnreadCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("drafts")}
+              className={`px-4 py-2 text-sm font-medium ${
+                activeTab === "drafts" 
+                  ? "border-b-2 border-[#AAFF45] text-black" 
+                  : "text-gray-500 hover:text-black"
+              }`}
+            >
+              Drafts
+              {drafts.length > 0 && (
+                <span className="ml-2 bg-gray-200 text-gray-700 text-xs rounded-full px-2 py-0.5">
+                  {drafts.length}
+                </span>
+              )}
+            </button>
           </div>
+
+          {/* Tab Content */}
+          {activeTab === "messages" && (
+            <div className="space-y-2">
+              {directConversations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-4 bg-gray-50 text-gray-500 text-center rounded-md">
+                  <p className="mb-2">No conversations yet</p>
+                  <button 
+                    onClick={() => router.push("/pages/inbox/new")}
+                    className="px-4 py-2 bg-[#AAFF45] text-black rounded hover:bg-[#B9FF66] text-sm"
+                  >
+                    Start a new conversation
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {directConversations.map(renderConversationItem)}
+                  {loading && hasMoreDirect && (
+                    <div className="flex justify-center p-2">
+                      <div className="w-6 h-6 border-4 border-t-[#AAFF45] border-[#d1e3bb] rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                  {!loading && hasMoreDirect && (
+                    <button
+                      onClick={loadMoreDirect}
+                      className="w-full p-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                    >
+                      Load More
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {activeTab === "announcements" && (
+            <div className="space-y-2">
+              {announcements.length === 0 ? (
+                <div className="p-4 bg-gray-50 text-gray-500 text-center rounded-md">
+                  No announcements yet.
+                </div>
+              ) : (
+                <>
+                  {announcements.map(renderConversationItem)}
+                  {loading && hasMoreAnnouncements && (
+                    <div className="flex justify-center p-2">
+                      <div className="w-6 h-6 border-4 border-t-[#AAFF45] border-[#d1e3bb] rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                  {!loading && hasMoreAnnouncements && (
+                    <button
+                      onClick={loadMoreAnnouncements}
+                      className="w-full p-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                    >
+                      Load More
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {activeTab === "drafts" && (
+            <DraftsList 
+              drafts={drafts}
+              onSelect={handleDraftSelect}
+              onDelete={handleDraftDelete}
+              loading={loadingDrafts}
+            />
+          )}
         </main>
       </div>
     </>

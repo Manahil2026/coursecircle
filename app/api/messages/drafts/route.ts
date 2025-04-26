@@ -1,3 +1,4 @@
+// app/api/messages/drafts/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuth } from "@clerk/nextjs/server";
@@ -72,6 +73,86 @@ export async function GET(req: NextRequest) {
     console.error("Error fetching drafts:", error);
     return NextResponse.json(
       { error: "Failed to fetch drafts" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST to create a new draft
+export async function POST(req: NextRequest) {
+  try {
+    const { userId } = getAuth(req);
+    
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { content, conversationId } = await req.json();
+
+    if (!content || typeof content !== 'string') {
+      return NextResponse.json(
+        { error: "Message content is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!conversationId) {
+      return NextResponse.json(
+        { error: "Conversation ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Check if the user is a participant in this conversation
+    const participant = await prisma.conversationParticipant.findUnique({
+      where: {
+        userId_conversationId: {
+          userId: userId,
+          conversationId: conversationId
+        }
+      }
+    });
+
+    if (!participant) {
+      return NextResponse.json(
+        { error: "Not a participant in this conversation" },
+        { status: 403 }
+      );
+    }
+
+    // Create the draft message
+    const draft = await prisma.message.create({
+      data: {
+        content: content.trim(),
+        senderId: userId,
+        conversationId,
+        isDraft: true,
+        status: "DRAFT"
+      },
+      include: {
+        conversation: {
+          include: {
+            participants: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return NextResponse.json(draft, { status: 201 });
+  } catch (error) {
+    console.error("Error creating draft:", error);
+    return NextResponse.json(
+      { error: "Failed to create draft" },
       { status: 500 }
     );
   }
