@@ -46,7 +46,7 @@ const StudentGradeTable: React.FC<StudentGradeTableProps> = ({
 
   // Calculate overall grade using weightedGrade if available
 const calculateOverallGrade = () => {
-  if (weightedGrade && weightedGrade.finalGrade !== undefined) {
+  if (weightedGrade && weightedGrade.finalGrade !== undefined && weightedGrade.finalGrade !== null) {
     return `${weightedGrade.finalGrade.toFixed(2)}%`;
   }
 
@@ -73,12 +73,12 @@ const calculateOverallGrade = () => {
 };
 
 
-  const overallPercentage = weightedGrade 
-  ? `${weightedGrade.finalGrade.toFixed(2)}%` 
-  : calculateOverallGrade();
+  const overallPercentage = weightedGrade && weightedGrade.finalGrade !== null
+    ? `${weightedGrade.finalGrade.toFixed(2)}%` 
+    : calculateOverallGrade();
 
   return (
-    <div className="w-full relative">
+    <div className="overflow-x-auto">
       {/* Feedback Modal */}
       {showFeedback && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
@@ -145,7 +145,7 @@ const calculateOverallGrade = () => {
                 {assignment.feedback ? (
                   <button 
                     onClick={() => handleViewFeedback(assignment.feedback, assignment.name)}
-                    className="text-blue-600 hover:underline"
+                    className="text-[#AAFF45] hover:text-[#94db3d] font-medium transition-colors duration-200"
                   >
                     View Feedback
                   </button>
@@ -161,7 +161,7 @@ const calculateOverallGrade = () => {
               {assignments.reduce((total, a) => total + a.points, 0)}
             </td>
             <td colSpan={2} className="p-2 border text-center">
-              {weightedGrade 
+              {weightedGrade && weightedGrade.finalGrade !== null
                 ? `${weightedGrade.finalGrade.toFixed(2)}%`
                 : overallPercentage
               }

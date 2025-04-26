@@ -31,12 +31,12 @@ const CalendarWidget: React.FC = () => {
   return (
     <div className="rounded-lg">
       <h2 className="text-base font-semibold mb-4">{`${currentMonth} ${currentYear}`}</h2>
-      <div className="grid grid-cols-7 text-center bg-[#AAFF45] rounded-lg">
+      <div className="grid grid-cols-7 text-center bg-[#AAFF45] rounded-lg text-base">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
           (day, index) => (
             <div
               key={day}
-              className={`font-medium py-[3px] ${
+              className={`font-medium py-[1px] ${
                 index === currentDayOfWeekIndex
                   ? "bg-black text-white rounded-t-lg"
                   : ""
@@ -51,7 +51,7 @@ const CalendarWidget: React.FC = () => {
         {daysToShow.map(({ day, index, isCurrentDay }, i) => (
           <div
             key={i}
-            className={`font-medium py-1 ${
+            className={`font-medium py-[1px] ${
               isCurrentDay && index === currentDayOfWeekIndex
                 ? "bg-black text-white rounded-b-lg"
                 : ""

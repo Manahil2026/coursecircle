@@ -39,6 +39,7 @@ export default function GradeTracker() {
   // All assignments (for header columns)
   const [allAssignments, setAllAssignments] = useState<Assignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Track only the edits the user has made
   const [pendingChanges, setPendingChanges] = useState<GradeChange[]>([]);
@@ -90,6 +91,7 @@ export default function GradeTracker() {
         setAllAssignments(fetchedAssignments);
       } catch (error) {
         console.error("Error fetching gradebook data:", error);
+        setError("Failed to fetch gradebook data. Please try again.");
       } finally {
         setIsLoading(false);
       }
@@ -177,42 +179,55 @@ export default function GradeTracker() {
     setPendingChanges([]);
   };
 
-  if (isLoading) {
-    return <div>Loading gradebook…</div>;
-  }
-
   return (
     <>
       <SidebarDashboard />
       <CourseMenu courseId={courseId as string} />
-
-      <div className="p-6 max-w-4xl mx-auto">
-        <h1 className="text-base font-medium mb-4 text-center text-black">
+      <div className="p-6 max-w-4xl mx-auto rounded-lg pl-52">
+        <h1 className="text-base font-medium mb-6 text-center text-black">
           Gradebook
         </h1>
 
-        <GradeTable
-          students={students}
-          assignments={allAssignments}
-          updateScore={handleCellEdit}
-        />
+        {isLoading ? (
+          <div className="h-screen flex items-center justify-center bg-white">
+            <div className="flex flex-col items-center space-y-2">
+              <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded my-4">
+            {error}
+          </div>
+        ) : students.length === 0 ? (
+          <div className="text-center text-gray-500 my-8">
+            No students enrolled in this course yet.
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <GradeTable
+              students={students}
+              assignments={allAssignments}
+              updateScore={handleCellEdit}
+            />
 
-        <div className="mt-4 flex space-x-2">
-          <button
-            onClick={saveAllChanges}
-            disabled={pendingChanges.length === 0}
-            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
-          >
-            Save Changes
-          </button>
-          <button
-            onClick={cancelAllChanges}
-            disabled={pendingChanges.length === 0}
-            className="px-4 py-2 bg-gray-400 text-white rounded disabled:opacity-50"
-          >
-            Cancel
-          </button>
-        </div>
+            <div className="mt-4 p-4 flex space-x-2 border-t border-gray-200">
+              <button
+                onClick={saveAllChanges}
+                disabled={pendingChanges.length === 0}
+                className="px-4 py-2 bg-[#AAFF45] text-black rounded hover:bg-[#94db3d] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={cancelAllChanges}
+                disabled={pendingChanges.length === 0}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

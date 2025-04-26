@@ -65,15 +65,15 @@ const DashboardAnnouncements: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white p-4 rounded-lg shadow border border-black h-[150px] flex items-center justify-center">
-        <div className="w-6 h-6 border-4 border-t-[#AAFF45] border-[#d1e3bb] rounded-full animate-spin"></div>
+      <div className="bg-white p-4 rounded-lg h-[150px] flex items-center justify-center">
+        <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (announcements.length === 0) {
     return (
-      <div className="bg-white p-2 rounded-lg shadow border border-black text-center">
+      <div className="bg-white p-2 rounded-lg text-center">
         <p className="text-gray-700 text-base">No Announcements</p>
       </div>
     );

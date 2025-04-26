@@ -134,13 +134,15 @@ export default function GradeTracker() {
       <Sidebar_dashboard />
       <CourseMenu courseId={courseId as string} />
       <div className="p-6 max-w-4xl mx-auto rounded-lg pl-52">
-        <h1 className="text-xl font-medium mb-4 text-center text-black">
-          Your Grades [ {courseName} ]
+        <h1 className="text-base font-medium mb-6 text-center text-black">
+          Gradebook
         </h1>
-        
+
         {loading ? (
-          <div className="flex justify-center my-8">
-            <div className="w-8 h-8 border-4 border-t-[#AAFF45] border-[#d1e3bb] rounded-full animate-spin"></div>
+          <div className="h-screen flex items-center justify-center bg-white">
+            <div className="flex flex-col items-center space-y-2">
+              <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
+            </div>
           </div>
         ) : error ? (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded my-4">
@@ -151,7 +153,7 @@ export default function GradeTracker() {
             No graded assignments available for this course yet.
           </div>
         ) : (
-          <div className="border rounded-lg p-6 bg-white shadow-md">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <StudentGradeTable 
               assignments={assignments} 
               attendance={95} 

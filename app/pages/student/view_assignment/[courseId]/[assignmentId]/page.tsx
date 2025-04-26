@@ -281,7 +281,7 @@ const ViewAssignment = () => {
         <Sidebar_dashboard />
         <CourseMenu courseId={courseId} />
         <div className="flex-1 pl-52 px-6 flex justify-center items-center h-screen">
-          <div className="w-8 h-8 border-4 border-t-[#AAFF45] border-[#d1e3bb] rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
         </div>
       </div>
     );

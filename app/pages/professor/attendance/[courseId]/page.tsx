@@ -131,7 +131,7 @@ export default function AttendancePage() {
 
                 {/* Attendance Content */}
                 <div className="flex-1 p-6 overflow-y-auto">
-                    <h1 className="text-2xl font-bold mb-6">Attendance for {date}</h1>
+                    <h1 className="text-base font-medium mb-6">Attendance for {date}</h1>
                     <label className="block mb-4">
                         Select Date:
                         <input
@@ -143,12 +143,11 @@ export default function AttendancePage() {
                     </label>
                     {error && <p className="text-red-500 mt-2">{error}</p>}
 
-                    <table className="table-auto w-full border-collapse border border-gray-300 mt-4">
+                    <table className="table-auto w-3/4 border-collapse border border-gray-300 mt-4">
                         <thead>
                             <tr className="bg-gray-100">
                                 <th className="border border-gray-300 px-4 py-2 text-left">Student Name</th>
-                                <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
-                                <th className="border border-gray-300 px-4 py-2 text-left">Actions</th>
+                                <th className="border border-gray-300 px-4 py-2 text-left">Attendance</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -157,19 +156,13 @@ export default function AttendancePage() {
                                     <td className="border border-gray-300 px-4 py-2">
                                         {student.firstName} {student.lastName}
                                     </td>
-                                    <td className="border border-gray-300 px-4 py-2">{student.status}</td>
                                     <td className="border border-gray-300 px-4 py-2">
-                                        <button
-                                            onClick={() => toggleStatus(student.id)}
-                                            className={`px-4 py-2 rounded ${student.status === "PRESENT"
-                                                    ? "bg-green-500 text-white"
-                                                    : student.status === "ABSENT"
-                                                        ? "bg-red-500 text-white"
-                                                        : "bg-gray-500 text-white"
-                                                }`}
-                                        >
-                                            {student.status}
-                                        </button>
+                                        <input
+                                            type="checkbox"
+                                            checked={student.status === "PRESENT"}
+                                            onChange={() => toggleStatus(student.id)}
+                                            className="w-5 h-5 rounded border-gray-300 text-[#AAFF45] focus:ring-[#AAFF45]"
+                                        />
                                     </td>
                                 </tr>
                             ))}
@@ -179,7 +172,7 @@ export default function AttendancePage() {
                     <button
                         onClick={saveAttendance}
                         disabled={loading}
-                        className={`mt-4 px-6 py-2 rounded ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 text-white"
+                        className={`mt-4 px-6 py-2 rounded ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-[#AAFF45] hover:bg-[#94db3d] text-black"
                             }`}
                     >
                         {loading ? "Saving..." : "Save Attendance"}

@@ -1,12 +1,11 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
 interface CourseCardProps {
   courseId: string;
   courseName: string;
-  assignmentsDue: number;
   notifications: number;
   schedule: string;
   upcomingClassDate: string;
@@ -15,16 +14,34 @@ interface CourseCardProps {
 const CourseCard: React.FC<CourseCardProps> = ({
   courseId,
   courseName,
-  assignmentsDue,
   notifications,
   schedule,
   upcomingClassDate,
 }) => {
   const router = useRouter();
   const { user } = useUser();
+  const [assignmentsDue, setAssignmentsDue] = useState(0);
 
   // Extract role from Clerk's public metadata
   const role = user?.publicMetadata?.role as "prof" | "member" | undefined;
+
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      if (!user || role !== "member") return;
+      
+      try {
+        const response = await fetch(`/api/courses/${courseId}/assignments/due`);
+        if (response.ok) {
+          const data = await response.json();
+          setAssignmentsDue(data.count);
+        }
+      } catch (error) {
+        console.error("Error fetching assignments:", error);
+      }
+    };
+
+    fetchAssignments();
+  }, [courseId, user, role]);
 
   const handleClick = () => {
     if (!role) return; // Prevent navigation if role is undefined
@@ -36,6 +53,25 @@ const CourseCard: React.FC<CourseCardProps> = ({
 
     router.push(path);
   };
+
+  const handleAssignmentsClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    if (!role) return;
+    const path = role === "prof" 
+      ? `/pages/professor/assignments/${courseId}`
+      : `/pages/student/assignments/${courseId}`;
+    router.push(path);
+  };
+
+  const handleNotificationsClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    if (!role) return;
+    const path = role === "prof"
+      ? `/pages/professor/notifications/${courseId}`
+      : `/pages/student/notifications/${courseId}`;
+    router.push(path);
+  };
+
   return (
     <div
       className="flex items-center border-b rounded-md p-2 shadow-lg border-[#aeaeae85] w-full max-w-xl cursor-pointer transition-all duration-300 hover:transform hover:scale-105"
@@ -58,14 +94,17 @@ const CourseCard: React.FC<CourseCardProps> = ({
           notifications. You have an upcoming class on {upcomingClassDate}.
         </p>
         <div className="mt-3 flex gap-1 text-sm font-medium">
-          <button className="bg-[#AAFF45] px-3 py-1 rounded-lg ">
+          <button 
+            onClick={handleAssignmentsClick}
+            className="bg-[#AAFF45] px-3 py-1 rounded-lg hover:bg-[#95e03d] transition-colors"
+          >
             Asgmt {assignmentsDue}
           </button>
-          <button className="bg-[#AAFF45] px-3 py-1 rounded-lg ">
+          <button 
+            onClick={handleNotificationsClick}
+            className="bg-[#AAFF45] px-3 py-1 rounded-lg hover:bg-[#95e03d] transition-colors"
+          >
             Notifs {notifications}
-          </button>
-          <button className="bg-[#AAFF45] px-3 py-1 rounded-lg ">
-            {schedule}
           </button>
         </div>
       </div>
