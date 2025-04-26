@@ -31,7 +31,7 @@ const CalendarWidget: React.FC = () => {
   return (
     <div className="rounded-lg">
       <h2 className="text-base font-semibold mb-4">{`${currentMonth} ${currentYear}`}</h2>
-      <div className="grid grid-cols-7 text-center bg-[#AAFF45] rounded-lg text-xs">
+      <div className="grid grid-cols-7 text-center bg-[#AAFF45] rounded-lg text-base">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
           (day, index) => (
             <div

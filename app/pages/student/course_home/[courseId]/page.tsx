@@ -58,10 +58,7 @@ const Coursepage: React.FC = () => {
     <div className="flex bg-gradient-to-t from-[#AAFF45]/15 to-white">
       <Sidebar_dashboard />
       <CourseMenu courseId={courseId} />
-      <main className="min-h-screen flex-1 p-6 pl-52">
-        <h2 className="text-base font-semibold mb-4">Welcome to Your Course</h2>
-        
-    
+      <main className="min-h-screen flex-1 p-6 pl-52">    
         {/* Modules Section */}
         {isLoading ? (
           <div className="flex justify-center mt-6">
@@ -70,8 +67,8 @@ const Coursepage: React.FC = () => {
         ) : modules.length === 0 ? (
           <p className="mt-6">No course materials available yet.</p>
         ) : (
-          <div className="mt-6">
-            <h2 className="text-lg font-medium mb-4">Course Materials</h2>
+          <div className="">
+            <h2 className="text-base font-medium mb-4">Course Materials</h2>
             {modules.map((module) => (
               <div key={module.id} className="mb-6 text-sm">
                 <div className="bg-[#AAFF45] border border-gray-400 p-2 rounded-t-sm">

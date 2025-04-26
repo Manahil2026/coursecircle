@@ -128,7 +128,7 @@ export default function StudentDashboard() {
               {/* Announcements */}
               <div>
                 <h2 className="text-base font-semibold mb-2">Announcement</h2>
-                <div className="bg-white p-2 rounded-lg shadow border border-black text-center">
+                <div className="bg-white p-1 rounded-lg shadow border border-black text-center">
                   <DashboardAnnouncements />
                 </div>
               </div>

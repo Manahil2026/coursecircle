@@ -78,7 +78,7 @@ const calculateOverallGrade = () => {
     : calculateOverallGrade();
 
   return (
-    <div className="w-full relative">
+    <div className="overflow-x-auto">
       {/* Feedback Modal */}
       {showFeedback && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
@@ -145,7 +145,7 @@ const calculateOverallGrade = () => {
                 {assignment.feedback ? (
                   <button 
                     onClick={() => handleViewFeedback(assignment.feedback, assignment.name)}
-                    className="text-blue-600 hover:underline"
+                    className="text-[#AAFF45] hover:text-[#94db3d] font-medium transition-colors duration-200"
                   >
                     View Feedback
                   </button>

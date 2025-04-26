@@ -136,10 +136,10 @@ const StudentAssignments = () => {
   };
 
   return (
-    <div className="flex">
+    <div className="flex ">
       <Sidebar_dashboard />
       <CourseMenu courseId={courseId} />
-      <div className="flex-1 pl-52 px-6">
+      <div className="flex-1 pl-52 px-6 ">
         <div className="py-4">
           <h1 className="text-lg font-medium mb-4">Assignments</h1>
 
