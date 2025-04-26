@@ -310,12 +310,12 @@ const Calendar: React.FC = () => {
         <div
           key={day}
           className={`h-24 border border-gray-200 p-1 overflow-hidden ${
-            isToday(date) ? "bg-blue-50/40" : "hover:bg-gray-50"
+            isToday(date) ? "bg-blue-50/40" : "hover:bg-[#abff4569]"
           }`}
           onClick={() => setSelectedDate(date)}
         >
           <div className="flex justify-between items-center mb-1">
-            <span className={`text-xs px-1.5 py-0.5 rounded-full ${isToday(date) ? "bg-blue-500 text-white" : "text-gray-500"}`}>
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${isToday(date) ? "bg-[#AAFF45] text-black" : "text-gray-500"}`}>
               {day}
             </span>
             {dayEvents.length > 0 && (
@@ -348,7 +348,7 @@ const Calendar: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white rounded-xl shadow-md p-4 mb-4">
+      <div className="flex justify-between items-center bg-white rounded-md p-2 mb-2">
         <div className="flex items-center space-x-2">
           <h2 className="text-xl font-bold text-gray-800">
             {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
@@ -363,7 +363,7 @@ const Calendar: React.FC = () => {
             <button
               onClick={() => setView('month')}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
-                view === 'month' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                view === 'month' ? 'bg-[#AAFF45] text-black' : 'text-gray-600 hover:bg-white'
               }`}
             >
               Month
@@ -371,7 +371,7 @@ const Calendar: React.FC = () => {
             <button
               onClick={() => setView('week')}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
-                view === 'week' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                view === 'week' ? 'bg-[#AAFF45] text-black' : 'text-gray-600 hover:bg-white'
               }`}
             >
               Week
@@ -379,7 +379,7 @@ const Calendar: React.FC = () => {
             <button
               onClick={() => setView('day')}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
-                view === 'day' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                view === 'day' ? 'bg-[#AAFF45] text-black' : 'text-gray-600 hover:bg-white'
               }`}
             >
               Day
@@ -398,7 +398,7 @@ const Calendar: React.FC = () => {
             </button>
             <button
               onClick={handleToday}
-              className="px-3 py-1.5 bg-blue-50 rounded-md hover:bg-blue-100 text-sm font-medium text-blue-600 transition"
+              className="px-3 py-1.5 bg-blue-50 rounded-md hover:bg-blue-100 text-sm font-medium text-black transition"
             >
               Today
             </button>
@@ -426,7 +426,7 @@ const Calendar: React.FC = () => {
               }); // Reset the newEvent state
               setSelectedDate(new Date()); // Optionally reset the selected date
             }}
-            className="ml-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center transition shadow-sm"
+            className="ml-2 px-4 py-2 bg-[#AAFF45] hover:bg-[#94db3d] text-black rounded-lg text-sm font-medium flex items-center transition shadow-sm"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -437,7 +437,7 @@ const Calendar: React.FC = () => {
       </div>
 
       <div className="flex gap-6">
-        <div className="bg-white rounded-xl shadow-md p-6 flex-1">
+        <div className="bg-white rounded-md p-6 flex-1">
           <div className="grid grid-cols-7 gap-0 text-sm">
             {dayNames.map(day => (
               <div key={day} className="text-center font-medium py-2 text-gray-600 border-b border-gray-100">
@@ -449,7 +449,7 @@ const Calendar: React.FC = () => {
         </div>
         
         {selectedDate && (
-          <div className="bg-white rounded-xl shadow-md p-6 w-80 sticky top-6">
+          <div className="bg-white rounded-md p-6 w-80 sticky top-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-gray-800 text-lg">
                 {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -473,7 +473,7 @@ const Calendar: React.FC = () => {
                   });
                   setShowEventModal(true);
                 }}
-                className="flex items-center justify-center w-full py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 text-sm font-medium transition duration-200"
+                className="flex items-center justify-center w-full py-2 bg-[#AAFF45] text-black rounded-lg hover:bg-[#94db3d] text-sm font-medium transition duration-200"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -677,12 +677,6 @@ export default function CalendarPage() {
       <Sidebar_dashboard />
       <div className="flex-1 p-6 ml-16">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">Calendar</h1>
-            <span className="text-sm text-gray-500">
-              Plan your schedule and organize your time
-            </span>
-          </div>
           <Calendar />
         </div>
       </div>
