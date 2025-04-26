@@ -46,7 +46,7 @@ const StudentGradeTable: React.FC<StudentGradeTableProps> = ({
 
   // Calculate overall grade using weightedGrade if available
 const calculateOverallGrade = () => {
-  if (weightedGrade && weightedGrade.finalGrade !== undefined) {
+  if (weightedGrade && weightedGrade.finalGrade !== undefined && weightedGrade.finalGrade !== null) {
     return `${weightedGrade.finalGrade.toFixed(2)}%`;
   }
 
@@ -73,9 +73,9 @@ const calculateOverallGrade = () => {
 };
 
 
-  const overallPercentage = weightedGrade 
-  ? `${weightedGrade.finalGrade.toFixed(2)}%` 
-  : calculateOverallGrade();
+  const overallPercentage = weightedGrade && weightedGrade.finalGrade !== null
+    ? `${weightedGrade.finalGrade.toFixed(2)}%` 
+    : calculateOverallGrade();
 
   return (
     <div className="w-full relative">
@@ -161,7 +161,7 @@ const calculateOverallGrade = () => {
               {assignments.reduce((total, a) => total + a.points, 0)}
             </td>
             <td colSpan={2} className="p-2 border text-center">
-              {weightedGrade 
+              {weightedGrade && weightedGrade.finalGrade !== null
                 ? `${weightedGrade.finalGrade.toFixed(2)}%`
                 : overallPercentage
               }
