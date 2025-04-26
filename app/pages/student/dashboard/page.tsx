@@ -90,7 +90,6 @@ export default function StudentDashboard() {
                           <CourseCard
                             courseId={course.id}
                             courseName={course.name}
-                            assignmentsDue={Math.floor(Math.random() * 5)}
                             notifications={Math.floor(Math.random() * 5)}
                             schedule="MWF 10:00 AM"
                             upcomingClassDate="March 4, 2025"

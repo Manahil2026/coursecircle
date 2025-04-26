@@ -349,7 +349,7 @@ export default function InboxPage() {
                   {directConversations.map(renderConversationItem)}
                   {loading && hasMoreDirect && (
                     <div className="flex justify-center p-2">
-                      <div className="w-6 h-6 border-4 border-t-[#AAFF45] border-[#d1e3bb] rounded-full animate-spin"></div>
+                      <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
                     </div>
                   )}
                   {!loading && hasMoreDirect && (
@@ -376,7 +376,7 @@ export default function InboxPage() {
                   {announcements.map(renderConversationItem)}
                   {loading && hasMoreAnnouncements && (
                     <div className="flex justify-center p-2">
-                      <div className="w-6 h-6 border-4 border-t-[#AAFF45] border-[#d1e3bb] rounded-full animate-spin"></div>
+                      <div className="w-8 h-8 border-8 border-t-[#d1e3bb] border-[#73b029] rounded-full animate-spin"></div>
                     </div>
                   )}
                   {!loading && hasMoreAnnouncements && (
