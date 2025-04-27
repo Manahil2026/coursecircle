@@ -4,7 +4,6 @@ import { useParams } from "next/navigation";
 import Sidebar_dashboard from "@/app/components/sidebar_dashboard";
 import CourseMenu from "@/app/components/course_menu";
 
-
 interface Student {
     id: string;
     firstName: string;
@@ -115,6 +114,16 @@ export default function AttendancePage() {
         }
     };
 
+    // Get the appropriate icon for each status
+    const getStatusIcon = (status: string) => {
+        switch (status) {
+            case "PRESENT": return "✓";
+            case "ABSENT": return "✗";
+            case "UNMARKED": return "—";
+            default: return "—";
+        }
+    };
+
     return (
         <div className="flex h-screen">
             {/* Sidebar */}
@@ -143,6 +152,18 @@ export default function AttendancePage() {
                     </label>
                     {error && <p className="text-red-500 mt-2">{error}</p>}
 
+                    <div className="mb-4 flex gap-4 text-sm">
+                        <div className="flex items-center">
+                            <span className="font-medium mr-1">✓:</span> Present
+                        </div>
+                        <div className="flex items-center">
+                            <span className="font-medium mr-1">✗:</span> Absent (0 points)
+                        </div>
+                        <div className="flex items-center">
+                            <span className="font-medium mr-1">—:</span> Unmarked (null)
+                        </div>
+                    </div>
+
                     <table className="table-auto w-3/4 border-collapse border border-gray-300 mt-4">
                         <thead>
                             <tr className="bg-gray-100">
@@ -157,12 +178,21 @@ export default function AttendancePage() {
                                         {student.firstName} {student.lastName}
                                     </td>
                                     <td className="border border-gray-300 px-4 py-2">
-                                        <input
-                                            type="checkbox"
-                                            checked={student.status === "PRESENT"}
-                                            onChange={() => toggleStatus(student.id)}
-                                            className="w-5 h-5 rounded border-gray-300 text-[#AAFF45] focus:ring-[#AAFF45]"
-                                        />
+                                        <div className="flex items-center">
+                                            <button
+                                                onClick={() => toggleStatus(student.id)}
+                                                className={`w-8 h-8 flex items-center justify-center mr-2 rounded ${
+                                                    student.status === "PRESENT" ? "bg-green-100 text-green-700" :
+                                                    student.status === "ABSENT" ? "bg-red-100 text-red-700" :
+                                                    "bg-gray-100 text-gray-500"
+                                                }`}
+                                            >
+                                                {getStatusIcon(student.status)}
+                                            </button>
+                                            <span className="text-sm">
+                                                {student.status.charAt(0) + student.status.slice(1).toLowerCase()}
+                                            </span>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
