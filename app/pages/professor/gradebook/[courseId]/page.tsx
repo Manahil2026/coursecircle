@@ -210,7 +210,7 @@ export default function GradeTracker() {
               updateScore={handleCellEdit}
             />
 
-            <div className="mt-4 p-4 flex space-x-2 border-t border-gray-200">
+            <div className="p-4 flex space-x-2 border-t border-gray-200">
               <button
                 onClick={saveAllChanges}
                 disabled={pendingChanges.length === 0}
