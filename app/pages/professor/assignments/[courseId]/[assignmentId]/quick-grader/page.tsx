@@ -14,6 +14,7 @@ interface Submission {
     createdAt: string;  // submission date/time
     grade?: number;
     feedback?: string;
+    status: string;
     student: {
         id: string;
         firstName: string;
@@ -43,6 +44,8 @@ const QuickGraderPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
 
+    const [dueDate, setDueDate] = useState<string | null>(null);
+
     // Fetch all submissions for this assignment
     useEffect(() => {
         const fetchSubmissions = async () => {
@@ -55,8 +58,8 @@ const QuickGraderPage = () => {
                     throw new Error(`Failed to fetch submissions: ${res.status}`);
                 }
                 const data = await res.json();
-                // data.submissions is assumed to be an array
                 setSubmissions(data.submissions || []);
+                setDueDate(data.dueDate || null); 
                 setIsLoading(false);
             } catch (err: any) {
                 setError(err.message || "Error fetching submissions");
@@ -164,6 +167,9 @@ const QuickGraderPage = () => {
 
                     <p className="text-sm text-gray-500">
                         Submitted on: {new Date(currentSubmission.createdAt).toLocaleString()}
+                        {dueDate && new Date(currentSubmission.createdAt) > new Date(dueDate) && (
+                            <span className="text-red-500 font-semibold ml-2">(Late Submission)</span>
+                        )}
                     </p>
 
                     <div className="mt-4 flex-1">

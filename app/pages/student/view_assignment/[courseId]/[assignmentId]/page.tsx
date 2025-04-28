@@ -18,6 +18,8 @@ interface Assignment {
   submissionType: "NO_SUBMISSIONS" | "ONLINE";
   onlineSubmissionMethod: "TEXT_ENTRY" | "FILE_UPLOAD" | null;
   published: boolean;
+  availableUntil: string | null;
+  allowedAttempts: number;
 }
 
 interface Submission {
@@ -159,6 +161,10 @@ const ViewAssignment = () => {
 
   // Handler for file uploads from the StudentFileUpload component
   const handleFileUpload = (fileUrl: string, fileName: string) => {
+    if (assignment && submissions.length >= assignment.allowedAttempts) { 
+      alert(`You have reached the maximum number of allowed submissions (${assignment.allowedAttempts.toString()}). No more submissions will be accepted.`);
+      return;
+    }
     setSubmitSuccess(true);
     
     // Refresh submissions after upload
@@ -181,6 +187,13 @@ const ViewAssignment = () => {
 
   const handleTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!assignment) return;
+
+    if (submissions.length >= assignment.allowedAttempts) { 
+      alert(`You have reached the maximum number of allowed submissions (${assignment.allowedAttempts.toString()}). No more submissions will be accepted.`);
+      return;
+    }
     
     if (textSubmission.trim() === "") {
       setSubmitError("Please enter some text before submitting");
@@ -275,6 +288,8 @@ const ViewAssignment = () => {
     }
   };
 
+  const canSubmit = assignment && submissions.length < assignment.allowedAttempts;
+
   if (loading) {
     return (
       <div className="flex">
@@ -353,19 +368,31 @@ const ViewAssignment = () => {
                     <span className="text-black">Due: </span>
                     <span className="font-medium text-sm">{formatDueDate(assignment.dueDate)}</span>
                   </div>
+                  {assignment.availableUntil && (
+                    <div>
+                      <span className="text-black">Available Until: </span>
+                      <span className="font-medium text-sm">{formatDueDate(assignment.availableUntil)}</span>
+                    </div>
+                  )}
                   <div>
                     <span className="text-black">Points: </span>
                     <span className="font-medium">{assignment.points}</span>
                   </div>
+                  <div>
+                    <span className="text-black">Attempts Allowed: </span>
+                    <span className="font-medium">{assignment.allowedAttempts}</span>
+                  </div>
                 </div>
 
-                <div className="text-base pt-1">
+              <div className="gap-2 border-gray-800 border-t border-b p-2 mb-5">
+                <div className="text-base pt-1 pb-5">
                   {assignment.description ? (
                     <div dangerouslySetInnerHTML={{ __html: assignment.description }} />
                   ) : (
                     <p className="text-gray-500 italic">No instructions provided.</p>
                   )}
                 </div>
+              </div>
               </div>
                 {assignmentFiles.length > 0 && (
                 <div className="">
@@ -392,7 +419,7 @@ const ViewAssignment = () => {
             {submissions.length > 0 && (
               <div className="">
                 <div className="">
-                  Submissions
+                <h3 className="text-lg font-medium ">Submissions</h3>
                 </div>
                 <div className="">
                   <div className="overflow-x-auto">
@@ -475,11 +502,17 @@ const ViewAssignment = () => {
                       {isFileSubmission && (
                         <div className="mb-6">
                           <h3 className="text-lg font-medium mb-4">File Upload</h3>
-                          <StudentFileUpload
-                            assignmentId={assignmentId}
-                            courseId={courseId}
-                            onUpload={handleFileUpload}
-                          />
+                          {!canSubmit && assignment ? (
+                            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+                              You have reached the maximum number of allowed submissions ({assignment.allowedAttempts}).
+                            </div>
+                          ) : (
+                            <StudentFileUpload
+                              assignmentId={assignmentId}
+                              courseId={courseId}
+                              onUpload={handleFileUpload}
+                            />
+                          )}
                           <p className="mt-1 text-sm text-gray-500">
                             Accepted file types: PDF, DOC, DOCX, ZIP
                           </p>

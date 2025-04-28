@@ -17,6 +17,8 @@ interface Assignment {
   submissionType: string;
   onlineSubmissionMethod?: string;
   published: boolean;
+  availableUntil: string | null;
+  allowedAttempts: string;
 }
 
 interface AssignmentFile {
@@ -44,6 +46,8 @@ const AssignmentDetails = () => {
   const [submissionType, setSubmissionType] = useState("NO_SUBMISSIONS");
   const [selectedOnlineMethod, setSelectedOnlineMethod] = useState<string | null>(null);
   const [showFiles, setShowFiles] = useState(false);
+  const [availableUntil, setAvailableUntil] = useState<string | null>(null);
+  const [allowedAttempts, setAllowedAttempts] = useState<string>("1"); // Default to 1
 
   // New state variables for submissions count
   const [submissionCount, setSubmissionCount] = useState<number>(0);
@@ -67,6 +71,8 @@ const AssignmentDetails = () => {
           setDescription(data.description || "");
           setPoints(data.points?.toString() || "0");
           setIsPublished(data.published || false);
+          setAvailableUntil(data.availableUntil ? new Date(data.availableUntil).toISOString().split("T")[0] : null);
+          setAllowedAttempts(data.allowedAttempts?.toString() || "1");
 
           if (data.dueDate) {
             const dateObj = new Date(data.dueDate);
@@ -140,6 +146,9 @@ const AssignmentDetails = () => {
       ? new Date(`${dueDate}T${dueTime}:00`)
       : null;
 
+    // Format availableUntil to ISO string if it has a value
+    const formattedAvailableUntil = availableUntil ? new Date(`${availableUntil}T23:59:59`).toISOString() : null;
+
     const payload = {
       ...assignment,
       title,
@@ -149,6 +158,8 @@ const AssignmentDetails = () => {
       submissionType: formattedSubmissionType,
       onlineSubmissionMethod:
         formattedSubmissionType === "ONLINE" ? selectedOnlineMethod?.toUpperCase() : null,
+      availableUntil: formattedAvailableUntil,
+      allowedAttempts: parseInt(allowedAttempts, 10),
     };
 
     try {
@@ -343,11 +354,10 @@ const AssignmentDetails = () => {
               </button>
               <button
                 onClick={isEditing ? handleSaveAll : () => setIsEditing(true)}
-                className={`px-4 py-1.5 text-sm font-medium rounded-lg text-black transition-colors flex items-center gap-1 ${
-                  isEditing 
-                    ? "bg-[#B9FF66] hover:bg-[#A8FF00]" 
+                className={`px-4 py-1.5 text-sm font-medium rounded-lg text-black transition-colors flex items-center gap-1 ${isEditing
+                    ? "bg-[#B9FF66] hover:bg-[#A8FF00]"
                     : "bg-[#B9FF66] hover:bg-[#A8FF00]"
-                }`}
+                  }`}
               >
                 {isEditing ? (
                   <>
@@ -402,11 +412,10 @@ const AssignmentDetails = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 readOnly={!isEditing}
-                className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
-                  isEditing 
-                    ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]" 
+                className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${isEditing
+                    ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]"
                     : "bg-white"
-                }`}
+                  }`}
               />
             </div>
 
@@ -419,11 +428,10 @@ const AssignmentDetails = () => {
                   value={points}
                   onChange={(e) => setPoints(e.target.value)}
                   readOnly={!isEditing}
-                  className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
-                    isEditing 
-                      ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]" 
+                  className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${isEditing
+                      ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]"
                       : "bg-white"
-                  }`}
+                    }`}
                 />
               </div>
 
@@ -436,11 +444,10 @@ const AssignmentDetails = () => {
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
                     readOnly={!isEditing}
-                    className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
-                      isEditing 
-                        ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]" 
+                    className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${isEditing
+                        ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]"
                         : "bg-white"
-                    }`}
+                      }`}
                   />
                 </div>
                 <div>
@@ -450,13 +457,26 @@ const AssignmentDetails = () => {
                     value={dueTime}
                     onChange={(e) => setDueTime(e.target.value)}
                     readOnly={!isEditing}
-                    className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
-                      isEditing 
-                        ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]" 
+                    className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${isEditing
+                        ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]"
                         : "bg-white"
-                    }`}
+                      }`}
                   />
                 </div>
+              </div>
+              {/* Available Until Date */}
+              <div>
+                <label className="block text-sm font-semibold mb-1 text-gray-700">Available Until (Optional)</label>
+                <input
+                  type="date"
+                  value={availableUntil || ""}
+                  onChange={(e) => setAvailableUntil(e.target.value)}
+                  readOnly={!isEditing}
+                  className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${isEditing
+                      ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]"
+                      : "bg-white"
+                    }`}
+                />
               </div>
             </div>
 
@@ -467,11 +487,10 @@ const AssignmentDetails = () => {
                 value={submissionType}
                 onChange={(e) => setSubmissionType(e.target.value)}
                 disabled={!isEditing}
-                className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
-                  isEditing 
-                    ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]" 
+                className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${isEditing
+                    ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]"
                     : "bg-white"
-                }`}
+                  }`}
               >
                 <option value="NO_SUBMISSIONS">No Submissions</option>
                 <option value="ONLINE">Online Submission</option>

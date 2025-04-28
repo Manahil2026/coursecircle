@@ -1,5 +1,6 @@
 "use client";
 
+import { Assignment, Submission } from "@prisma/client";
 import React, { useState } from "react";
 import { useDropzone } from "react-dropzone";
 

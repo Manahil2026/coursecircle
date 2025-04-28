@@ -16,21 +16,21 @@ export async function POST(
   try {
     // Await the params object before destructuring
     const { courseId, assignmentId } = await params;
-    
+
     // Clone the request before using it for auth
     const authRequest = new Request(req.url, {
       method: req.method,
       headers: req.headers,
     });
-    
+
     const { userId } = getAuth(req as NextRequest);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     // Check if the student is enrolled in the course
     const student = await prisma.user.findUnique({
-      where: { 
+      where: {
         id: userId,
         role: "STUDENT",
         enrolledCourses: {
@@ -43,11 +43,15 @@ export async function POST(
       return NextResponse.json({ error: "Not enrolled in this course" }, { status: 403 });
     }
 
-    // Check if the assignment exists and belongs to the course
+    // Check if the assignment exists and belongs to the course, and get allowedAttempts
     const assignment = await prisma.assignment.findUnique({
-      where: { 
+      where: {
         id: assignmentId,
         courseId
+      },
+      select: {
+        allowedAttempts: true,
+        dueDate: true,
       }
     });
 
@@ -55,51 +59,70 @@ export async function POST(
       return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
     }
 
+    // Check the number of existing submissions for this student on this assignment
+    const existingSubmissionsCount = await prisma.submission.count({
+      where: {
+        assignmentId: assignmentId,
+        studentId: userId,
+      },
+    });
+
+    const allowedAttempts = assignment.allowedAttempts; 
+
+    if (existingSubmissionsCount >= allowedAttempts) {
+      return NextResponse.json({ error: `Maximum submissions allowed (${allowedAttempts.toString()}) reached.` }, { status: 400 });
+    }
+
     // Now safely read the formData for the first time
     const formData = await req.formData();
-  const text = formData.get("text") as string | null;
-  const file = formData.get("file") as File | null;
+    const text = formData.get("text") as string | null;
+    const file = formData.get("file") as File | null;
 
-  if (!file && !text) {
-    return NextResponse.json({ error: "No submission provided" }, { status: 400 });
-  }
+    if (!file && !text) {
+      return NextResponse.json({ error: "No submission provided" }, { status: 400 });
+    }
 
-  let fileName: string | undefined;
-  let fileUrl: string | undefined;
+    let fileName: string | undefined;
+    let fileUrl: string | undefined;
 
-  if (file) {
-    // 1. ensure uploadDir exists
-    await fs.mkdir(uploadDir, { recursive: true });
+    if (file) {
+      // 1. ensure uploadDir exists
+      await fs.mkdir(uploadDir, { recursive: true });
 
-    // 2. generate a unique file name
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = file.name.split(".").pop();
-    const generatedName = `submission-${uniqueSuffix}.${ext}`;
-    const destPath = path.join(uploadDir, generatedName);
+      // 2. generate a unique file name
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const ext = file.name.split(".").pop();
+      const generatedName = `submission-${uniqueSuffix}.${ext}`;
+      const destPath = path.join(uploadDir, generatedName);
 
-    // 3. write it
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(destPath, buffer);
+      // 3. write it
+      const buffer = Buffer.from(await file.arrayBuffer());
+      await fs.writeFile(destPath, buffer);
 
-    // 4. set for Prisma
-    fileName = file.name;
-    fileUrl  = `/uploads/${generatedName}`;
-  }
+      // 4. set for Prisma
+      fileName = file.name;
+      fileUrl  = `/uploads/${generatedName}`;
+    }
 
-  // Create the submission record
-  const submission = await prisma.submission.create({
-    data: {
-      assignmentId,
-      studentId: userId,
-      status: "SUBMITTED",
-      // only set these if they’re defined
-      ...(fileName && { fileName }),
-      ...(fileUrl  && { fileUrl  }),
-      ...(text     && { text     }),
-    },
-  });
+    // Determine submission status based on due date
+    const now = new Date();
+    const isLate = assignment.dueDate && now > new Date(assignment.dueDate);
+    const submissionStatus = isLate ? "SUBMITTED_LATE" : "SUBMITTED";
 
-  return NextResponse.json({ success: true, submission }, { status: 201 });
+    // Create the submission record
+    const submission = await prisma.submission.create({
+      data: {
+        assignmentId,
+        studentId: userId,
+        status: "SUBMITTED",
+        // only set these if they’re defined
+        ...(fileName && { fileName }),
+        ...(fileUrl  && { fileUrl  }),
+        ...(text    && { text    }),
+      },
+    });
+
+    return NextResponse.json({ success: true, submission }, { status: 201 });
   } catch (error) {
     console.error("Error creating submission:", error);
     return NextResponse.json({ error: "Failed to create submission" }, { status: 500 });
@@ -193,6 +216,16 @@ export async function GET(
         }
       }
 
+      const assignment = await prisma.assignment.findUnique({
+        where: {
+            id: assignmentId,
+            courseId,
+        },
+        select: {
+            dueDate: true, 
+        },
+      });
+
       const submissions = await prisma.submission.findMany({
         where: {
           assignmentId,
@@ -211,8 +244,7 @@ export async function GET(
           createdAt: "desc",
         },
       });
-
-      return NextResponse.json({ submissions });
+      return NextResponse.json({ submissions, dueDate: assignment?.dueDate });
     }
 
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
