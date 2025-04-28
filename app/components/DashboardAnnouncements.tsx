@@ -80,7 +80,7 @@ const DashboardAnnouncements: React.FC = () => {
   }
 
   return (
-    <div className="bg-white p-3 rounded-lg shadow border border-black">
+    <div className="bg-white p-3 rounded-lg">
       <div className="space-y-2 max-h-[180px] overflow-y-auto">
         {announcements.map((announcement) => (
           <div

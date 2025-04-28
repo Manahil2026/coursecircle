@@ -101,7 +101,7 @@ export default function StudentDashboard() {
                 </div>
 
                 {courses.length > 2 && (
-                  <div className="absolute bottom-0 left-[280px] opacity-45">
+                  <div className="absolute bottom-0 left-[280px] opacity-35">
                     <Image
                       src="/asset/arrowdown_icon.svg"
                       alt="Add icon"
