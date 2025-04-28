@@ -145,7 +145,7 @@ const calculateOverallGrade = () => {
                 {assignment.feedback ? (
                   <button 
                     onClick={() => handleViewFeedback(assignment.feedback, assignment.name)}
-                    className="text-[#AAFF45] hover:text-[#94db3d] font-medium transition-colors duration-200"
+                    className="text-blue-500 hover:text-blue-700 font-medium transition-colors duration-200"
                   >
                     View Feedback
                   </button>
