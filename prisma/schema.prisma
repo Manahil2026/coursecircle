@@ -168,6 +168,9 @@ model Assignment {
 
   isAttendanceAssignment Boolean @default(false) // Flag to identify attendance assignment
 
+  availableUntil        DateTime?             // Optional date until which submissions are allowed
+  allowedAttempts       Int                   @default(1)    // Number of allowed submission attempts
+
   @@index([courseId])
   @@map("assignments")
 }
@@ -231,6 +234,7 @@ model ModuleFile {
 enum SubmissionStatus {
   DRAFT
   SUBMITTED
+  SUBMITTED_LATE
   GRADED
 }
 
