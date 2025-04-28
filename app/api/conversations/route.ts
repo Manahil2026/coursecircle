@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
     
     const skip = (page - 1) * limit;
 
-    // Fetch conversations with pagination
-    const conversations = await prisma.conversation.findMany({
+    // First, get all conversations where the user is a participant
+    const allConversations = await prisma.conversation.findMany({
       where: {
         participants: {
           some: {
@@ -45,30 +45,40 @@ export async function GET(req: NextRequest) {
           orderBy: {
             createdAt: 'desc'
           },
-          take: 1,
           where: {
-            isDraft: false // Exclude draft messages
+            OR: [
+              { isDraft: false }, // Include all non-draft messages
+              { 
+                isDraft: true, 
+                senderId: userId // Include only drafts from the current user
+              }
+            ]
           }
         }
       },
-      orderBy: {
-        updatedAt: 'desc'
-      },
-      take: limit,
-      skip: skip
     });
+    
+    // Filter out conversations that only contain drafts from the current user
+    const filteredConversations = allConversations.filter(conversation => {
+      // If the conversation has no messages, filter it out
+      if (conversation.messages.length === 0) return false;
+      
+      // Check if all messages are drafts from the current user
+      const allMessagesAreDraftsFromCurrentUser = conversation.messages.every(
+        message => message.isDraft && message.senderId === userId
+      );
+      
+      // Keep conversations that have at least one non-draft message or a draft from another user
+      return !allMessagesAreDraftsFromCurrentUser;
+    });
+    
+    // Apply pagination after filtering
+    const paginatedConversations = filteredConversations
+      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()) // Sort by updatedAt in descending order
+      .slice(skip, skip + limit);
 
-    // Count total conversations for pagination
-    const totalCount = await prisma.conversation.count({
-      where: {
-        participants: {
-          some: {
-            userId: userId
-          }
-        },
-        isAnnouncement: isAnnouncement
-      }
-    });
+    // Count total conversations after filtering
+    const totalCount = filteredConversations.length;
 
     // Count unread messages in these conversations
     const unreadCount = await prisma.message.count({
@@ -86,10 +96,13 @@ export async function GET(req: NextRequest) {
     });
 
     // Format the conversations for the frontend
-    const formattedConversations = conversations.map(conversation => {
+    const formattedConversations = paginatedConversations.map(conversation => {
       const otherParticipants = conversation.participants
         .filter(p => p.userId !== userId)
         .map(p => p.user);
+      
+      // Get the last non-draft message (if any)
+      const lastMessage = conversation.messages.find(msg => !msg.isDraft) || null;
       
       // For one-on-one conversations, use the other person's name
       // For group conversations, use the group name or list of participants
@@ -105,7 +118,7 @@ export async function GET(req: NextRequest) {
         isGroup: conversation.isGroup,
         isAnnouncement: conversation.isAnnouncement,
         participants: otherParticipants,
-        lastMessage: conversation.messages[0] || null,
+        lastMessage: lastMessage,
         updatedAt: conversation.updatedAt
       };
     });
