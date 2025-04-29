@@ -183,7 +183,7 @@ export default function GradeTracker() {
     <>
       <SidebarDashboard />
       <CourseMenu courseId={courseId as string} />
-      <div className="p-6 max-w-4xl mx-auto rounded-lg pl-52">
+      <div className="p-6 mx-auto rounded-lg pl-52">
         <h1 className="text-base font-medium mb-6 text-center text-black">
           Gradebook
         </h1>
@@ -203,29 +203,12 @@ export default function GradeTracker() {
             No students enrolled in this course yet.
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto w-full">
             <GradeTable
               students={students}
               assignments={allAssignments}
               updateScore={handleCellEdit}
             />
-
-            <div className="p-4 flex space-x-2 border-t border-gray-200">
-              <button
-                onClick={saveAllChanges}
-                disabled={pendingChanges.length === 0}
-                className="px-4 py-2 bg-[#AAFF45] text-black rounded hover:bg-[#94db3d] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                Save Changes
-              </button>
-              <button
-                onClick={cancelAllChanges}
-                disabled={pendingChanges.length === 0}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                Cancel
-              </button>
-            </div>
           </div>
         )}
       </div>
