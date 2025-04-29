@@ -203,7 +203,7 @@ export default function GradeTracker() {
             No students enrolled in this course yet.
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
             <GradeTable
               students={students}
               assignments={allAssignments}
