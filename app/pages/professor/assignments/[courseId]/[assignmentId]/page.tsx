@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import CourseMenu from "@/app/components/course_menu";
@@ -44,7 +44,9 @@ const AssignmentDetails = () => {
   const [isPublished, setIsPublished] = useState(false);
   const [files, setFiles] = useState<AssignmentFile[]>([]);
   const [submissionType, setSubmissionType] = useState("NO_SUBMISSIONS");
-  const [selectedOnlineMethod, setSelectedOnlineMethod] = useState<string | null>(null);
+  const [selectedOnlineMethod, setSelectedOnlineMethod] = useState<
+    string | null
+  >(null);
   const [showFiles, setShowFiles] = useState(false);
   const [availableUntil, setAvailableUntil] = useState<string | null>(null);
   const [allowedAttempts, setAllowedAttempts] = useState<string>("1"); // Default to 1
@@ -71,7 +73,11 @@ const AssignmentDetails = () => {
           setDescription(data.description || "");
           setPoints(data.points?.toString() || "0");
           setIsPublished(data.published || false);
-          setAvailableUntil(data.availableUntil ? new Date(data.availableUntil).toISOString().split("T")[0] : null);
+          setAvailableUntil(
+            data.availableUntil
+              ? new Date(data.availableUntil).toISOString().split("T")[0]
+              : null
+          );
           setAllowedAttempts(data.allowedAttempts?.toString() || "1");
 
           if (data.dueDate) {
@@ -105,7 +111,9 @@ const AssignmentDetails = () => {
   // Fetch submissions for the assignment and count unique student submissions
   const fetchSubmissionsCount = async () => {
     try {
-      const res = await fetch(`/api/courses/${courseId}/assignments/${assignmentId}/submissions/count`);
+      const res = await fetch(
+        `/api/courses/${courseId}/assignments/${assignmentId}/submissions/count`
+      );
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
@@ -142,12 +150,13 @@ const AssignmentDetails = () => {
       return;
     }
 
-    const combinedDueDateTime = dueDate && dueTime
-      ? new Date(`${dueDate}T${dueTime}:00`)
-      : null;
+    const combinedDueDateTime =
+      dueDate && dueTime ? new Date(`${dueDate}T${dueTime}:00`) : null;
 
     // Format availableUntil to ISO string if it has a value
-    const formattedAvailableUntil = availableUntil ? new Date(`${availableUntil}T23:59:59`).toISOString() : null;
+    const formattedAvailableUntil = availableUntil
+      ? new Date(`${availableUntil}T23:59:59`).toISOString()
+      : null;
 
     const payload = {
       ...assignment,
@@ -157,24 +166,31 @@ const AssignmentDetails = () => {
       dueDate: combinedDueDateTime ? combinedDueDateTime.toISOString() : null,
       submissionType: formattedSubmissionType,
       onlineSubmissionMethod:
-        formattedSubmissionType === "ONLINE" ? selectedOnlineMethod?.toUpperCase() : null,
+        formattedSubmissionType === "ONLINE"
+          ? selectedOnlineMethod?.toUpperCase()
+          : null,
       availableUntil: formattedAvailableUntil,
       allowedAttempts: parseInt(allowedAttempts, 10),
     };
 
     try {
-      const res = await fetch(`/api/courses/${courseId}/assignments/${assignment.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `/api/courses/${courseId}/assignments/${assignment.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (res.ok) {
         alert("Assignment updated successfully!");
         setIsEditing(false);
       } else {
         const errorData = await res.json();
-        alert(`Failed to update assignment: ${errorData.error || "Unknown error"}`);
+        alert(
+          `Failed to update assignment: ${errorData.error || "Unknown error"}`
+        );
       }
     } catch (error) {
       console.error("Error updating assignment:", error);
@@ -184,7 +200,9 @@ const AssignmentDetails = () => {
 
   const fetchFiles = async (courseId: string, assignmentId: string) => {
     try {
-      const response = await fetch(`/api/courses/${courseId}/assignments/${assignmentId}/files`);
+      const response = await fetch(
+        `/api/courses/${courseId}/assignments/${assignmentId}/files`
+      );
       if (!response.ok) throw new Error("Failed to fetch files");
       const data = await response.json();
       return data.files;
@@ -201,34 +219,43 @@ const AssignmentDetails = () => {
   };
 
   const handleNavigate = (fileId: string) => {
-    router.push(`/pages/professor/assignments/${courseId}/${assignmentId}/file/${fileId}`);
+    router.push(
+      `/pages/professor/assignments/${courseId}/${assignmentId}/file/${fileId}`
+    );
   };
 
   const handlePublish = async () => {
     if (!assignment) return;
 
-    const confirmPublish = confirm("Are you sure you want to publish this assignment?");
+    const confirmPublish = confirm(
+      "Are you sure you want to publish this assignment?"
+    );
     if (!confirmPublish) return;
 
     try {
       const payload = { published: true };
 
-      const res = await fetch(`/api/courses/${courseId}/assignments/${assignment.id}/publish`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `/api/courses/${courseId}/assignments/${assignment.id}/publish`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (res.ok) {
         alert("Assignment published successfully!");
         setIsPublished(true);
-        setAssignment((prev) => prev ? { ...prev, published: true } : null);
+        setAssignment((prev) => (prev ? { ...prev, published: true } : null));
         // Fetch submission stats when published
         fetchSubmissionsCount();
         fetchEnrolledStudents();
       } else {
         const errorData = await res.json();
-        alert(`Failed to publish assignment: ${errorData.error || "Unknown error"}`);
+        alert(
+          `Failed to publish assignment: ${errorData.error || "Unknown error"}`
+        );
       }
     } catch (error) {
       console.error("Error publishing assignment:", error);
@@ -239,28 +266,37 @@ const AssignmentDetails = () => {
   const handleUnpublish = async () => {
     if (!assignment) return;
 
-    const confirmUnpublish = confirm("Are you sure you want to unpublish this assignment?");
+    const confirmUnpublish = confirm(
+      "Are you sure you want to unpublish this assignment?"
+    );
     if (!confirmUnpublish) return;
 
     try {
       const payload = { published: false };
 
-      const res = await fetch(`/api/courses/${courseId}/assignments/${assignment.id}/publish`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `/api/courses/${courseId}/assignments/${assignment.id}/publish`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (res.ok) {
         alert("Assignment unpublished successfully!");
         setIsPublished(false);
-        setAssignment((prev) => prev ? { ...prev, published: false } : null);
+        setAssignment((prev) => (prev ? { ...prev, published: false } : null));
         // Reset submission stats when unpublished
         setSubmissionCount(0);
         setTotalStudents(0);
       } else {
         const errorData = await res.json();
-        alert(`Failed to unpublish assignment: ${errorData.error || "Unknown error"}`);
+        alert(
+          `Failed to unpublish assignment: ${
+            errorData.error || "Unknown error"
+          }`
+        );
       }
     } catch (error) {
       console.error("Error unpublishing assignment:", error);
@@ -306,7 +342,9 @@ const AssignmentDetails = () => {
         <div className="bg-white p-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-medium text-gray-800">{assignment.title}</h1>
+              <h1 className="text-lg font-medium text-gray-800">
+                {assignment.title}
+              </h1>
               {isPublished ? (
                 <div className="relative group">
                   <button
@@ -347,30 +385,61 @@ const AssignmentDetails = () => {
                 onClick={() => router.back()}
                 className="px-4 py-1.5 text-sm font-medium rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex items-center gap-1"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
                 </svg>
                 <span>Back</span>
               </button>
               <button
                 onClick={isEditing ? handleSaveAll : () => setIsEditing(true)}
-                className={`px-4 py-1.5 text-sm font-medium rounded-lg text-black transition-colors flex items-center gap-1 ${isEditing
+                className={`px-4 py-1.5 text-sm font-medium rounded-lg text-black transition-colors flex items-center gap-1 ${
+                  isEditing
                     ? "bg-[#B9FF66] hover:bg-[#A8FF00]"
                     : "bg-[#B9FF66] hover:bg-[#A8FF00]"
-                  }`}
+                }`}
               >
                 {isEditing ? (
                   <>
                     <span>Save Changes</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                   </>
                 ) : (
                   <>
                     <span>Edit Assignment</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
                     </svg>
                   </>
                 )}
@@ -384,7 +453,8 @@ const AssignmentDetails = () => {
                 <span className="text-sm text-gray-700">
                   {totalStudents > 0 ? (
                     <span>
-                      {submissionCount} student{submissionCount !== 1 && "s"} submitted out of {totalStudents}
+                      {submissionCount} student{submissionCount !== 1 && "s"}{" "}
+                      submitted out of {totalStudents}
                     </span>
                   ) : (
                     <span>Loading submission data...</span>
@@ -393,12 +463,26 @@ const AssignmentDetails = () => {
               </div>
             )}
             <button
-              onClick={() => router.push(`/pages/professor/assignments/${courseId}/${assignmentId}/quick-grader`)}
+              onClick={() =>
+                router.push(
+                  `/pages/professor/assignments/${courseId}/${assignmentId}/quick-grader`
+                )
+              }
               className="px-4 py-1.5 text-sm font-medium rounded-lg bg-[#B9FF66] text-black hover:bg-[#A8FF00] transition-colors flex items-center gap-1"
             >
               <span>Quick Grader</span>
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
           </div>
@@ -406,91 +490,116 @@ const AssignmentDetails = () => {
           <div className="space-y-2">
             {/* Title */}
             <div>
-              <label className="block text-sm font-semibold mb-1 text-gray-700">Title</label>
+              <label className="block text-sm font-semibold mb-1 text-gray-700">
+                Title
+              </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 readOnly={!isEditing}
-                className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${isEditing
+                className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
+                  isEditing
                     ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]"
                     : "bg-white"
-                  }`}
+                }`}
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {/* Points */}
-              <div>
-                <label className="block text-sm font-semibold mb-1 text-gray-700">Points</label>
-                <input
-                  type="number"
-                  value={points}
-                  onChange={(e) => setPoints(e.target.value)}
-                  readOnly={!isEditing}
-                  className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${isEditing
-                      ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]"
-                      : "bg-white"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Left Side */}
+              <div className="space-y-4">
+                {/* Points */}
+                <div>
+                  <label className="block text-sm font-semibold mb-1 text-gray-700">
+                    Points
+                  </label>
+                  <input
+                    type="number"
+                    value={points}
+                    onChange={(e) => setPoints(e.target.value)}
+                    readOnly={!isEditing}
+                    className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
+                      isEditing
+                        ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]"
+                        : "bg-white"
                     }`}
-                />
+                  />
+                </div>
+
+                {/* Available Until */}
+                <div>
+                  <label className="block text-sm font-semibold mb-1 text-gray-700">
+                    Available Until (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={availableUntil || ""}
+                    onChange={(e) => setAvailableUntil(e.target.value)}
+                    readOnly={!isEditing}
+                    className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
+                      isEditing
+                        ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]"
+                        : "bg-white"
+                    }`}
+                  />
+                </div>
               </div>
 
-              {/* Due Date and Time */}
-              <div className="space-y-2">
+              {/* Right Side */}
+              <div className="space-y-4">
+                {/* Due Date */}
                 <div>
-                  <label className="block text-sm font-semibold mb-1 text-gray-700">Due Date</label>
+                  <label className="block text-sm font-semibold mb-1 text-gray-700">
+                    Due Date
+                  </label>
                   <input
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
                     readOnly={!isEditing}
-                    className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${isEditing
+                    className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
+                      isEditing
                         ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]"
                         : "bg-white"
-                      }`}
+                    }`}
                   />
                 </div>
+
+                {/* Due Time */}
                 <div>
-                  <label className="block text-sm font-semibold mb-1 text-gray-700">Due Time</label>
+                  <label className="block text-sm font-semibold mb-1 text-gray-700">
+                    Due Time
+                  </label>
                   <input
                     type="time"
                     value={dueTime}
                     onChange={(e) => setDueTime(e.target.value)}
                     readOnly={!isEditing}
-                    className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${isEditing
+                    className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
+                      isEditing
                         ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]"
                         : "bg-white"
-                      }`}
+                    }`}
                   />
                 </div>
-              </div>
-              {/* Available Until Date */}
-              <div>
-                <label className="block text-sm font-semibold mb-1 text-gray-700">Available Until (Optional)</label>
-                <input
-                  type="date"
-                  value={availableUntil || ""}
-                  onChange={(e) => setAvailableUntil(e.target.value)}
-                  readOnly={!isEditing}
-                  className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${isEditing
-                      ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]"
-                      : "bg-white"
-                    }`}
-                />
               </div>
             </div>
 
             {/* Submission Type Selection */}
             <div>
-              <label className="block text-sm font-semibold mb-1 text-gray-700">Submission Type</label>
+              <label className="block text-sm font-semibold mb-1 text-gray-700">
+                Submission Type
+              </label>
               <select
                 value={submissionType}
                 onChange={(e) => setSubmissionType(e.target.value)}
                 disabled={!isEditing}
-                className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${isEditing
+                className={`w-full border border-black p-1.5 rounded-lg transition-colors text-base ${
+                  isEditing
                     ? "bg-white focus:border-[#B9FF66] focus:ring-1 focus:ring-[#B9FF66]"
                     : "bg-white"
-                  }`}
+                }`}
               >
                 <option value="NO_SUBMISSIONS">No Submissions</option>
                 <option value="ONLINE">Online Submission</option>
@@ -500,7 +609,9 @@ const AssignmentDetails = () => {
             {/* Conditional Rendering of Submission Options */}
             {submissionType === "ONLINE" && (
               <div className="border border-black p-1.5 rounded-lg">
-                <label className="block text-sm font-semibold mb-1 text-gray-700">Submission Options</label>
+                <label className="block text-sm font-semibold mb-1 text-gray-700">
+                  Submission Options
+                </label>
                 <div className="flex gap-4">
                   <div className="flex items-center">
                     <input
@@ -513,7 +624,12 @@ const AssignmentDetails = () => {
                       disabled={!isEditing}
                       className="w-4 h-4 text-[#B9FF66] focus:ring-[#B9FF66]"
                     />
-                    <label htmlFor="text_entry" className="ml-2 text-sm text-gray-700">Text Entry</label>
+                    <label
+                      htmlFor="text_entry"
+                      className="ml-2 text-sm text-gray-700"
+                    >
+                      Text Entry
+                    </label>
                   </div>
                   <div className="flex items-center">
                     <input
@@ -526,7 +642,12 @@ const AssignmentDetails = () => {
                       disabled={!isEditing}
                       className="w-4 h-4 text-[#B9FF66] focus:ring-[#B9FF66]"
                     />
-                    <label htmlFor="file_upload" className="ml-2 text-sm text-gray-700">File Upload</label>
+                    <label
+                      htmlFor="file_upload"
+                      className="ml-2 text-sm text-gray-700"
+                    >
+                      File Upload
+                    </label>
                   </div>
                 </div>
               </div>
@@ -534,7 +655,9 @@ const AssignmentDetails = () => {
 
             {/* File Upload Section */}
             <div className="border border-black p-1.5 rounded-lg">
-              <h2 className="text-base font-semibold mb-1 text-gray-800">Upload Files</h2>
+              <h2 className="text-base font-semibold mb-1 text-gray-800">
+                Upload Files
+              </h2>
               <div className="text-sm">
                 <FileUpload
                   assignmentId={assignment.id}
@@ -550,11 +673,16 @@ const AssignmentDetails = () => {
 
               {/* Uploaded Files Section */}
               <div className="mt-2">
-                <h2 className="text-base font-semibold mb-1 text-gray-800">Uploaded Files</h2>
+                <h2 className="text-base font-semibold mb-1 text-gray-800">
+                  Uploaded Files
+                </h2>
                 <ul className="space-y-1">
                   {files.length > 0 ? (
                     files.map((file) => (
-                      <li key={file.id} className="flex items-center justify-between bg-white p-2 rounded-lg border border-black">
+                      <li
+                        key={file.id}
+                        className="flex items-center justify-between bg-white p-2 rounded-lg border border-black"
+                      >
                         <a
                           onClick={() => handleNavigate(file.id)}
                           className="text-[#B9FF66] hover:text-[#A8FF00] cursor-pointer text-base"
@@ -575,7 +703,9 @@ const AssignmentDetails = () => {
                       </li>
                     ))
                   ) : (
-                    <li className="text-sm text-gray-500 italic">No files uploaded yet.</li>
+                    <li className="text-sm text-gray-500 italic">
+                      No files uploaded yet.
+                    </li>
                   )}
                 </ul>
               </div>
@@ -583,7 +713,9 @@ const AssignmentDetails = () => {
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-semibold mb-1 text-gray-700">Description</label>
+              <label className="block text-sm font-semibold mb-1 text-gray-700">
+                Description
+              </label>
               {isEditing ? (
                 <ReactQuillEditor
                   value={description}
