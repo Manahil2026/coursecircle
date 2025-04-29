@@ -2,10 +2,14 @@
 // This file is called by the course homepage to fetch and create modules.
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuth } from "@clerk/nextjs/server";
+import { NextRequest } from "next/server";
 
 // GET - Fetch all modules for a course
 export async function GET(req: Request) {
     try {
+        const nextReq = new NextRequest(req);
+        const { userId } = getAuth(nextReq);
         const { searchParams } = new URL(req.url);
         const courseId = searchParams.get("courseId");
 
@@ -13,12 +17,52 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Missing courseId parameter" }, { status: 400 });
         }
 
-        const modules = await prisma.module.findMany({
-            where: { courseId },
-            include: { sections: true, files: true },
+        // Get user to determine role
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { role: true }
         });
 
-        return NextResponse.json(modules);
+        const isStudent = user?.role === "STUDENT";
+
+        // For students, fetch only published modules with necessary fields
+        if (isStudent) {
+            const modules = await prisma.module.findMany({
+                where: { 
+                    courseId,
+                    published: true // Only published modules for students
+                },
+                select: {
+                    id: true,
+                    title: true,
+                    published: true,
+                    sections: {
+                        select: {
+                            id: true,
+                            title: true,
+                            content: true
+                        }
+                    },
+                    files: {
+                        select: {
+                            id: true,
+                            name: true,
+                            url: true,
+                            type: true
+                        }
+                    }
+                }
+            });
+            return NextResponse.json(modules);
+        } 
+        // For professors and admins, fetch all modules with complete data
+        else {
+            const modules = await prisma.module.findMany({
+                where: { courseId },
+                include: { sections: true, files: true },
+            });
+            return NextResponse.json(modules);
+        }
     } catch (error) {
         console.error("Error fetching modules:", error);
         return NextResponse.json({ error: "Failed to fetch modules" }, { status: 500 });
