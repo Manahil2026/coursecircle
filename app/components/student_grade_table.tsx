@@ -26,6 +26,20 @@ interface StudentGradeTableProps {
   } | null;
 }
 
+// Function to safely format dates
+const formatDate = (dateString: string | undefined): string => {
+  if (!dateString) return "N/A";
+  
+  // Check if the date is valid
+  const date = new Date(dateString);
+  
+  // Check if date is invalid or near epoch (which could indicate an error)
+  if (isNaN(date.getTime()) || date.getFullYear() < 1980) {
+    return "N/A";
+  }
+  
+  return date.toLocaleDateString();
+};
 
 const StudentGradeTable: React.FC<StudentGradeTableProps> = ({ 
   assignments, 
@@ -45,33 +59,32 @@ const StudentGradeTable: React.FC<StudentGradeTableProps> = ({
   };
 
   // Calculate overall grade using weightedGrade if available
-const calculateOverallGrade = () => {
-  if (weightedGrade && weightedGrade.finalGrade !== undefined && weightedGrade.finalGrade !== null) {
-    return `${weightedGrade.finalGrade.toFixed(2)}%`;
-  }
+  const calculateOverallGrade = () => {
+    if (weightedGrade && weightedGrade.finalGrade !== undefined && weightedGrade.finalGrade !== null) {
+      return `${weightedGrade.finalGrade.toFixed(2)}%`;
+    }
 
-  // Fallback to basic average calculation
-  const gradedAssignments = assignments.filter(
-    assignment => assignment.grade !== null
-  );
+    // Fallback to basic average calculation
+    const gradedAssignments = assignments.filter(
+      assignment => assignment.grade !== null
+    );
 
-  if (gradedAssignments.length === 0) {
-    return "N/A";
-  }
+    if (gradedAssignments.length === 0) {
+      return "N/A";
+    }
 
-  const totalPointsEarned = gradedAssignments.reduce(
-    (total, assignment) => total + (assignment.grade || 0), 
-    0
-  );
-  const totalPossiblePoints = gradedAssignments.reduce(
-    (total, assignment) => total + assignment.points, 
-    0
-  );
+    const totalPointsEarned = gradedAssignments.reduce(
+      (total, assignment) => total + (assignment.grade || 0), 
+      0
+    );
+    const totalPossiblePoints = gradedAssignments.reduce(
+      (total, assignment) => total + assignment.points, 
+      0
+    );
 
-  const percentage = (totalPointsEarned / totalPossiblePoints) * 100;
-  return `${percentage.toFixed(2)}%`;
-};
-
+    const percentage = (totalPointsEarned / totalPossiblePoints) * 100;
+    return `${percentage.toFixed(2)}%`;
+  };
 
   const overallPercentage = weightedGrade && weightedGrade.finalGrade !== null
     ? `${weightedGrade.finalGrade.toFixed(2)}%` 
@@ -126,11 +139,11 @@ const calculateOverallGrade = () => {
             >
               <td className="p-2 border">{assignment.name}</td>
               <td className="p-2 border text-center">
-                {new Date(assignment.dueDate).toLocaleDateString()}
+                {formatDate(assignment.dueDate)}
               </td>
               <td className="p-2 border text-center">
                 {assignment.submissionDate 
-                  ? new Date(assignment.submissionDate).toLocaleDateString() 
+                  ? formatDate(assignment.submissionDate)
                   : "Not Submitted"}
               </td>
               <td className="p-2 border text-center">
