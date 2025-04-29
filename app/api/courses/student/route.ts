@@ -12,9 +12,19 @@ export async function GET(req: NextRequest) {
   }
 
   // Find student by Clerk userId
+  // Optimization: Only select the fields needed for the student dashboard
   const student = await prisma.user.findUnique({
     where: { id: userId },
-    include: { enrolledCourses: true }, // Fetch courses they are enrolled in
+    select: {
+      role: true, // Needed to verify student role
+      enrolledCourses: {
+        select: {
+          id: true,     // Required for navigation/links
+          name: true,   // Displayed on course cards
+          code: true,   // Displayed on course cards
+        }
+      }
+    }
   });
 
   if (!student || student.role !== "STUDENT") {
