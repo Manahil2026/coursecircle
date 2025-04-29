@@ -665,7 +665,7 @@ const ProfessorAssignments = () => {
                 </button>
                 <button
                   onClick={handleSaveWeights}
-                  className="bg-[#AAFF45] text-white px-4 py-2 rounded hover:bg-[#83c236]"
+                  className="bg-[#AAFF45] text-black px-4 py-2 rounded hover:bg-[#83c236]"
                 >
                   Save
                 </button>
